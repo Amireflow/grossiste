@@ -257,12 +257,12 @@ export default function MarketplacePage() {
                   className="shrink-0 flex flex-col items-center gap-1.5 group cursor-pointer"
                   data-testid="button-category-all"
                 >
-                  <div className={`w-16 h-16 rounded-md overflow-hidden border-2 transition-colors ${selectedCategory === "all" ? "border-primary" : "border-transparent"}`}>
+                  <div className={`w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${selectedCategory === "all" ? "border-primary" : "border-transparent"}`}>
                     <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <Package className="w-6 h-6 text-muted-foreground" />
+                      <Package className="w-7 h-7 text-muted-foreground" />
                     </div>
                   </div>
-                  <span className={`text-[11px] leading-tight text-center max-w-[72px] ${selectedCategory === "all" ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                  <span className={`text-xs leading-tight text-center max-w-[84px] ${selectedCategory === "all" ? "font-semibold text-primary" : "text-muted-foreground"}`}>
                     Tout
                   </span>
                 </button>
@@ -273,14 +273,14 @@ export default function MarketplacePage() {
                     className="shrink-0 flex flex-col items-center gap-1.5 group cursor-pointer"
                     data-testid={`button-category-${cat.slug}`}
                   >
-                    <div className={`w-16 h-16 rounded-md overflow-hidden border-2 transition-colors ${selectedCategory === cat.id ? "border-primary" : "border-transparent"}`}>
+                    <div className={`w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${selectedCategory === cat.id ? "border-primary" : "border-transparent"}`}>
                       {cat.imageUrl ? (
                         <img src={cat.imageUrl} alt={cat.nameFr} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-muted" />
                       )}
                     </div>
-                    <span className={`text-[11px] leading-tight text-center max-w-[72px] ${selectedCategory === cat.id ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                    <span className={`text-xs leading-tight text-center max-w-[84px] ${selectedCategory === cat.id ? "font-semibold text-primary" : "text-muted-foreground"}`}>
                       {cat.nameFr}
                       {globalCategoryCounts[cat.id] !== undefined && (
                         <span className="opacity-60 ml-0.5">({globalCategoryCounts[cat.id]})</span>
