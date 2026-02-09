@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Search, Package, Store, ArrowRight, X, MapPin, ShoppingCart,
-  ChevronDown, ChevronUp, Shield, Truck, Users, TrendingUp,
+  ChevronDown, Shield, Truck, Users, TrendingUp,
   ArrowUpDown, Plus, Minus, CheckCircle, Filter, Zap, Star,
 } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
@@ -47,7 +47,6 @@ export default function MarketplacePage() {
   const [selectedSupplier, setSelectedSupplier] = useState<string>("all");
   const supplierFilter = selectedSupplier !== "all" ? selectedSupplier : supplierFilterFromUrl;
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [showAllCategories, setShowAllCategories] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const { user } = useAuth();
   const { toast } = useToast();
@@ -135,15 +134,10 @@ export default function MarketplacePage() {
     return counts;
   }, [allProducts, products, selectedCategory, search]);
 
-  const selectedCatName = selectedCategory !== "all"
-    ? categories?.find(c => c.id === selectedCategory)?.nameFr
-    : null;
-
   const supplierName = supplierFilter && products && products.length > 0
     ? products[0].supplierName
     : null;
 
-  const visibleCategories = showAllCategories ? categories : categories?.slice(0, 8);
   const supplierCount = useMemo(() => {
     if (!products) return 0;
     return new Set(products.map(p => p.supplierId)).size;
@@ -255,79 +249,37 @@ export default function MarketplacePage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {categories && categories.length > 0 && selectedCategory === "all" && !search && (
-            <div className="mb-8">
-              <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-                <h2 className="font-semibold text-lg">
-                  Catégories
-                </h2>
-                {categories.length > 8 && (
+          {categories && categories.length > 0 && !search && (
+            <div className="mb-6">
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+                <Button
+                  variant={selectedCategory === "all" ? "default" : "outline"}
+                  size="sm"
+                  className="shrink-0 text-xs"
+                  onClick={() => setSelectedCategory("all")}
+                  data-testid="button-category-all"
+                >
+                  Tout
+                  {products && (
+                    <span className="ml-1 text-[10px] opacity-70">({products.length})</span>
+                  )}
+                </Button>
+                {categories.map((cat) => (
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowAllCategories(!showAllCategories)}
-                    data-testid="button-toggle-categories"
-                  >
-                    {showAllCategories ? "Voir moins" : `Voir tout (${categories.length})`}
-                    {showAllCategories ? <ChevronUp className="w-3.5 h-3.5 ml-1" /> : <ChevronDown className="w-3.5 h-3.5 ml-1" />}
-                  </Button>
-                )}
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {visibleCategories?.map((cat) => (
-                  <Card
                     key={cat.id}
-                    className="cursor-pointer overflow-visible hover-elevate"
+                    variant={selectedCategory === cat.id ? "default" : "outline"}
+                    size="sm"
+                    className="shrink-0 text-xs"
                     onClick={() => setSelectedCategory(cat.id)}
-                    data-testid={`card-marketplace-category-${cat.slug}`}
+                    data-testid={`button-category-${cat.slug}`}
                   >
-                    <CardContent className="p-0 relative aspect-[4/3] overflow-hidden rounded-[inherit]">
-                      {cat.imageUrl ? (
-                        <img src={cat.imageUrl} alt={cat.nameFr} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-muted" />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                      <div className="absolute inset-x-0 bottom-0 p-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-medium text-sm text-white">{cat.nameFr}</p>
-                          {globalCategoryCounts[cat.id] !== undefined && (
-                            <Badge variant="secondary" className="text-[10px] bg-white/20 text-white border-0 shrink-0">
-                              {globalCategoryCounts[cat.id]}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    {cat.nameFr}
+                    {globalCategoryCounts[cat.id] !== undefined && (
+                      <span className="ml-1 text-[10px] opacity-70">({globalCategoryCounts[cat.id]})</span>
+                    )}
+                  </Button>
                 ))}
               </div>
-            </div>
-          )}
-
-          {selectedCategory !== "all" && (
-            <div className="flex items-center gap-3 mb-5 flex-wrap">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedCategory("all")}
-                data-testid="button-back-all-categories"
-              >
-                <ChevronDown className="w-3.5 h-3.5 mr-1.5 rotate-90" />
-                Toutes les catégories
-              </Button>
-              <Badge variant="secondary" className="text-xs gap-1.5 pr-1">
-                {selectedCatName}
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="no-default-hover-elevate ml-0.5"
-                  onClick={() => setSelectedCategory("all")}
-                  data-testid="button-clear-marketplace-category"
-                >
-                  <X className="w-3 h-3" />
-                </Button>
-              </Badge>
             </div>
           )}
 
@@ -374,25 +326,6 @@ export default function MarketplacePage() {
                 : isLoading ? "Chargement..." : "Aucun produit"}
             </p>
             <div className="flex items-center gap-2 flex-wrap">
-              {selectedCategory === "all" && !search && categories && categories.length > 0 && (
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                  {categories.slice(0, 5).map(cat => (
-                    <Button
-                      key={cat.id}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs whitespace-nowrap shrink-0"
-                      onClick={() => setSelectedCategory(cat.id)}
-                      data-testid={`button-quick-filter-${cat.slug}`}
-                    >
-                      {cat.nameFr}
-                      {globalCategoryCounts[cat.id] !== undefined && (
-                        <span className="text-muted-foreground ml-1">({globalCategoryCounts[cat.id]})</span>
-                      )}
-                    </Button>
-                  ))}
-                </div>
-              )}
               <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
                 <SelectTrigger className="w-[200px]" data-testid="select-marketplace-supplier">
                   <Store className="w-3.5 h-3.5 mr-2 text-muted-foreground shrink-0" />
