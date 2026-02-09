@@ -21,10 +21,6 @@ export default function LandingPage() {
                 <Package className="w-3.5 h-3.5" />
                 Marketplace
               </Link>
-              <Link href="/suppliers" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5" data-testid="link-suppliers">
-                <Users className="w-3.5 h-3.5" />
-                Fournisseurs
-              </Link>
               <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="link-features">
                 Fonctionnalités
               </a>

@@ -21,6 +21,15 @@ import { Link, useSearch } from "wouter";
 
 type MarketplaceProduct = Product & { supplierName: string; supplierCity: string | null; isSponsored?: boolean; boostLevel?: string | null };
 
+interface Supplier {
+  id: string;
+  businessName: string;
+  city: string | null;
+  country: string | null;
+  description: string | null;
+  productCount: number;
+}
+
 type SortOption = "newest" | "price_asc" | "price_desc" | "name_asc";
 
 const SORT_LABELS: Record<SortOption, string> = {
@@ -34,7 +43,9 @@ export default function MarketplacePage() {
   const [search, setSearch] = useState("");
   const searchString = useSearch();
   const urlParams = new URLSearchParams(searchString);
-  const supplierFilter = urlParams.get("supplier") || undefined;
+  const supplierFilterFromUrl = urlParams.get("supplier") || undefined;
+  const [selectedSupplier, setSelectedSupplier] = useState<string>("all");
+  const supplierFilter = selectedSupplier !== "all" ? selectedSupplier : supplierFilterFromUrl;
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
@@ -42,6 +53,7 @@ export default function MarketplacePage() {
   const { toast } = useToast();
 
   const { data: categories } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
+  const { data: suppliers } = useQuery<Supplier[]>({ queryKey: ["/api/suppliers"] });
 
   const { data: profile } = useQuery<UserProfile>({
     queryKey: ["/api/profile"],
@@ -152,12 +164,6 @@ export default function MarketplacePage() {
               </div>
             </Link>
             <div className="flex items-center gap-2">
-              <Link href="/suppliers">
-                <Button variant="ghost" size="sm" data-testid="link-to-suppliers">
-                  <Users className="w-3.5 h-3.5 mr-1.5" />
-                  Fournisseurs
-                </Button>
-              </Link>
               <ThemeToggle />
               {user ? (
                 <div className="flex items-center gap-2">
@@ -327,25 +333,27 @@ export default function MarketplacePage() {
 
           {supplierFilter && (
             <div className="flex items-center gap-3 mb-5 flex-wrap">
-              <Link href="/suppliers">
-                <Button variant="ghost" size="sm" data-testid="button-back-all-suppliers">
-                  <ChevronDown className="w-3.5 h-3.5 mr-1.5 rotate-90" />
-                  Tous les fournisseurs
-                </Button>
-              </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedSupplier("all")}
+                data-testid="button-back-all-suppliers"
+              >
+                <ChevronDown className="w-3.5 h-3.5 mr-1.5 rotate-90" />
+                Tous les fournisseurs
+              </Button>
               <Badge variant="secondary" className="text-xs gap-1.5 pr-1">
                 <Store className="w-3 h-3" />
                 {supplierName || "Fournisseur"}
-                <Link href="/marketplace">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="no-default-hover-elevate ml-0.5"
-                    data-testid="button-clear-supplier-filter"
-                  >
-                    <X className="w-3 h-3" />
-                  </Button>
-                </Link>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="no-default-hover-elevate ml-0.5"
+                  onClick={() => setSelectedSupplier("all")}
+                  data-testid="button-clear-supplier-filter"
+                >
+                  <X className="w-3 h-3" />
+                </Button>
               </Badge>
             </div>
           )}
@@ -385,6 +393,20 @@ export default function MarketplacePage() {
                   ))}
                 </div>
               )}
+              <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
+                <SelectTrigger className="w-[200px]" data-testid="select-marketplace-supplier">
+                  <Store className="w-3.5 h-3.5 mr-2 text-muted-foreground shrink-0" />
+                  <SelectValue placeholder="Tous les fournisseurs" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les fournisseurs</SelectItem>
+                  {suppliers?.map((s) => (
+                    <SelectItem key={s.id} value={s.id} data-testid={`option-supplier-${s.id}`}>
+                      {s.businessName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
                 <SelectTrigger className="w-[170px]" data-testid="select-marketplace-sort">
                   <ArrowUpDown className="w-3.5 h-3.5 mr-2 text-muted-foreground shrink-0" />
@@ -438,12 +460,12 @@ export default function MarketplacePage() {
                   ? "Essayez avec d'autres termes de recherche"
                   : "Les fournisseurs ajouteront bientôt leurs produits"}
               </p>
-              {(search || selectedCategory !== "all") && (
+              {(search || selectedCategory !== "all" || supplierFilter) && (
                 <Button
                   variant="outline"
                   size="sm"
                   className="mt-4"
-                  onClick={() => { setSearch(""); setSelectedCategory("all"); }}
+                  onClick={() => { setSearch(""); setSelectedCategory("all"); setSelectedSupplier("all"); }}
                   data-testid="button-marketplace-reset-filters"
                 >
                   Réinitialiser les filtres
