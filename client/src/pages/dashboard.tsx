@@ -32,7 +32,7 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <div className="animate-fade-in-up rounded-md bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5 sm:p-6">
+      <div className="animate-fade-in-up rounded-md bg-gradient-to-r from-primary/15 via-primary/8 to-transparent p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-greeting">{greeting}</h1>
@@ -72,7 +72,7 @@ export default function DashboardPage() {
               label="Commandes"
               value={String(stats?.totalOrders || 0)}
               color="text-blue-600 dark:text-blue-400"
-              bg="bg-blue-100 dark:bg-blue-900/30"
+              bg="bg-blue-100 dark:bg-blue-900/40"
               testId="stat-total-orders"
               delay="stagger-1"
             />
@@ -81,7 +81,7 @@ export default function DashboardPage() {
               label="En attente"
               value={String(stats?.pendingOrders || 0)}
               color="text-amber-600 dark:text-amber-400"
-              bg="bg-amber-100 dark:bg-amber-900/30"
+              bg="bg-amber-100 dark:bg-amber-900/40"
               testId="stat-pending-orders"
               delay="stagger-2"
             />
@@ -90,7 +90,7 @@ export default function DashboardPage() {
               label={isSupplier ? "Produits" : "Articles"}
               value={String(stats?.totalProducts || 0)}
               color="text-emerald-600 dark:text-emerald-400"
-              bg="bg-emerald-100 dark:bg-emerald-900/30"
+              bg="bg-emerald-100 dark:bg-emerald-900/40"
               testId="stat-total-products"
               delay="stagger-3"
             />
@@ -99,7 +99,7 @@ export default function DashboardPage() {
               label={isSupplier ? "Revenus" : "Depense"}
               value={formatPrice(stats?.totalRevenue || "0", profile?.currency || "XOF")}
               color="text-primary"
-              bg="bg-primary/10"
+              bg="bg-primary/15"
               testId="stat-total-revenue"
               delay="stagger-4"
             />
@@ -178,7 +178,7 @@ export default function DashboardPage() {
             ) : (
               <div className="text-center py-10">
                 <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                  <ClipboardList className="w-6 h-6 text-muted-foreground/50" />
+                  <ClipboardList className="w-6 h-6 text-muted-foreground" />
                 </div>
                 <p className="text-sm font-medium mb-1">Aucune commande</p>
                 <p className="text-xs text-muted-foreground mb-4 max-w-[240px] mx-auto">
@@ -186,6 +186,7 @@ export default function DashboardPage() {
                     ? "Les commandes de vos clients apparaitront ici"
                     : "Parcourez le marketplace pour passer votre premiere commande"}
                 </p>
+
                 {!isSupplier && (
                   <Link href="/marketplace">
                     <Button variant="outline" size="sm" data-testid="button-browse-catalog">
@@ -215,7 +216,7 @@ export default function DashboardPage() {
                     description="Ajoutez au catalogue"
                     href="/products/new"
                     testId="quick-add-product"
-                    accent="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                    accent="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400"
                   />
                   <QuickAction
                     icon={<ClipboardList className="w-4 h-4" />}
@@ -223,7 +224,7 @@ export default function DashboardPage() {
                     description="Commandes en cours"
                     href="/orders"
                     testId="quick-manage-orders"
-                    accent="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                    accent="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
                   />
                   <QuickAction
                     icon={<Store className="w-4 h-4" />}
@@ -231,7 +232,7 @@ export default function DashboardPage() {
                     description="Voir vos produits en ligne"
                     href="/marketplace"
                     testId="quick-view-marketplace"
-                    accent="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                    accent="bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400"
                   />
                 </>
               ) : (
@@ -242,7 +243,7 @@ export default function DashboardPage() {
                     description="Trouvez vos produits"
                     href="/marketplace"
                     testId="quick-browse-catalog"
-                    accent="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                    accent="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400"
                   />
                   <QuickAction
                     icon={<ShoppingCart className="w-4 h-4" />}
@@ -250,7 +251,7 @@ export default function DashboardPage() {
                     description="Finalisez la commande"
                     href="/cart"
                     testId="quick-view-cart"
-                    accent="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                    accent="bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400"
                   />
                   <QuickAction
                     icon={<ClipboardList className="w-4 h-4" />}
@@ -258,7 +259,7 @@ export default function DashboardPage() {
                     description="Suivi des livraisons"
                     href="/orders"
                     testId="quick-order-history"
-                    accent="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                    accent="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
                   />
                 </>
               )}

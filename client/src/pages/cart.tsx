@@ -136,8 +136,8 @@ export default function CartPage() {
                         {item.product.imageUrl ? (
                           <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                            <Package className="w-6 h-6 text-muted-foreground/25" />
+                          <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <Package className="w-6 h-6 text-muted-foreground/50" />
                           </div>
                         )}
                       </div>
@@ -278,7 +278,7 @@ export default function CartPage() {
       ) : (
         <div className="text-center py-20 animate-scale-in">
           <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-5">
-            <ShoppingCart className="w-8 h-8 text-muted-foreground/40" />
+            <ShoppingCart className="w-8 h-8 text-muted-foreground" />
           </div>
           <h3 className="font-medium text-lg mb-2">Votre panier est vide</h3>
           <p className="text-sm text-muted-foreground mb-5 max-w-xs mx-auto">

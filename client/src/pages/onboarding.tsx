@@ -96,7 +96,7 @@ export default function OnboardingPage() {
                 data-testid="card-role-shop"
               >
                 <CardContent className="p-5 flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 rounded-md bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0">
                     <Store className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -116,7 +116,7 @@ export default function OnboardingPage() {
                 data-testid="card-role-supplier"
               >
                 <CardContent className="p-5 flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-md bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 rounded-md bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
                     <Package className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="flex-1 min-w-0">

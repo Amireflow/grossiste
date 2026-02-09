@@ -145,7 +145,7 @@ export default function MarketplacePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-background/80 border-b">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4 h-14">
             <Link href="/">
@@ -195,8 +195,7 @@ export default function MarketplacePage() {
       </nav>
 
       <div className="pt-14">
-        <div className="relative bg-primary/5 border-b overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
+        <div className="relative bg-card border-b overflow-hidden">
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
             <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
               <div className="flex-1">
@@ -283,7 +282,7 @@ export default function MarketplacePage() {
                     <span className={`text-xs leading-tight text-center max-w-[84px] ${selectedCategory === cat.id ? "font-semibold text-primary" : "text-muted-foreground"}`}>
                       {cat.nameFr}
                       {globalCategoryCounts[cat.id] !== undefined && (
-                        <span className="opacity-60 ml-0.5">({globalCategoryCounts[cat.id]})</span>
+                        <span className="text-muted-foreground ml-0.5">({globalCategoryCounts[cat.id]})</span>
                       )}
                     </span>
                   </button>
@@ -394,7 +393,7 @@ export default function MarketplacePage() {
           ) : (
             <div className="text-center py-16">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                <Package className="w-7 h-7 text-muted-foreground/40" />
+                <Package className="w-7 h-7 text-muted-foreground" />
               </div>
               <h3 className="font-medium text-lg mb-2">Aucun produit trouvé</h3>
               <p className="text-sm text-muted-foreground max-w-sm mx-auto">
@@ -418,21 +417,21 @@ export default function MarketplacePage() {
 
           <div className="mt-16 grid sm:grid-cols-3 gap-6 py-10 border-t">
             <div className="text-center">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-3">
                 <Shield className="w-5 h-5 text-primary" />
               </div>
               <h4 className="font-medium text-sm mb-1" data-testid="text-trust-verified">Fournisseurs vérifiés</h4>
               <p className="text-xs text-muted-foreground">Tous nos partenaires sont vérifiés et fiables</p>
             </div>
             <div className="text-center">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-3">
                 <Truck className="w-5 h-5 text-primary" />
               </div>
               <h4 className="font-medium text-sm mb-1" data-testid="text-trust-delivery">Livraison rapide</h4>
               <p className="text-xs text-muted-foreground">Réseau de livreurs dans toute l'Afrique de l'Ouest</p>
             </div>
             <div className="text-center">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-3">
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <h4 className="font-medium text-sm mb-1" data-testid="text-trust-prices">Meilleurs prix de gros</h4>
@@ -441,7 +440,7 @@ export default function MarketplacePage() {
           </div>
 
           {!user && products && products.length > 0 && (
-            <div className="mt-6 rounded-md bg-primary/5 border border-primary/10 p-8 sm:p-10 text-center">
+            <div className="mt-6 rounded-md bg-card border p-8 sm:p-10 text-center">
               <h3 className="font-serif text-xl sm:text-2xl font-bold mb-3" data-testid="text-marketplace-cta-title">
                 Prêt à passer commande ?
               </h3>
@@ -512,24 +511,24 @@ function MarketplaceProductCard({
   };
 
   return (
-    <Card className={`overflow-visible group transition-all ${product.isSponsored && product.boostLevel === "premium" ? "border-amber-400/50 dark:border-amber-500/30" : ""}`} data-testid={`card-marketplace-product-${product.id}`}>
+    <Card className={`overflow-visible group transition-all ${product.isSponsored && product.boostLevel === "premium" ? "border-amber-400 dark:border-amber-600" : ""}`} data-testid={`card-marketplace-product-${product.id}`}>
       <CardContent className="p-3 sm:p-4">
         <div className="relative w-full aspect-square rounded-md overflow-hidden mb-3 bg-muted">
           {product.imageUrl ? (
             <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-              <Package className="w-10 h-10 text-muted-foreground/25" />
+            <div className="w-full h-full flex items-center justify-center bg-muted">
+              <Package className="w-10 h-10 text-muted-foreground/50" />
             </div>
           )}
           {isOutOfStock && (
-            <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px] flex items-center justify-center">
-              <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-400">Rupture</Badge>
+            <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+              <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">Rupture</Badge>
             </div>
           )}
           {product.stock && product.stock > 0 && product.stock <= 10 && (
             <div className="absolute top-2 right-2">
-              <Badge variant="secondary" className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-400">
+              <Badge variant="secondary" className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
                 {product.stock} en stock
               </Badge>
             </div>
@@ -541,14 +540,14 @@ function MarketplaceProductCard({
                 Sponsorise
               </Badge>
               {categoryName && (
-                <Badge variant="secondary" className="text-[10px] bg-black/50 text-white border-0 backdrop-blur-sm">
+                <Badge variant="secondary" className="text-[10px] bg-black/70 text-white border-0">
                   {categoryName}
                 </Badge>
               )}
             </div>
           ) : categoryName ? (
             <div className="absolute top-2 left-2">
-              <Badge variant="secondary" className="text-[10px] bg-black/50 text-white border-0 backdrop-blur-sm">
+              <Badge variant="secondary" className="text-[10px] bg-black/70 text-white border-0">
                 {categoryName}
               </Badge>
             </div>

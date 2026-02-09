@@ -148,7 +148,7 @@ export default function OrdersPage() {
                                 <img src={item.product.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center">
-                                  <Package className="w-4 h-4 text-muted-foreground/30" />
+                                  <Package className="w-4 h-4 text-muted-foreground/50" />
                                 </div>
                               )}
                             </div>
@@ -223,7 +223,7 @@ export default function OrdersPage() {
       ) : (
         <div className="text-center py-20 animate-scale-in">
           <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-5">
-            <ClipboardList className="w-8 h-8 text-muted-foreground/40" />
+            <ClipboardList className="w-8 h-8 text-muted-foreground" />
           </div>
           <h3 className="font-medium text-lg mb-2">Aucune commande</h3>
           <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-5">

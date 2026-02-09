@@ -106,7 +106,7 @@ export function AppSidebar() {
           <div className="flex items-center gap-2.5 px-3 py-2 rounded-md bg-sidebar-accent">
             <Avatar className="w-7 h-7">
               <AvatarImage src={user?.profileImageUrl || undefined} />
-              <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{initials}</AvatarFallback>
+              <AvatarFallback className="text-[10px] bg-primary/15 text-primary">{initials}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium truncate" data-testid="text-sidebar-user">
