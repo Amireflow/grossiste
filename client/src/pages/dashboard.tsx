@@ -5,7 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
-import { Package, ShoppingCart, ClipboardList, TrendingUp, ArrowRight, AlertCircle } from "lucide-react";
+import {
+  Package, ShoppingCart, ClipboardList, TrendingUp, ArrowRight,
+  AlertCircle, Truck, CheckCircle2, BarChart3,
+} from "lucide-react";
 import { formatPrice, ORDER_STATUS_LABELS } from "@/lib/constants";
 import type { UserProfile, Order, Product } from "@shared/schema";
 
@@ -28,23 +31,31 @@ export default function DashboardPage() {
     : "Bienvenue";
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="font-serif text-2xl font-bold" data-testid="text-greeting">{greeting}</h1>
-        <p className="text-muted-foreground mt-1">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+      <div className="rounded-md bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5 sm:p-6">
+        <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-greeting">{greeting}</h1>
+        <p className="text-muted-foreground mt-1.5 text-sm sm:text-base">
           {isSupplier
             ? "Gérez vos produits et suivez vos commandes"
             : "Approvisionnez votre commerce facilement"}
         </p>
+        {!isSupplier && (
+          <Link href="/catalog">
+            <Button size="sm" className="mt-4" data-testid="button-explore-catalog">
+              Parcourir le catalogue
+              <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            </Button>
+          </Link>
+        )}
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {statsLoading ? (
           <>
             {[1, 2, 3, 4].map((i) => (
               <Card key={i}>
-                <CardContent className="p-6">
-                  <Skeleton className="h-4 w-24 mb-3" />
+                <CardContent className="p-4 sm:p-5">
+                  <Skeleton className="h-4 w-20 mb-3" />
                   <Skeleton className="h-8 w-16" />
                 </CardContent>
               </Card>
@@ -54,37 +65,47 @@ export default function DashboardPage() {
           <>
             <StatCard
               icon={<ClipboardList className="w-4 h-4" />}
-              label="Commandes totales"
+              label="Commandes"
               value={String(stats?.totalOrders || 0)}
+              color="text-blue-600 dark:text-blue-400"
+              bg="bg-blue-100 dark:bg-blue-900/30"
               testId="stat-total-orders"
             />
             <StatCard
               icon={<AlertCircle className="w-4 h-4" />}
               label="En attente"
               value={String(stats?.pendingOrders || 0)}
-              highlight
+              color="text-amber-600 dark:text-amber-400"
+              bg="bg-amber-100 dark:bg-amber-900/30"
               testId="stat-pending-orders"
             />
             <StatCard
               icon={<Package className="w-4 h-4" />}
-              label={isSupplier ? "Produits actifs" : "Produits commandés"}
+              label={isSupplier ? "Produits" : "Articles"}
               value={String(stats?.totalProducts || 0)}
+              color="text-emerald-600 dark:text-emerald-400"
+              bg="bg-emerald-100 dark:bg-emerald-900/30"
               testId="stat-total-products"
             />
             <StatCard
               icon={<TrendingUp className="w-4 h-4" />}
-              label={isSupplier ? "Chiffre d'affaires" : "Total dépensé"}
+              label={isSupplier ? "Revenus" : "Dépensé"}
               value={formatPrice(stats?.totalRevenue || "0", profile?.currency || "XOF")}
+              color="text-primary"
+              bg="bg-primary/10"
               testId="stat-total-revenue"
             />
           </>
         )}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4 pb-4">
-            <h2 className="font-semibold">Commandes récentes</h2>
+      <div className="grid lg:grid-cols-5 gap-4 sm:gap-6">
+        <Card className="lg:col-span-3">
+          <CardHeader className="flex flex-row items-center justify-between gap-4 pb-4 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <BarChart3 className="w-4 h-4 text-muted-foreground" />
+              <h2 className="font-semibold">Commandes récentes</h2>
+            </div>
             <Link href="/orders">
               <Button variant="ghost" size="sm" data-testid="link-view-all-orders">
                 Voir tout
@@ -100,45 +121,67 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : recentOrders && recentOrders.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-1">
                 {recentOrders.slice(0, 5).map((order) => {
                   const status = ORDER_STATUS_LABELS[order.status || "pending"];
                   return (
-                    <div
-                      key={order.id}
-                      className="flex items-center justify-between gap-4 py-3 border-b last:border-0"
-                      data-testid={`order-row-${order.id}`}
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          Commande #{order.id.slice(0, 8)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {order.createdAt
-                            ? new Date(order.createdAt).toLocaleDateString("fr-FR")
-                            : ""}
-                        </p>
+                    <Link key={order.id} href="/orders">
+                      <div
+                        className="flex items-center justify-between gap-4 p-3 rounded-md hover-elevate cursor-pointer"
+                        data-testid={`order-row-${order.id}`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+                            {order.status === "delivered" ? (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                            ) : order.status === "shipped" ? (
+                              <Truck className="w-4 h-4 text-blue-500" />
+                            ) : (
+                              <Package className="w-4 h-4 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              #{order.id.slice(0, 8)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {order.createdAt
+                                ? new Date(order.createdAt).toLocaleDateString("fr-FR", {
+                                    day: "numeric",
+                                    month: "short",
+                                  })
+                                : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2.5 shrink-0">
+                          <span className="text-sm font-medium hidden sm:block">
+                            {formatPrice(order.totalAmount, order.currency || "XOF")}
+                          </span>
+                          <Badge variant="secondary" className={`text-[10px] ${status.color}`}>
+                            {status.label}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-sm font-medium">
-                          {formatPrice(order.totalAmount, order.currency || "XOF")}
-                        </span>
-                        <Badge variant="secondary" className={`text-xs ${status.color}`}>
-                          {status.label}
-                        </Badge>
-                      </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <ClipboardList className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Aucune commande pour le moment</p>
+              <div className="text-center py-10">
+                <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                  <ClipboardList className="w-6 h-6 text-muted-foreground/50" />
+                </div>
+                <p className="text-sm font-medium mb-1">Aucune commande</p>
+                <p className="text-xs text-muted-foreground mb-4 max-w-[240px] mx-auto">
+                  {isSupplier
+                    ? "Les commandes de vos clients apparaîtront ici"
+                    : "Parcourez le catalogue pour passer votre première commande"}
+                </p>
                 {!isSupplier && (
                   <Link href="/catalog">
-                    <Button variant="outline" size="sm" className="mt-3" data-testid="button-browse-catalog">
-                      Parcourir le catalogue
+                    <Button variant="outline" size="sm" data-testid="button-browse-catalog">
+                      Voir le catalogue
                     </Button>
                   </Link>
                 )}
@@ -147,25 +190,25 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4 pb-4">
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-4">
             <h2 className="font-semibold">Actions rapides</h2>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {isSupplier ? (
                 <>
                   <QuickAction
                     icon={<Package className="w-4 h-4" />}
                     title="Ajouter un produit"
-                    description="Ajoutez un nouveau produit à votre catalogue"
+                    description="Ajoutez au catalogue"
                     href="/products/new"
                     testId="quick-add-product"
                   />
                   <QuickAction
                     icon={<ClipboardList className="w-4 h-4" />}
                     title="Gérer les commandes"
-                    description="Consultez et traitez les commandes en cours"
+                    description="Commandes en cours"
                     href="/orders"
                     testId="quick-manage-orders"
                   />
@@ -175,21 +218,21 @@ export default function DashboardPage() {
                   <QuickAction
                     icon={<Package className="w-4 h-4" />}
                     title="Parcourir le catalogue"
-                    description="Trouvez les produits dont vous avez besoin"
+                    description="Trouvez vos produits"
                     href="/catalog"
                     testId="quick-browse-catalog"
                   />
                   <QuickAction
                     icon={<ShoppingCart className="w-4 h-4" />}
                     title="Mon panier"
-                    description="Consultez et finalisez votre commande"
+                    description="Finalisez la commande"
                     href="/cart"
                     testId="quick-view-cart"
                   />
                   <QuickAction
                     icon={<ClipboardList className="w-4 h-4" />}
-                    title="Historique des commandes"
-                    description="Suivez vos commandes passées"
+                    title="Mes commandes"
+                    description="Suivi des livraisons"
                     href="/orders"
                     testId="quick-order-history"
                   />
@@ -207,25 +250,25 @@ function StatCard({
   icon,
   label,
   value,
-  highlight,
+  color,
+  bg,
   testId,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
-  highlight?: boolean;
+  color: string;
+  bg: string;
   testId: string;
 }) {
   return (
     <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center gap-2 mb-3">
-          <div className={`w-8 h-8 rounded-md flex items-center justify-center ${highlight ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" : "bg-primary/10 text-primary"}`}>
-            {icon}
-          </div>
-          <span className="text-sm text-muted-foreground">{label}</span>
+      <CardContent className="p-4 sm:p-5">
+        <div className={`w-9 h-9 rounded-md flex items-center justify-center ${bg} ${color} mb-3`}>
+          {icon}
         </div>
-        <p className="text-2xl font-bold" data-testid={testId}>{value}</p>
+        <p className="text-xl sm:text-2xl font-bold tracking-tight" data-testid={testId}>{value}</p>
+        <p className="text-xs text-muted-foreground mt-1">{label}</p>
       </CardContent>
     </Card>
   );
@@ -250,11 +293,11 @@ function QuickAction({
         <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center text-primary shrink-0">
           {icon}
         </div>
-        <div className="min-w-0">
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">{title}</p>
           <p className="text-xs text-muted-foreground truncate">{description}</p>
         </div>
-        <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0 ml-auto" />
+        <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
       </div>
     </Link>
   );

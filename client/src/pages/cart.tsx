@@ -6,11 +6,12 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, MapPin, Truck, CreditCard } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useState } from "react";
 
 interface CartItemWithProduct {
@@ -70,7 +71,8 @@ export default function CartPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      toast({ title: "Commande passée", description: "Votre commande a été envoyée aux fournisseurs" });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      toast({ title: "Commande confirmée", description: "Votre commande a été envoyée aux fournisseurs" });
       navigate("/orders");
     },
     onError: () => {
@@ -82,14 +84,17 @@ export default function CartPage() {
     return sum + parseFloat(item.product.price) * item.quantity;
   }, 0) || 0;
 
+  const totalItems = cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
   const currency = cartItems?.[0]?.product?.currency || "XOF";
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-5">
       <div>
-        <h1 className="font-serif text-2xl font-bold">Mon panier</h1>
-        <p className="text-muted-foreground mt-1">
-          {cartItems ? `${cartItems.length} article(s)` : "Chargement..."}
+        <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-cart-title">Mon panier</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          {cartItems
+            ? `${cartItems.length} article${cartItems.length !== 1 ? "s" : ""} - ${totalItems} unité${totalItems !== 1 ? "s" : ""}`
+            : "Chargement..."}
         </p>
       </div>
 
@@ -111,77 +116,84 @@ export default function CartPage() {
           ))}
         </div>
       ) : cartItems && cartItems.length > 0 ? (
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 space-y-3">
-            {cartItems.map((item) => (
-              <Card key={item.id} data-testid={`cart-item-${item.id}`}>
-                <CardContent className="p-4">
-                  <div className="flex gap-4">
-                    <div className="w-20 h-20 rounded-md overflow-hidden bg-muted shrink-0">
-                      {item.product.imageUrl ? (
-                        <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="w-6 h-6 text-muted-foreground/30" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm truncate">{item.product.name}</h3>
-                      <p className="text-sm text-primary font-bold mt-1">
-                        {formatPrice(item.product.price, item.product.currency)} / {item.product.unit}
-                      </p>
-                      <div className="flex items-center justify-between gap-4 mt-3">
-                        <div className="flex items-center border rounded-md">
+            {cartItems.map((item) => {
+              const lineTotal = parseFloat(item.product.price) * item.quantity;
+              return (
+                <Card key={item.id} data-testid={`cart-item-${item.id}`}>
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex gap-3 sm:gap-4">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden bg-muted shrink-0">
+                        {item.product.imageUrl ? (
+                          <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="w-6 h-6 text-muted-foreground/30" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="font-medium text-sm line-clamp-2">{item.product.name}</h3>
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="no-default-hover-elevate"
-                            onClick={() => updateQuantity.mutate({ itemId: item.id, quantity: Math.max(1, item.quantity - 1) })}
-                            data-testid={`button-cart-minus-${item.id}`}
-                          >
-                            <Minus className="w-3 h-3" />
-                          </Button>
-                          <span className="text-sm w-8 text-center">{item.quantity}</span>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="no-default-hover-elevate"
-                            onClick={() => updateQuantity.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
-                            data-testid={`button-cart-plus-${item.id}`}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </Button>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold">
-                            {formatPrice(parseFloat(item.product.price) * item.quantity, item.product.currency)}
-                          </span>
-                          <Button
-                            size="icon"
-                            variant="ghost"
+                            className="shrink-0 -mt-1 -mr-1"
                             onClick={() => removeItem.mutate(item.id)}
                             data-testid={`button-cart-remove-${item.id}`}
                           >
-                            <Trash2 className="w-4 h-4 text-destructive" />
+                            <Trash2 className="w-4 h-4 text-muted-foreground" />
                           </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {formatPrice(item.product.price, item.product.currency)} / {item.product.unit}
+                        </p>
+                        <div className="flex items-center justify-between gap-3 mt-2.5">
+                          <div className="flex items-center border rounded-md">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="no-default-hover-elevate"
+                              onClick={() => updateQuantity.mutate({ itemId: item.id, quantity: Math.max(1, item.quantity - 1) })}
+                              data-testid={`button-cart-minus-${item.id}`}
+                            >
+                              <Minus className="w-3 h-3" />
+                            </Button>
+                            <span className="text-sm w-8 text-center tabular-nums">{item.quantity}</span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="no-default-hover-elevate"
+                              onClick={() => updateQuantity.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
+                              data-testid={`button-cart-plus-${item.id}`}
+                            >
+                              <Plus className="w-3 h-3" />
+                            </Button>
+                          </div>
+                          <span className="text-sm font-bold" data-testid={`text-line-total-${item.id}`}>
+                            {formatPrice(lineTotal, item.product.currency)}
+                          </span>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
           <div className="space-y-4">
             <Card>
               <CardHeader className="pb-3">
-                <h2 className="font-semibold">Livraison</h2>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  <h2 className="font-semibold text-sm">Livraison</h2>
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <Label htmlFor="delivery-city">Ville</Label>
+                  <Label htmlFor="delivery-city" className="text-xs">Ville</Label>
                   <Input
                     id="delivery-city"
                     placeholder="Cotonou"
@@ -191,7 +203,7 @@ export default function CartPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="delivery-address">Adresse</Label>
+                  <Label htmlFor="delivery-address" className="text-xs">Adresse</Label>
                   <Input
                     id="delivery-address"
                     placeholder="Quartier, rue, repère..."
@@ -201,7 +213,7 @@ export default function CartPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="notes">Notes (optionnel)</Label>
+                  <Label htmlFor="notes" className="text-xs">Notes (optionnel)</Label>
                   <Textarea
                     id="notes"
                     className="resize-none"
@@ -216,19 +228,25 @@ export default function CartPage() {
 
             <Card>
               <CardHeader className="pb-3">
-                <h2 className="font-semibold">Résumé</h2>
+                <div className="flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-muted-foreground" />
+                  <h2 className="font-semibold text-sm">Résumé</h2>
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Sous-total</span>
+                  <span className="text-muted-foreground">Sous-total ({totalItems} unités)</span>
                   <span>{formatPrice(total, currency)}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Livraison</span>
-                  <span className="text-muted-foreground">À déterminer</span>
+                  <span className="text-muted-foreground flex items-center gap-1.5">
+                    <Truck className="w-3.5 h-3.5" />
+                    Livraison
+                  </span>
+                  <Badge variant="secondary" className="text-[10px]">À déterminer</Badge>
                 </div>
                 <Separator />
-                <div className="flex items-center justify-between font-bold">
+                <div className="flex items-center justify-between font-bold text-base">
                   <span>Total</span>
                   <span className="text-primary" data-testid="text-cart-total">{formatPrice(total, currency)}</span>
                 </div>
@@ -239,29 +257,31 @@ export default function CartPage() {
                   disabled={checkout.isPending || !deliveryCity}
                   data-testid="button-checkout"
                 >
-                  {checkout.isPending ? "Traitement..." : "Passer la commande"}
+                  {checkout.isPending ? "Traitement..." : "Confirmer la commande"}
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  Paiement mobile money ou à la livraison
+                <p className="text-[11px] text-muted-foreground text-center">
+                  Paiement mobile money ou cash à la livraison
                 </p>
               </CardContent>
             </Card>
           </div>
         </div>
       ) : (
-        <div className="text-center py-16">
-          <ShoppingCart className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+        <div className="text-center py-20">
+          <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-5">
+            <ShoppingCart className="w-8 h-8 text-muted-foreground/40" />
+          </div>
           <h3 className="font-medium text-lg mb-2">Votre panier est vide</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Parcourez le catalogue pour trouver vos produits
+          <p className="text-sm text-muted-foreground mb-5 max-w-xs mx-auto">
+            Parcourez le catalogue pour trouver les meilleurs produits pour votre commerce
           </p>
-          <a href="/catalog">
+          <Link href="/catalog">
             <Button data-testid="button-start-shopping">
               Parcourir le catalogue
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
-          </a>
+          </Link>
         </div>
       )}
     </div>

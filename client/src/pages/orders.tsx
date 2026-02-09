@@ -1,19 +1,33 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClipboardList, Package, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ClipboardList, Package, ChevronDown, ChevronUp, MapPin, StickyNote,
+  Truck, CheckCircle2, Clock, XCircle, ArrowRight, RefreshCw,
+} from "lucide-react";
 import { formatPrice, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { Link } from "wouter";
 import type { Order, OrderItem, UserProfile } from "@shared/schema";
 
 interface OrderWithItems extends Order {
   items: (OrderItem & { product?: { name: string; imageUrl: string | null } })[];
 }
+
+const STATUS_ICONS: Record<string, React.ReactNode> = {
+  pending: <Clock className="w-4 h-4 text-amber-500" />,
+  confirmed: <CheckCircle2 className="w-4 h-4 text-blue-500" />,
+  processing: <RefreshCw className="w-4 h-4 text-purple-500" />,
+  shipped: <Truck className="w-4 h-4 text-indigo-500" />,
+  delivered: <CheckCircle2 className="w-4 h-4 text-emerald-500" />,
+  cancelled: <XCircle className="w-4 h-4 text-red-500" />,
+};
 
 export default function OrdersPage() {
   const { toast } = useToast();
@@ -33,6 +47,7 @@ export default function OrdersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       toast({ title: "Statut mis à jour" });
     },
     onError: () => {
@@ -41,13 +56,15 @@ export default function OrdersPage() {
   });
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-5">
       <div>
-        <h1 className="font-serif text-2xl font-bold">
+        <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-orders-title">
           {isSupplier ? "Commandes reçues" : "Mes commandes"}
         </h1>
-        <p className="text-muted-foreground mt-1">
-          {isSupplier ? "Gérez les commandes de vos clients" : "Suivez l'état de vos commandes"}
+        <p className="text-muted-foreground mt-1 text-sm">
+          {isSupplier
+            ? `${orders?.length || 0} commande${(orders?.length || 0) !== 1 ? "s" : ""} au total`
+            : "Suivez l'état de vos commandes"}
         </p>
       </div>
 
@@ -55,7 +72,7 @@ export default function OrdersPage() {
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <Card key={i}>
-              <CardContent className="p-6">
+              <CardContent className="p-5">
                 <Skeleton className="h-5 w-1/3 mb-3" />
                 <Skeleton className="h-4 w-1/4 mb-2" />
                 <Skeleton className="h-4 w-1/2" />
@@ -64,39 +81,51 @@ export default function OrdersPage() {
           ))}
         </div>
       ) : orders && orders.length > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {orders.map((order) => {
             const status = ORDER_STATUS_LABELS[order.status || "pending"];
             const isExpanded = expandedOrder === order.id;
+            const itemCount = order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
             return (
               <Card key={order.id} data-testid={`order-card-${order.id}`}>
                 <CardContent className="p-0">
                   <div
-                    className="flex items-center justify-between gap-4 p-4 cursor-pointer"
+                    className="flex items-center justify-between gap-3 p-4 w-full text-left cursor-pointer hover-elevate rounded-md"
                     onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedOrder(isExpanded ? null : order.id); } }}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded}
                     data-testid={`order-toggle-${order.id}`}
                   >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium text-sm">
-                          Commande #{order.id.slice(0, 8)}
-                        </p>
-                        <Badge variant="secondary" className={`text-xs ${status.color}`}>
-                          {status.label}
-                        </Badge>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center shrink-0">
+                        {STATUS_ICONS[order.status || "pending"]}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {order.createdAt
-                          ? new Date(order.createdAt).toLocaleDateString("fr-FR", {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                            })
-                          : ""}
-                      </p>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium text-sm">
+                            #{order.id.slice(0, 8)}
+                          </p>
+                          <Badge variant="secondary" className={`text-[10px] ${status.color}`}>
+                            {status.label}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {order.createdAt
+                            ? new Date(order.createdAt).toLocaleDateString("fr-FR", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              })
+                            : ""}
+                          {" - "}
+                          {itemCount} article{itemCount !== 1 ? "s" : ""}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0">
                       <span className="font-bold text-sm">
                         {formatPrice(order.totalAmount, order.currency || "XOF")}
                       </span>
@@ -109,10 +138,11 @@ export default function OrdersPage() {
                   </div>
 
                   {isExpanded && (
-                    <div className="border-t px-4 pb-4">
-                      <div className="space-y-3 mt-4">
+                    <div className="border-t">
+                      <div className="p-4 space-y-3">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Articles</p>
                         {order.items?.map((item) => (
-                          <div key={item.id} className="flex items-center gap-3">
+                          <div key={item.id} className="flex items-center gap-3" data-testid={`order-item-${item.id}`}>
                             <div className="w-10 h-10 rounded-md overflow-hidden bg-muted shrink-0">
                               {item.product?.imageUrl ? (
                                 <img src={item.product.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
@@ -128,46 +158,59 @@ export default function OrdersPage() {
                                 {item.quantity} x {formatPrice(item.unitPrice)}
                               </p>
                             </div>
-                            <span className="text-sm font-medium shrink-0">
+                            <span className="text-sm font-medium shrink-0 tabular-nums">
                               {formatPrice(item.totalPrice)}
                             </span>
                           </div>
                         ))}
                       </div>
 
-                      {order.deliveryAddress && (
-                        <div className="mt-4 p-3 rounded-md bg-muted/50">
-                          <p className="text-xs text-muted-foreground mb-1">Adresse de livraison</p>
-                          <p className="text-sm">{order.deliveryAddress}, {order.deliveryCity}</p>
-                        </div>
-                      )}
-
-                      {order.notes && (
-                        <div className="mt-3 p-3 rounded-md bg-muted/50">
-                          <p className="text-xs text-muted-foreground mb-1">Notes</p>
-                          <p className="text-sm">{order.notes}</p>
+                      {(order.deliveryAddress || order.notes) && (
+                        <div className="px-4 pb-4 space-y-2">
+                          <Separator />
+                          {order.deliveryAddress && (
+                            <div className="flex items-start gap-2 pt-2">
+                              <MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                              <div>
+                                <p className="text-xs text-muted-foreground">Livraison</p>
+                                <p className="text-sm">{order.deliveryAddress}{order.deliveryCity ? `, ${order.deliveryCity}` : ""}</p>
+                              </div>
+                            </div>
+                          )}
+                          {order.notes && (
+                            <div className="flex items-start gap-2">
+                              <StickyNote className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                              <div>
+                                <p className="text-xs text-muted-foreground">Notes</p>
+                                <p className="text-sm">{order.notes}</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 
                       {isSupplier && order.status !== "delivered" && order.status !== "cancelled" && (
-                        <div className="mt-4 flex items-center gap-3">
-                          <span className="text-sm text-muted-foreground">Changer le statut :</span>
-                          <Select
-                            value={order.status || "pending"}
-                            onValueChange={(val) => updateStatus.mutate({ orderId: order.id, status: val })}
-                          >
-                            <SelectTrigger className="w-[180px]" data-testid={`select-status-${order.id}`}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">En attente</SelectItem>
-                              <SelectItem value="confirmed">Confirmée</SelectItem>
-                              <SelectItem value="processing">En cours</SelectItem>
-                              <SelectItem value="shipped">Expédiée</SelectItem>
-                              <SelectItem value="delivered">Livrée</SelectItem>
-                              <SelectItem value="cancelled">Annulée</SelectItem>
-                            </SelectContent>
-                          </Select>
+                        <div className="px-4 pb-4">
+                          <Separator className="mb-3" />
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className="text-xs text-muted-foreground">Modifier le statut :</span>
+                            <Select
+                              value={order.status || "pending"}
+                              onValueChange={(val) => updateStatus.mutate({ orderId: order.id, status: val })}
+                            >
+                              <SelectTrigger className="w-[180px]" data-testid={`select-status-${order.id}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">En attente</SelectItem>
+                                <SelectItem value="confirmed">Confirmée</SelectItem>
+                                <SelectItem value="processing">En cours</SelectItem>
+                                <SelectItem value="shipped">Expédiée</SelectItem>
+                                <SelectItem value="delivered">Livrée</SelectItem>
+                                <SelectItem value="cancelled">Annulée</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -178,14 +221,24 @@ export default function OrdersPage() {
           })}
         </div>
       ) : (
-        <div className="text-center py-16">
-          <ClipboardList className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+        <div className="text-center py-20">
+          <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-5">
+            <ClipboardList className="w-8 h-8 text-muted-foreground/40" />
+          </div>
           <h3 className="font-medium text-lg mb-2">Aucune commande</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-5">
             {isSupplier
-              ? "Vos commandes apparaîtront ici"
+              ? "Les commandes de vos clients apparaîtront ici dès qu'elles seront passées"
               : "Parcourez le catalogue pour passer votre première commande"}
           </p>
+          {!isSupplier && (
+            <Link href="/catalog">
+              <Button data-testid="button-go-catalog">
+                Voir le catalogue
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+          )}
         </div>
       )}
     </div>

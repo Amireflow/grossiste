@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -23,8 +24,14 @@ import {
   Store,
   LogOut,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import type { UserProfile } from "@shared/schema";
+
+interface CartItemBasic {
+  id: string;
+  quantity: number;
+}
 
 export function AppSidebar() {
   const [location] = useLocation();
@@ -35,12 +42,18 @@ export function AppSidebar() {
     enabled: !!user,
   });
 
+  const { data: cartItems } = useQuery<CartItemBasic[]>({
+    queryKey: ["/api/cart"],
+    enabled: !!user && profile?.role === "shop_owner",
+  });
+
   const isSupplier = profile?.role === "supplier";
+  const cartCount = cartItems?.length || 0;
 
   const shopMenuItems = [
     { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
     { title: "Catalogue", url: "/catalog", icon: Package },
-    { title: "Mon panier", url: "/cart", icon: ShoppingCart },
+    { title: "Mon panier", url: "/cart", icon: ShoppingCart, badge: cartCount },
     { title: "Mes commandes", url: "/orders", icon: ClipboardList },
   ];
 
@@ -58,21 +71,31 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 pb-2">
         <Link href="/">
-          <div className="flex items-center gap-2 cursor-pointer" data-testid="link-logo">
-            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-              <Store className="w-4 h-4 text-primary-foreground" />
+          <div className="flex items-center gap-2.5 cursor-pointer" data-testid="link-logo">
+            <div className="w-9 h-9 rounded-md bg-primary flex items-center justify-center">
+              <Store className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-serif text-lg font-bold">SokoB2B</span>
+            <div>
+              <span className="font-serif text-lg font-bold leading-none">SokoB2B</span>
+              <p className="text-[10px] text-muted-foreground mt-0.5 leading-none">Marketplace B2B</p>
+            </div>
           </div>
         </Link>
-        {profile && (
-          <div className="mt-3 text-xs text-muted-foreground">
-            {isSupplier ? "Espace Fournisseur" : "Espace Commerçant"}
-          </div>
-        )}
       </SidebarHeader>
+
+      {profile && (
+        <div className="px-4 pb-3">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-primary/5">
+            <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span className="text-xs font-medium text-primary">
+              {isSupplier ? "Espace Fournisseur" : "Espace Commerçant"}
+            </span>
+          </div>
+        </div>
+      )}
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
@@ -90,7 +113,12 @@ export function AppSidebar() {
                   >
                     <Link href={item.url} data-testid={`link-nav-${item.url.replace("/", "") || "dashboard"}`}>
                       <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
+                      <span className="flex-1">{item.title}</span>
+                      {"badge" in item && (item as any).badge > 0 && (
+                        <Badge variant="default" className="text-[10px]" data-testid="badge-cart-count">
+                          {(item as any).badge}
+                        </Badge>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -120,7 +148,7 @@ export function AppSidebar() {
         <div className="flex items-center gap-3 mb-3">
           <Avatar className="w-9 h-9">
             <AvatarImage src={user?.profileImageUrl || undefined} />
-            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+            <AvatarFallback className="text-xs bg-primary/10 text-primary">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate" data-testid="text-user-name">
