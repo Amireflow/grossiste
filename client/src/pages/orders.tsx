@@ -58,7 +58,7 @@ export default function OrdersPage() {
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-5 animate-fade-in">
       <div>
-        <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-orders-title">
+        <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-orders-title">
           {isSupplier ? "Commandes recues" : "Mes commandes"}
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">

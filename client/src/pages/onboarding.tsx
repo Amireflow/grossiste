@@ -86,7 +86,7 @@ export default function OnboardingPage() {
               <div className="w-14 h-14 rounded-md bg-primary flex items-center justify-center mx-auto mb-4">
                 <Store className="w-7 h-7 text-primary-foreground" />
               </div>
-              <h1 className="font-serif text-2xl font-bold mb-2">Bienvenue sur SokoB2B</h1>
+              <h1 className="font-serif text-2xl font-bold mb-2 tracking-tight">Bienvenue sur SokoB2B</h1>
               <p className="text-muted-foreground text-sm">Choisissez votre profil pour commencer</p>
             </div>
             <div className="grid gap-3">
@@ -139,7 +139,7 @@ export default function OnboardingPage() {
         ) : (
           <div className="animate-fade-in-up" key="details-step">
             <div className="text-center mb-6">
-              <h1 className="font-serif text-2xl font-bold mb-2">
+              <h1 className="font-serif text-2xl font-bold mb-2 tracking-tight">
                 {selectedRole === "shop_owner" ? "Configurez votre boutique" : "Configurez votre profil fournisseur"}
               </h1>
               <p className="text-muted-foreground text-sm">Completez les informations de votre activite</p>

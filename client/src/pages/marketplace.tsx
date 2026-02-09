@@ -149,11 +149,11 @@ export default function MarketplacePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4 h-14">
             <Link href="/">
-              <div className="flex items-center gap-2 cursor-pointer" data-testid="link-marketplace-logo">
+              <div className="flex items-center gap-2.5 cursor-pointer" data-testid="link-marketplace-logo">
                 <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
                   <Store className="w-4 h-4 text-primary-foreground" />
                 </div>
-                <span className="font-serif text-xl font-bold">SokoB2B</span>
+                <span className="font-serif text-xl font-bold tracking-tight">SokoB2B</span>
                 <Badge variant="secondary" className="text-[10px] hidden sm:inline-flex">Marketplace</Badge>
               </div>
             </Link>
@@ -195,61 +195,60 @@ export default function MarketplacePage() {
       </nav>
 
       <div className="pt-14">
-        <div className="relative bg-card border-b overflow-hidden">
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-              <div className="flex-1">
-                <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold mb-2" data-testid="text-marketplace-title">
+        <div className="bg-card border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+              <div>
+                <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-marketplace-title">
                   Marketplace B2B
                 </h1>
-                <p className="text-muted-foreground mb-6 max-w-2xl text-sm sm:text-base">
-                  Parcourez le catalogue de nos fournisseurs vérifiés. Trouvez les meilleurs prix de gros pour votre commerce.
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Trouvez les meilleurs prix de gros pour votre commerce
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Rechercher un produit, une marque..."
-                      className="pl-9 bg-background"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      data-testid="input-marketplace-search"
-                    />
-                    {search && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="absolute right-1 top-1/2 -translate-y-1/2 no-default-hover-elevate"
-                        onClick={() => setSearch("")}
-                        data-testid="button-clear-marketplace-search"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
               </div>
-              <div className="flex items-center gap-4 sm:gap-6 text-sm text-muted-foreground flex-wrap">
+              <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                 <span className="flex items-center gap-1.5" data-testid="text-stat-products">
-                  <Package className="w-4 h-4 text-primary" />
+                  <Package className="w-3.5 h-3.5 text-primary" />
                   <span className="font-medium text-foreground">{products?.length || 0}</span> produits
                 </span>
                 <span className="flex items-center gap-1.5" data-testid="text-stat-suppliers">
-                  <Users className="w-4 h-4 text-primary" />
+                  <Users className="w-3.5 h-3.5 text-primary" />
                   <span className="font-medium text-foreground">{supplierCount}</span> fournisseurs
                 </span>
                 <span className="flex items-center gap-1.5" data-testid="text-stat-categories">
-                  <Filter className="w-4 h-4 text-primary" />
-                  <span className="font-medium text-foreground">{categories?.length || 0}</span> catégories
+                  <Filter className="w-3.5 h-3.5 text-primary" />
+                  <span className="font-medium text-foreground">{categories?.length || 0}</span> categories
                 </span>
               </div>
+            </div>
+            <div className="relative max-w-xl">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher un produit, une marque..."
+                className="pl-9 bg-background"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                data-testid="input-marketplace-search"
+              />
+              {search && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 no-default-hover-elevate"
+                  onClick={() => setSearch("")}
+                  data-testid="button-clear-marketplace-search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {categories && categories.length > 0 && !search && (
-            <div className="mb-6">
+            <div className="mb-5">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Categories</p>
               <div className="flex items-start gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin">
                 <button
                   onClick={() => setSelectedCategory("all")}
@@ -328,7 +327,8 @@ export default function MarketplacePage() {
           )}
 
           {suppliers && suppliers.length > 0 && (
-            <div className="mb-6">
+            <div className="mb-5">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Fournisseurs</p>
               <div className="flex items-start gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin">
                 <button
                   onClick={() => setSelectedSupplier("all")}
@@ -442,52 +442,54 @@ export default function MarketplacePage() {
             </div>
           )}
 
-          <div className="mt-16 grid sm:grid-cols-3 gap-6 py-10 border-t">
+          <div className="mt-16 grid sm:grid-cols-3 gap-8 py-10 border-t">
             <div className="text-center">
-              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-3">
-                <Shield className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                <Shield className="w-4 h-4 text-primary" />
               </div>
-              <h4 className="font-medium text-sm mb-1" data-testid="text-trust-verified">Fournisseurs vérifiés</h4>
-              <p className="text-xs text-muted-foreground">Tous nos partenaires sont vérifiés et fiables</p>
+              <h4 className="font-medium text-sm mb-1" data-testid="text-trust-verified">Fournisseurs verifies</h4>
+              <p className="text-xs text-muted-foreground">Tous nos partenaires sont verifies et fiables</p>
             </div>
             <div className="text-center">
-              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-3">
-                <Truck className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                <Truck className="w-4 h-4 text-primary" />
               </div>
               <h4 className="font-medium text-sm mb-1" data-testid="text-trust-delivery">Livraison rapide</h4>
-              <p className="text-xs text-muted-foreground">Réseau de livreurs dans toute l'Afrique de l'Ouest</p>
+              <p className="text-xs text-muted-foreground">Reseau de livreurs dans toute l'Afrique de l'Ouest</p>
             </div>
             <div className="text-center">
-              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-3">
-                <TrendingUp className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                <TrendingUp className="w-4 h-4 text-primary" />
               </div>
               <h4 className="font-medium text-sm mb-1" data-testid="text-trust-prices">Meilleurs prix de gros</h4>
-              <p className="text-xs text-muted-foreground">Comparez et économisez sur vos approvisionnements</p>
+              <p className="text-xs text-muted-foreground">Comparez et economisez sur vos approvisionnements</p>
             </div>
           </div>
 
           {!user && products && products.length > 0 && (
-            <div className="mt-6 rounded-md bg-card border p-8 sm:p-10 text-center">
-              <h3 className="font-serif text-xl sm:text-2xl font-bold mb-3" data-testid="text-marketplace-cta-title">
-                Prêt à passer commande ?
-              </h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm">
-                Créez votre compte gratuitement pour commander directement auprès des fournisseurs aux meilleurs prix de gros.
-              </p>
-              <div className="flex items-center justify-center gap-3 flex-wrap">
-                <a href="/api/login">
-                  <Button size="lg" data-testid="button-marketplace-cta">
-                    Créer mon compte
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </a>
-                <Link href="/">
-                  <Button size="lg" variant="outline" data-testid="button-marketplace-learn-more">
-                    En savoir plus
-                  </Button>
-                </Link>
-              </div>
-            </div>
+            <Card className="mt-6 overflow-visible">
+              <CardContent className="p-8 sm:p-10 text-center">
+                <h3 className="font-serif text-xl sm:text-2xl font-bold mb-3" data-testid="text-marketplace-cta-title">
+                  Pret a passer commande ?
+                </h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm">
+                  Creez votre compte gratuitement pour commander directement aupres des fournisseurs aux meilleurs prix de gros.
+                </p>
+                <div className="flex items-center justify-center gap-3 flex-wrap">
+                  <a href="/api/login">
+                    <Button size="lg" data-testid="button-marketplace-cta">
+                      Creer mon compte
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </a>
+                  <Link href="/">
+                    <Button size="lg" variant="outline" data-testid="button-marketplace-learn-more">
+                      En savoir plus
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
@@ -495,11 +497,11 @@ export default function MarketplacePage() {
       <footer className="border-t mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
                 <Store className="w-3.5 h-3.5 text-primary-foreground" />
               </div>
-              <span className="font-serif text-lg font-bold">SokoB2B</span>
+              <span className="font-serif text-lg font-bold tracking-tight">SokoB2B</span>
             </div>
             <p className="text-xs text-muted-foreground" data-testid="text-marketplace-footer">
               &copy; 2026 SokoB2B. Marketplace B2B pour l'Afrique de l'Ouest.

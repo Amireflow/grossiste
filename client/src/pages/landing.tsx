@@ -10,13 +10,13 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4 h-16">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
                 <Store className="w-4 h-4 text-primary-foreground" />
               </div>
-              <span className="font-serif text-xl font-bold">SokoB2B</span>
+              <span className="font-serif text-xl font-bold tracking-tight">SokoB2B</span>
             </div>
-            <div className="hidden md:flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-8">
               <Link href="/marketplace" className="text-sm font-medium text-foreground hover:text-primary transition-colors flex items-center gap-1.5" data-testid="link-marketplace">
                 <Package className="w-3.5 h-3.5" />
                 Marketplace
@@ -49,25 +49,25 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
+      <section className="relative pt-32 pb-24 lg:pt-44 lg:pb-36 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
             src="/images/hero-marketplace.png"
             alt="Marche africain"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-black/70 to-black/30" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl">
-            <div className="animate-fade-in-up inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/25 text-white text-sm mb-6">
+            <div className="animate-fade-in-up inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/90 text-sm mb-8">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>Plateforme B2B #1 en Afrique de l'Ouest</span>
             </div>
-            <h1 className="animate-fade-in-up stagger-1 font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
+            <h1 className="animate-fade-in-up stagger-1 font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-6">
               Approvisionnez votre commerce en quelques clics
             </h1>
-            <p className="animate-fade-in-up stagger-2 text-lg text-white/90 mb-8 max-w-xl leading-relaxed">
+            <p className="animate-fade-in-up stagger-2 text-lg text-white/80 mb-10 max-w-xl leading-relaxed">
               Connectez votre boutique de quartier aux meilleurs fournisseurs. Commandez vos produits,
               payez par mobile money, et recevez vos livraisons rapidement.
             </p>
@@ -79,22 +79,22 @@ export default function LandingPage() {
                 </Button>
               </a>
               <Link href="/marketplace">
-                <Button size="lg" variant="outline" className="text-base bg-white/15 border-white/30 text-white" data-testid="button-hero-marketplace">
+                <Button size="lg" variant="outline" className="text-base bg-white/10 border-white/20 text-white" data-testid="button-hero-marketplace">
                   Explorer le marketplace
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </Link>
             </div>
-            <div className="animate-fade-in-up stagger-4 flex flex-wrap items-center gap-6 mt-8 text-sm text-white/85">
-              <span className="flex items-center gap-1.5">
+            <div className="animate-fade-in-up stagger-4 flex flex-wrap items-center gap-6 mt-10 text-sm text-white/70">
+              <span className="flex items-center gap-2">
                 <Shield className="w-4 h-4" />
                 Paiement securise
               </span>
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-2">
                 <Truck className="w-4 h-4" />
                 Livraison rapide
               </span>
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 +500 fournisseurs
               </span>
@@ -105,74 +105,72 @@ export default function LandingPage() {
 
       <section id="features" className="py-20 lg:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-medium mb-4">
-              <Package className="w-3.5 h-3.5" />
+          <div className="text-center mb-14">
+            <p className="text-primary text-sm font-medium tracking-wide uppercase mb-3" data-testid="text-features-label">
               Fonctionnalites
-            </div>
+            </p>
             <h2 className="font-serif text-3xl sm:text-4xl font-bold mb-4">
               Tout ce dont votre commerce a besoin
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Une plateforme pensee pour les realites des commerces de proximite en Afrique de l'Ouest
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             <FeatureCard
               icon={<ShoppingCart className="w-5 h-5" />}
               title="Commande simplifiee"
               description="Parcourez le catalogue, ajoutez au panier et passez commande en quelques clics. Fini les deplacements inutiles chez les grossistes."
-              accent="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400"
+              accent="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
             />
             <FeatureCard
               icon={<CreditCard className="w-5 h-5" />}
               title="Mobile Money integre"
               description="Payez avec Orange Money, MTN MoMo, Flooz ou a la livraison. Transactions 100% securisees et adaptees a vos habitudes."
-              accent="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+              accent="bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400"
             />
             <FeatureCard
               icon={<Truck className="w-5 h-5" />}
               title="Livraison locale rapide"
               description="Reseau de livreurs partenaires (motos, tricycles) pour une livraison rapide directement a votre boutique."
-              accent="bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400"
+              accent="bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400"
             />
             <FeatureCard
               icon={<BarChart3 className="w-5 h-5" />}
               title="Gestion de stock"
               description="Suivez vos stocks automatiquement. Recevez des alertes quand il est temps de reapprovisionner."
-              accent="bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400"
+              accent="bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400"
             />
             <FeatureCard
               icon={<TrendingUp className="w-5 h-5" />}
               title="Meilleurs prix"
               description="Accedez aux prix de gros et comparez les offres de plusieurs fournisseurs pour maximiser vos marges."
-              accent="bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400"
+              accent="bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400"
             />
             <FeatureCard
               icon={<Shield className="w-5 h-5" />}
               title="Fournisseurs verifies"
               description="Tous nos fournisseurs sont verifies. Consultez les avis et choisissez en toute confiance."
-              accent="bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400"
+              accent="bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400"
             />
           </div>
         </div>
       </section>
 
-      <section id="how-it-works" className="py-20 lg:py-28 bg-card">
+      <section id="how-it-works" className="py-20 lg:py-28 bg-card border-y">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-medium mb-4">
-              <ArrowRight className="w-3.5 h-3.5" />
+          <div className="text-center mb-14">
+            <p className="text-primary text-sm font-medium tracking-wide uppercase mb-3">
               3 etapes simples
-            </div>
+            </p>
             <h2 className="font-serif text-3xl sm:text-4xl font-bold mb-4">
               Comment ca marche ?
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Trois etapes simples pour digitaliser vos approvisionnements
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-10 lg:gap-16">
             <StepCard
               number="1"
               title="Creez votre compte"
@@ -197,19 +195,18 @@ export default function LandingPage() {
 
       <section id="stats" className="py-20 lg:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-medium mb-4">
-              <BarChart3 className="w-3.5 h-3.5" />
+          <div className="text-center mb-14">
+            <p className="text-primary text-sm font-medium tracking-wide uppercase mb-3">
               Chiffres cles
-            </div>
+            </p>
             <h2 className="font-serif text-3xl sm:text-4xl font-bold mb-4">
               Un marche en pleine croissance
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               L'e-commerce en Afrique de l'Ouest connait une expansion rapide
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             <StatCard value="75 Mrd $" label="CA e-commerce africain projete en 2025" icon={<TrendingUp className="w-5 h-5" />} />
             <StatCard value="615 M" label="Smartphones actifs sur le continent" icon={<Smartphone className="w-5 h-5" />} />
             <StatCard value="+24%" label="Croissance annuelle du secteur" icon={<BarChart3 className="w-5 h-5" />} />
@@ -224,7 +221,7 @@ export default function LandingPage() {
           <h2 className="font-serif text-3xl sm:text-4xl font-bold text-primary-foreground mb-6">
             Pret a transformer votre commerce ?
           </h2>
-          <p className="text-primary-foreground/90 text-lg mb-8 max-w-2xl mx-auto">
+          <p className="text-primary-foreground/80 text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
             Rejoignez des milliers de commercants qui digitalisent leurs approvisionnements avec SokoB2B.
             Inscription gratuite, sans engagement.
           </p>
@@ -236,7 +233,7 @@ export default function LandingPage() {
               </Button>
             </a>
             <Link href="/marketplace">
-              <Button size="lg" variant="outline" className="text-base bg-white/15 border-white/30 text-primary-foreground" data-testid="button-cta-explore">
+              <Button size="lg" variant="outline" className="text-base bg-white/10 border-white/20 text-primary-foreground" data-testid="button-cta-explore">
                 Voir le marketplace
               </Button>
             </Link>
@@ -244,14 +241,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="py-12 border-t">
+      <footer className="py-10 border-t">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
                 <Store className="w-3.5 h-3.5 text-primary-foreground" />
               </div>
-              <span className="font-serif text-lg font-bold">SokoB2B</span>
+              <span className="font-serif text-lg font-bold tracking-tight">SokoB2B</span>
             </div>
             <p className="text-sm text-muted-foreground">
               &copy; 2026 SokoB2B. Tous droits reserves. Fait avec passion pour l'Afrique de l'Ouest.
@@ -266,11 +263,11 @@ export default function LandingPage() {
 function FeatureCard({ icon, title, description, accent }: { icon: React.ReactNode; title: string; description: string; accent: string }) {
   return (
     <Card className="hover-elevate overflow-visible">
-      <CardContent className="p-6">
-        <div className={`w-11 h-11 rounded-md flex items-center justify-center ${accent} mb-4`}>
+      <CardContent className="p-5 sm:p-6">
+        <div className={`w-10 h-10 rounded-md flex items-center justify-center ${accent} mb-4`}>
           {icon}
         </div>
-        <h3 className="font-semibold text-base mb-2">{title}</h3>
+        <h3 className="font-semibold text-[15px] mb-1.5">{title}</h3>
         <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
       </CardContent>
     </Card>
@@ -280,13 +277,13 @@ function FeatureCard({ icon, title, description, accent }: { icon: React.ReactNo
 function StepCard({ number, title, description, icon }: { number: string; title: string; description: string; icon: React.ReactNode }) {
   return (
     <div className="text-center">
-      <div className="relative w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center mx-auto mb-5">
+      <div className="relative w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
         <div className="text-primary">{icon}</div>
-        <div className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+        <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[11px] font-bold">
           {number}
         </div>
       </div>
-      <h3 className="font-semibold text-lg mb-2">{title}</h3>
+      <h3 className="font-semibold text-base mb-2">{title}</h3>
       <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto">{description}</p>
     </div>
   );
@@ -295,11 +292,11 @@ function StepCard({ number, title, description, icon }: { number: string; title:
 function StatCard({ value, label, icon }: { value: string; label: string; icon: React.ReactNode }) {
   return (
     <Card className="overflow-visible">
-      <CardContent className="p-6 text-center">
-        <div className="w-10 h-10 rounded-md bg-primary/15 text-primary flex items-center justify-center mx-auto mb-3">
+      <CardContent className="p-5 sm:p-6 text-center">
+        <div className="w-10 h-10 rounded-md bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3">
           {icon}
         </div>
-        <div className="text-3xl font-bold text-primary mb-2 tabular-nums">{value}</div>
+        <div className="text-2xl sm:text-3xl font-bold text-primary mb-1.5 tabular-nums">{value}</div>
         <p className="text-sm text-muted-foreground">{label}</p>
       </CardContent>
     </Card>

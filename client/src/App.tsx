@@ -74,7 +74,7 @@ function AuthenticatedRouter() {
       <div className="flex h-screen w-full">
         <AppSidebar />
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="flex items-center justify-between gap-4 px-3 h-12 border-b shrink-0 sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
+          <header className="flex items-center justify-between gap-4 px-4 h-12 border-b shrink-0 sticky top-0 z-40 bg-background">
             <div className="flex items-center gap-3">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               {pageTitle && (

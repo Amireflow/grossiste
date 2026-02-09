@@ -67,7 +67,7 @@ export default function BoostsPage() {
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </Link>
-            <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-boosts-title">Mes Boosts</h1>
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-boosts-title">Mes Boosts</h1>
           </div>
           <p className="text-muted-foreground text-sm ml-11">
             G\u00e9rez vos annonces sponsoris\u00e9es et boosts de produits

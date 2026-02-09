@@ -91,7 +91,7 @@ export default function CartPage() {
     <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-5 animate-fade-in">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-cart-title">Mon panier</h1>
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-cart-title">Mon panier</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             {cartItems
               ? `${cartItems.length} article${cartItems.length !== 1 ? "s" : ""} - ${totalItems} unite${totalItems !== 1 ? "s" : ""}`

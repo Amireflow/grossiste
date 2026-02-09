@@ -94,7 +94,7 @@ export function AppSidebar() {
               <Store className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <span className="font-serif text-lg font-bold leading-none">SokoB2B</span>
+              <span className="font-serif text-lg font-bold leading-none tracking-tight">SokoB2B</span>
               <p className="text-[10px] text-muted-foreground mt-0.5 leading-none">Marketplace B2B</p>
             </div>
           </div>

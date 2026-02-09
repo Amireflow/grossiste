@@ -32,11 +32,11 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <div className="animate-fade-in-up rounded-md bg-gradient-to-r from-primary/15 via-primary/8 to-transparent p-5 sm:p-6">
+      <div className="animate-fade-in-up">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-greeting">{greeting}</h1>
-            <p className="text-muted-foreground mt-1.5 text-sm sm:text-base">
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-greeting">{greeting}</h1>
+            <p className="text-muted-foreground mt-1 text-sm">
               {isSupplier
                 ? "Gerez vos produits et suivez vos commandes"
                 : "Approvisionnez votre commerce facilement"}
@@ -111,8 +111,7 @@ export default function DashboardPage() {
         <Card className="lg:col-span-3 animate-fade-in-up stagger-3">
           <CardHeader className="flex flex-row items-center justify-between gap-4 pb-4 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
-              <BarChart3 className="w-4 h-4 text-muted-foreground" />
-              <h2 className="font-semibold">Commandes recentes</h2>
+              <h2 className="font-semibold text-sm">Commandes recentes</h2>
             </div>
             <Link href="/orders">
               <Button variant="ghost" size="sm" data-testid="link-view-all-orders">
@@ -201,8 +200,7 @@ export default function DashboardPage() {
 
         <Card className="lg:col-span-2 animate-fade-in-up stagger-4">
           <CardHeader className="pb-4">
-            <h2 className="font-semibold flex items-center gap-2">
-              <Zap className="w-4 h-4 text-muted-foreground" />
+            <h2 className="font-semibold text-sm flex items-center gap-2">
               Actions rapides
             </h2>
           </CardHeader>
@@ -291,11 +289,13 @@ function StatCard({
   return (
     <Card className={`animate-fade-in-up ${delay}`}>
       <CardContent className="p-4 sm:p-5">
-        <div className={`w-9 h-9 rounded-md flex items-center justify-center ${bg} ${color} mb-3`}>
-          {icon}
+        <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <div className={`w-8 h-8 rounded-md flex items-center justify-center ${bg} ${color}`}>
+            {icon}
+          </div>
         </div>
         <p className="text-xl sm:text-2xl font-bold tracking-tight tabular-nums" data-testid={testId}>{value}</p>
-        <p className="text-xs text-muted-foreground mt-1">{label}</p>
       </CardContent>
     </Card>
   );

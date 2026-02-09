@@ -68,7 +68,7 @@ export default function WalletPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-wallet-title">Mon Portefeuille</h1>
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-wallet-title">Mon Portefeuille</h1>
           <p className="text-muted-foreground text-sm mt-0.5">G\u00e9rez votre solde et rechargez pour booster vos produits</p>
         </div>
       </div>

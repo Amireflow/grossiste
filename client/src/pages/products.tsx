@@ -116,7 +116,7 @@ export default function ProductsPage() {
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-5">
       <div className="flex items-start sm:items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-products-title">Mes produits</h1>
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-products-title">Mes produits</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             {totalCount > 0 ? `${activeCount} actif${activeCount !== 1 ? "s" : ""} sur ${totalCount}` : "G\u00e9rez votre catalogue"}
           </p>

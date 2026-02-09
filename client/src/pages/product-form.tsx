@@ -112,7 +112,7 @@ export default function ProductFormPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="font-serif text-2xl font-bold">
+          <h1 className="font-serif text-2xl font-bold tracking-tight">
             {isEditing ? "Modifier le produit" : "Nouveau produit"}
           </h1>
           <p className="text-muted-foreground mt-1">
