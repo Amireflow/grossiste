@@ -54,6 +54,8 @@ export const products = pgTable("products", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const paymentMethodEnum = pgEnum("payment_method", ["mobile_money", "cash_on_delivery"]);
+
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   buyerId: varchar("buyer_id").notNull().references(() => users.id),
@@ -61,8 +63,11 @@ export const orders = pgTable("orders", {
   status: orderStatusEnum("status").default("pending"),
   totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
   currency: currencyEnum("currency").default("XOF"),
+  contactName: text("contact_name"),
+  deliveryPhone: text("delivery_phone"),
   deliveryAddress: text("delivery_address"),
   deliveryCity: text("delivery_city"),
+  paymentMethod: paymentMethodEnum("payment_method").default("mobile_money"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

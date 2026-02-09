@@ -26,8 +26,11 @@ const cartUpdateSchema = z.object({
 });
 
 const checkoutSchema = z.object({
+  contactName: z.string().min(1, "Nom du contact requis"),
+  deliveryPhone: z.string().min(1, "Telephone requis"),
   deliveryAddress: z.string().optional(),
   deliveryCity: z.string().min(1, "Ville requise"),
+  paymentMethod: z.enum(["mobile_money", "cash_on_delivery"]).default("mobile_money"),
   notes: z.string().optional(),
 });
 
@@ -278,7 +281,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Cart is empty" });
       }
 
-      const { deliveryAddress, deliveryCity, notes } = parsed.data;
+      const { contactName, deliveryPhone, deliveryAddress, deliveryCity, paymentMethod, notes } = parsed.data;
 
       const ordersBySupplier: Record<string, typeof cartItemsData> = {};
       for (const item of cartItemsData) {
@@ -299,8 +302,11 @@ export async function registerRoutes(
           supplierId,
           totalAmount: totalAmount.toFixed(2),
           currency: profile.currency || "XOF",
+          contactName: contactName || "",
+          deliveryPhone: deliveryPhone || profile.phone || "",
           deliveryAddress: deliveryAddress || profile.address || "",
           deliveryCity: deliveryCity || profile.city || "",
+          paymentMethod: paymentMethod || "mobile_money",
           notes: notes || "",
           status: "pending",
         });

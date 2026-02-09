@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   ClipboardList, Package, ChevronDown, ChevronUp, MapPin, StickyNote,
   Truck, CheckCircle2, Clock, XCircle, ArrowRight, RefreshCw,
+  User, Phone, Smartphone, Banknote, CreditCard,
 } from "lucide-react";
 import { formatPrice, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -165,29 +166,56 @@ export default function OrdersPage() {
                         ))}
                       </div>
 
-                      {(order.deliveryAddress || order.notes) && (
-                        <div className="px-4 pb-4 space-y-2">
-                          <Separator />
-                          {order.deliveryAddress && (
-                            <div className="flex items-start gap-2 pt-2">
-                              <MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                              <div>
-                                <p className="text-xs text-muted-foreground">Livraison</p>
-                                <p className="text-sm">{order.deliveryAddress}{order.deliveryCity ? `, ${order.deliveryCity}` : ""}</p>
-                              </div>
+                      <div className="px-4 pb-4 space-y-2">
+                        <Separator />
+                        {order.contactName && (
+                          <div className="flex items-start gap-2 pt-2">
+                            <User className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Contact</p>
+                              <p className="text-sm">{order.contactName}</p>
                             </div>
-                          )}
-                          {order.notes && (
-                            <div className="flex items-start gap-2">
-                              <StickyNote className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                              <div>
-                                <p className="text-xs text-muted-foreground">Notes</p>
-                                <p className="text-sm">{order.notes}</p>
-                              </div>
+                          </div>
+                        )}
+                        {order.deliveryPhone && (
+                          <div className="flex items-start gap-2">
+                            <Phone className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Telephone</p>
+                              <p className="text-sm">{order.deliveryPhone}</p>
                             </div>
-                          )}
-                        </div>
-                      )}
+                          </div>
+                        )}
+                        {(order.deliveryAddress || order.deliveryCity) && (
+                          <div className="flex items-start gap-2">
+                            <MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Livraison</p>
+                              <p className="text-sm">{order.deliveryAddress}{order.deliveryCity ? `, ${order.deliveryCity}` : ""}</p>
+                            </div>
+                          </div>
+                        )}
+                        {order.paymentMethod && (
+                          <div className="flex items-start gap-2">
+                            <CreditCard className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Paiement</p>
+                              <p className="text-sm">
+                                {order.paymentMethod === "mobile_money" ? "Mobile Money" : "Cash a la livraison"}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {order.notes && (
+                          <div className="flex items-start gap-2">
+                            <StickyNote className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Notes</p>
+                              <p className="text-sm">{order.notes}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
                       {isSupplier && order.status !== "delivered" && order.status !== "cancelled" && (
                         <div className="px-4 pb-4">

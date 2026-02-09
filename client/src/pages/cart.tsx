@@ -7,12 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, MapPin, Truck, CreditCard, ArrowLeft } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, MapPin, Truck, CreditCard, ArrowLeft, User, Phone, Smartphone, Banknote } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, Link } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface CartItemWithProduct {
   id: string;
@@ -30,12 +30,35 @@ interface CartItemWithProduct {
   };
 }
 
+interface UserProfile {
+  businessName: string;
+  phone: string;
+  address: string | null;
+  city: string | null;
+}
+
 export default function CartPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const [contactName, setContactName] = useState("");
+  const [deliveryPhone, setDeliveryPhone] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryCity, setDeliveryCity] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"mobile_money" | "cash_on_delivery">("mobile_money");
   const [notes, setNotes] = useState("");
+
+  const { data: profile } = useQuery<UserProfile>({
+    queryKey: ["/api/profile"],
+  });
+
+  useEffect(() => {
+    if (profile) {
+      if (!contactName) setContactName(profile.businessName || "");
+      if (!deliveryPhone) setDeliveryPhone(profile.phone || "");
+      if (!deliveryAddress && profile.address) setDeliveryAddress(profile.address);
+      if (!deliveryCity && profile.city) setDeliveryCity(profile.city);
+    }
+  }, [profile]);
 
   const { data: cartItems, isLoading } = useQuery<CartItemWithProduct[]>({
     queryKey: ["/api/cart"],
@@ -62,8 +85,11 @@ export default function CartPage() {
   const checkout = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/orders/checkout", {
+        contactName,
+        deliveryPhone,
         deliveryAddress,
         deliveryCity,
+        paymentMethod,
         notes,
       });
       return res.json();
@@ -195,6 +221,38 @@ export default function CartPage() {
             <Card className="animate-fade-in-up stagger-2">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  <h2 className="font-semibold text-sm">Contact</h2>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label htmlFor="contact-name" className="text-xs">Nom du contact / commerce</Label>
+                  <Input
+                    id="contact-name"
+                    placeholder="Nom complet ou nom du commerce"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    data-testid="input-contact-name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="delivery-phone" className="text-xs">Telephone</Label>
+                  <Input
+                    id="delivery-phone"
+                    type="tel"
+                    placeholder="+229 XX XX XX XX"
+                    value={deliveryPhone}
+                    onChange={(e) => setDeliveryPhone(e.target.value)}
+                    data-testid="input-delivery-phone"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="animate-fade-in-up stagger-3">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-muted-foreground" />
                   <h2 className="font-semibold text-sm">Livraison</h2>
                 </div>
@@ -211,7 +269,7 @@ export default function CartPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="delivery-address" className="text-xs">Adresse</Label>
+                  <Label htmlFor="delivery-address" className="text-xs">Adresse de livraison</Label>
                   <Input
                     id="delivery-address"
                     placeholder="Quartier, rue, repere..."
@@ -221,11 +279,12 @@ export default function CartPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="notes" className="text-xs">Notes (optionnel)</Label>
+                  <Label htmlFor="notes" className="text-xs">Instructions de livraison (optionnel)</Label>
                   <Textarea
                     id="notes"
                     className="resize-none"
-                    placeholder="Instructions speciales..."
+                    rows={2}
+                    placeholder="Etage, code porte, heures preferees..."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     data-testid="input-order-notes"
@@ -234,12 +293,50 @@ export default function CartPage() {
               </CardContent>
             </Card>
 
-            <Card className="animate-fade-in-up stagger-3">
+            <Card className="animate-fade-in-up stagger-4">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-muted-foreground" />
-                  <h2 className="font-semibold text-sm">Resume</h2>
+                  <h2 className="font-semibold text-sm">Paiement</h2>
                 </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("mobile_money")}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-md border text-center transition-colors ${
+                      paymentMethod === "mobile_money"
+                        ? "border-primary bg-primary/5"
+                        : "hover-elevate"
+                    }`}
+                    data-testid="button-payment-mobile-money"
+                  >
+                    <Smartphone className={`w-5 h-5 ${paymentMethod === "mobile_money" ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className="text-xs font-medium">Mobile Money</span>
+                    <span className="text-[10px] text-muted-foreground leading-tight">Orange, MTN, Moov</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("cash_on_delivery")}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-md border text-center transition-colors ${
+                      paymentMethod === "cash_on_delivery"
+                        ? "border-primary bg-primary/5"
+                        : "hover-elevate"
+                    }`}
+                    data-testid="button-payment-cash"
+                  >
+                    <Banknote className={`w-5 h-5 ${paymentMethod === "cash_on_delivery" ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className="text-xs font-medium">Cash a la livraison</span>
+                    <span className="text-[10px] text-muted-foreground leading-tight">Payer a la reception</span>
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="animate-fade-in-up stagger-5">
+              <CardHeader className="pb-3">
+                <h2 className="font-semibold text-sm">Resume de la commande</h2>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between gap-4 text-sm">
@@ -262,14 +359,16 @@ export default function CartPage() {
                   className="w-full mt-2"
                   size="lg"
                   onClick={() => checkout.mutate()}
-                  disabled={checkout.isPending || !deliveryCity}
+                  disabled={checkout.isPending || !deliveryCity || !contactName || !deliveryPhone}
                   data-testid="button-checkout"
                 >
                   {checkout.isPending ? "Traitement..." : "Confirmer la commande"}
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
                 <p className="text-[11px] text-muted-foreground text-center">
-                  Paiement mobile money ou cash a la livraison
+                  {paymentMethod === "mobile_money"
+                    ? "Vous recevrez une demande de paiement Mobile Money"
+                    : "Vous paierez en especes a la reception de la commande"}
                 </p>
               </CardContent>
             </Card>

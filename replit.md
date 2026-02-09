@@ -56,7 +56,7 @@ shared/
 - `GET /api/my-products` - Supplier's own products
 - `POST/PATCH /api/products` - Create/update products (supplier only)
 - `GET/POST/PATCH/DELETE /api/cart` - Cart management
-- `POST /api/orders/checkout` - Place order from cart (shop_owner only)
+- `POST /api/orders/checkout` - Place order from cart (shop_owner only, requires contactName, deliveryPhone, deliveryCity; optional: deliveryAddress, paymentMethod, notes)
 - `PATCH /api/orders/:id/status` - Update order status (supplier only)
 - `GET /api/stats` - Dashboard statistics
 - `GET /api/suppliers` - List all suppliers with product counts (public)
@@ -79,6 +79,7 @@ shared/
 - 2026-02-09: Removed Catalogue page - marketplace is now the primary browsing experience. Shop owners can add to cart directly from marketplace. Added sorting, category counts, trust indicators, improved product cards with category badges and stock info
 - 2026-02-09: Supplier filtering integrated directly into marketplace via dropdown (removed separate /suppliers page). Dropdown in marketplace filter bar lists all suppliers, selecting one filters products server-side
 - 2026-02-09: Added Boost/Sponsored Ads system - suppliers can boost products (standard/premium levels, 7/14/30 day durations). Marketplace prioritizes boosted products (premium > standard > regular) with "Sponsorisé" badges. Added /boosts management page, boost controls on Products page, sidebar link for suppliers
+- 2026-02-09: Enhanced checkout form with contactName, deliveryPhone, paymentMethod (mobile_money/cash_on_delivery) fields. Order details page shows all new fields. Profile data auto-fills form.
 - 2026-02-09: Added Prepaid Wallet system for suppliers - walletBalance field on user_profiles, wallet_transactions table for audit trail. Suppliers must have sufficient balance to activate boosts (atomic charge with DB transaction). Wallet page (/wallet) with preset top-up amounts, custom amount input, transaction history. Wallet balance shown in sidebar and boost dialog. Pricing: standard 5k/8.5k/15k FCFA, premium 10k/17k/30k FCFA for 7/14/30 days
 
 ## User Preferences
