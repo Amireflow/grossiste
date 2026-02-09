@@ -251,33 +251,42 @@ export default function MarketplacePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {categories && categories.length > 0 && !search && (
             <div className="mb-6">
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1">
-                <Button
-                  variant={selectedCategory === "all" ? "default" : "outline"}
-                  size="sm"
-                  className="shrink-0 text-xs"
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+                <button
                   onClick={() => setSelectedCategory("all")}
+                  className="shrink-0 flex flex-col items-center gap-1.5 group cursor-pointer"
                   data-testid="button-category-all"
                 >
-                  Tout
-                  {products && (
-                    <span className="ml-1 text-[10px] opacity-70">({products.length})</span>
-                  )}
-                </Button>
+                  <div className={`w-16 h-16 rounded-md overflow-hidden border-2 transition-colors ${selectedCategory === "all" ? "border-primary" : "border-transparent"}`}>
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <Package className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <span className={`text-[11px] leading-tight text-center max-w-[72px] ${selectedCategory === "all" ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                    Tout
+                  </span>
+                </button>
                 {categories.map((cat) => (
-                  <Button
+                  <button
                     key={cat.id}
-                    variant={selectedCategory === cat.id ? "default" : "outline"}
-                    size="sm"
-                    className="shrink-0 text-xs"
                     onClick={() => setSelectedCategory(cat.id)}
+                    className="shrink-0 flex flex-col items-center gap-1.5 group cursor-pointer"
                     data-testid={`button-category-${cat.slug}`}
                   >
-                    {cat.nameFr}
-                    {globalCategoryCounts[cat.id] !== undefined && (
-                      <span className="ml-1 text-[10px] opacity-70">({globalCategoryCounts[cat.id]})</span>
-                    )}
-                  </Button>
+                    <div className={`w-16 h-16 rounded-md overflow-hidden border-2 transition-colors ${selectedCategory === cat.id ? "border-primary" : "border-transparent"}`}>
+                      {cat.imageUrl ? (
+                        <img src={cat.imageUrl} alt={cat.nameFr} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-muted" />
+                      )}
+                    </div>
+                    <span className={`text-[11px] leading-tight text-center max-w-[72px] ${selectedCategory === cat.id ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                      {cat.nameFr}
+                      {globalCategoryCounts[cat.id] !== undefined && (
+                        <span className="opacity-60 ml-0.5">({globalCategoryCounts[cat.id]})</span>
+                      )}
+                    </span>
+                  </button>
                 ))}
               </div>
             </div>
