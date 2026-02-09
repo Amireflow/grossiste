@@ -48,23 +48,23 @@ export default function OrdersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      toast({ title: "Statut mis à jour" });
+      toast({ title: "Statut mis a jour" });
     },
     onError: () => {
-      toast({ title: "Erreur", description: "Impossible de mettre à jour", variant: "destructive" });
+      toast({ title: "Erreur", description: "Impossible de mettre a jour", variant: "destructive" });
     },
   });
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-5">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-5 animate-fade-in">
       <div>
         <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-orders-title">
-          {isSupplier ? "Commandes reçues" : "Mes commandes"}
+          {isSupplier ? "Commandes recues" : "Mes commandes"}
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
           {isSupplier
             ? `${orders?.length || 0} commande${(orders?.length || 0) !== 1 ? "s" : ""} au total`
-            : "Suivez l'état de vos commandes"}
+            : "Suivez l'etat de vos commandes"}
         </p>
       </div>
 
@@ -82,13 +82,13 @@ export default function OrdersPage() {
         </div>
       ) : orders && orders.length > 0 ? (
         <div className="space-y-3">
-          {orders.map((order) => {
+          {orders.map((order, index) => {
             const status = ORDER_STATUS_LABELS[order.status || "pending"];
             const isExpanded = expandedOrder === order.id;
             const itemCount = order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
             return (
-              <Card key={order.id} data-testid={`order-card-${order.id}`}>
+              <Card key={order.id} className={`animate-fade-in-up stagger-${Math.min(index + 1, 6)}`} data-testid={`order-card-${order.id}`}>
                 <CardContent className="p-0">
                   <div
                     className="flex items-center justify-between gap-3 p-4 w-full text-left cursor-pointer hover-elevate rounded-md"
@@ -126,7 +126,7 @@ export default function OrdersPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="font-bold text-sm">
+                      <span className="font-bold text-sm tabular-nums">
                         {formatPrice(order.totalAmount, order.currency || "XOF")}
                       </span>
                       {isExpanded ? (
@@ -138,7 +138,7 @@ export default function OrdersPage() {
                   </div>
 
                   {isExpanded && (
-                    <div className="border-t">
+                    <div className="border-t animate-fade-in">
                       <div className="p-4 space-y-3">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Articles</p>
                         {order.items?.map((item) => (
@@ -203,11 +203,11 @@ export default function OrdersPage() {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="pending">En attente</SelectItem>
-                                <SelectItem value="confirmed">Confirmée</SelectItem>
+                                <SelectItem value="confirmed">Confirmee</SelectItem>
                                 <SelectItem value="processing">En cours</SelectItem>
-                                <SelectItem value="shipped">Expédiée</SelectItem>
-                                <SelectItem value="delivered">Livrée</SelectItem>
-                                <SelectItem value="cancelled">Annulée</SelectItem>
+                                <SelectItem value="shipped">Expediee</SelectItem>
+                                <SelectItem value="delivered">Livree</SelectItem>
+                                <SelectItem value="cancelled">Annulee</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -221,20 +221,20 @@ export default function OrdersPage() {
           })}
         </div>
       ) : (
-        <div className="text-center py-20">
+        <div className="text-center py-20 animate-scale-in">
           <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-5">
             <ClipboardList className="w-8 h-8 text-muted-foreground/40" />
           </div>
           <h3 className="font-medium text-lg mb-2">Aucune commande</h3>
           <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-5">
             {isSupplier
-              ? "Les commandes de vos clients apparaîtront ici dès qu'elles seront passées"
-              : "Parcourez le catalogue pour passer votre première commande"}
+              ? "Les commandes de vos clients apparaitront ici des qu'elles seront passees"
+              : "Parcourez le marketplace pour passer votre premiere commande"}
           </p>
           {!isSupplier && (
-            <Link href="/catalog">
+            <Link href="/marketplace">
               <Button data-testid="button-go-catalog">
-                Voir le catalogue
+                Voir le marketplace
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>

@@ -7,10 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import {
   Package, ShoppingCart, ClipboardList, TrendingUp, ArrowRight,
-  AlertCircle, Truck, CheckCircle2, BarChart3,
+  AlertCircle, Truck, CheckCircle2, BarChart3, Zap, Store,
 } from "lucide-react";
 import { formatPrice, ORDER_STATUS_LABELS } from "@/lib/constants";
-import type { UserProfile, Order, Product } from "@shared/schema";
+import type { UserProfile, Order } from "@shared/schema";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -32,21 +32,25 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <div className="rounded-md bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5 sm:p-6">
-        <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-greeting">{greeting}</h1>
-        <p className="text-muted-foreground mt-1.5 text-sm sm:text-base">
-          {isSupplier
-            ? "Gérez vos produits et suivez vos commandes"
-            : "Approvisionnez votre commerce facilement"}
-        </p>
-        {!isSupplier && (
-          <Link href="/marketplace">
-            <Button size="sm" className="mt-4" data-testid="button-explore-catalog">
-              Parcourir le marketplace
-              <ArrowRight className="w-3.5 h-3.5 ml-1" />
-            </Button>
-          </Link>
-        )}
+      <div className="animate-fade-in-up rounded-md bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-greeting">{greeting}</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm sm:text-base">
+              {isSupplier
+                ? "Gerez vos produits et suivez vos commandes"
+                : "Approvisionnez votre commerce facilement"}
+            </p>
+          </div>
+          {!isSupplier && (
+            <Link href="/marketplace">
+              <Button size="sm" data-testid="button-explore-catalog">
+                Parcourir le marketplace
+                <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -70,6 +74,7 @@ export default function DashboardPage() {
               color="text-blue-600 dark:text-blue-400"
               bg="bg-blue-100 dark:bg-blue-900/30"
               testId="stat-total-orders"
+              delay="stagger-1"
             />
             <StatCard
               icon={<AlertCircle className="w-4 h-4" />}
@@ -78,6 +83,7 @@ export default function DashboardPage() {
               color="text-amber-600 dark:text-amber-400"
               bg="bg-amber-100 dark:bg-amber-900/30"
               testId="stat-pending-orders"
+              delay="stagger-2"
             />
             <StatCard
               icon={<Package className="w-4 h-4" />}
@@ -86,25 +92,27 @@ export default function DashboardPage() {
               color="text-emerald-600 dark:text-emerald-400"
               bg="bg-emerald-100 dark:bg-emerald-900/30"
               testId="stat-total-products"
+              delay="stagger-3"
             />
             <StatCard
               icon={<TrendingUp className="w-4 h-4" />}
-              label={isSupplier ? "Revenus" : "Dépensé"}
+              label={isSupplier ? "Revenus" : "Depense"}
               value={formatPrice(stats?.totalRevenue || "0", profile?.currency || "XOF")}
               color="text-primary"
               bg="bg-primary/10"
               testId="stat-total-revenue"
+              delay="stagger-4"
             />
           </>
         )}
       </div>
 
       <div className="grid lg:grid-cols-5 gap-4 sm:gap-6">
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-3 animate-fade-in-up stagger-3">
           <CardHeader className="flex flex-row items-center justify-between gap-4 pb-4 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
               <BarChart3 className="w-4 h-4 text-muted-foreground" />
-              <h2 className="font-semibold">Commandes récentes</h2>
+              <h2 className="font-semibold">Commandes recentes</h2>
             </div>
             <Link href="/orders">
               <Button variant="ghost" size="sm" data-testid="link-view-all-orders">
@@ -175,8 +183,8 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium mb-1">Aucune commande</p>
                 <p className="text-xs text-muted-foreground mb-4 max-w-[240px] mx-auto">
                   {isSupplier
-                    ? "Les commandes de vos clients apparaîtront ici"
-                    : "Parcourez le marketplace pour passer votre première commande"}
+                    ? "Les commandes de vos clients apparaitront ici"
+                    : "Parcourez le marketplace pour passer votre premiere commande"}
                 </p>
                 {!isSupplier && (
                   <Link href="/marketplace">
@@ -190,9 +198,12 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 animate-fade-in-up stagger-4">
           <CardHeader className="pb-4">
-            <h2 className="font-semibold">Actions rapides</h2>
+            <h2 className="font-semibold flex items-center gap-2">
+              <Zap className="w-4 h-4 text-muted-foreground" />
+              Actions rapides
+            </h2>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -204,13 +215,23 @@ export default function DashboardPage() {
                     description="Ajoutez au catalogue"
                     href="/products/new"
                     testId="quick-add-product"
+                    accent="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
                   />
                   <QuickAction
                     icon={<ClipboardList className="w-4 h-4" />}
-                    title="Gérer les commandes"
+                    title="Gerer les commandes"
                     description="Commandes en cours"
                     href="/orders"
                     testId="quick-manage-orders"
+                    accent="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                  />
+                  <QuickAction
+                    icon={<Store className="w-4 h-4" />}
+                    title="Voir le marketplace"
+                    description="Voir vos produits en ligne"
+                    href="/marketplace"
+                    testId="quick-view-marketplace"
+                    accent="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
                   />
                 </>
               ) : (
@@ -221,6 +242,7 @@ export default function DashboardPage() {
                     description="Trouvez vos produits"
                     href="/marketplace"
                     testId="quick-browse-catalog"
+                    accent="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
                   />
                   <QuickAction
                     icon={<ShoppingCart className="w-4 h-4" />}
@@ -228,6 +250,7 @@ export default function DashboardPage() {
                     description="Finalisez la commande"
                     href="/cart"
                     testId="quick-view-cart"
+                    accent="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
                   />
                   <QuickAction
                     icon={<ClipboardList className="w-4 h-4" />}
@@ -235,6 +258,7 @@ export default function DashboardPage() {
                     description="Suivi des livraisons"
                     href="/orders"
                     testId="quick-order-history"
+                    accent="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                   />
                 </>
               )}
@@ -253,6 +277,7 @@ function StatCard({
   color,
   bg,
   testId,
+  delay,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -260,14 +285,15 @@ function StatCard({
   color: string;
   bg: string;
   testId: string;
+  delay: string;
 }) {
   return (
-    <Card>
+    <Card className={`animate-fade-in-up ${delay}`}>
       <CardContent className="p-4 sm:p-5">
         <div className={`w-9 h-9 rounded-md flex items-center justify-center ${bg} ${color} mb-3`}>
           {icon}
         </div>
-        <p className="text-xl sm:text-2xl font-bold tracking-tight" data-testid={testId}>{value}</p>
+        <p className="text-xl sm:text-2xl font-bold tracking-tight tabular-nums" data-testid={testId}>{value}</p>
         <p className="text-xs text-muted-foreground mt-1">{label}</p>
       </CardContent>
     </Card>
@@ -280,17 +306,19 @@ function QuickAction({
   description,
   href,
   testId,
+  accent,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
   href: string;
   testId: string;
+  accent: string;
 }) {
   return (
     <Link href={href}>
       <div className="flex items-center gap-3 p-3 rounded-md hover-elevate cursor-pointer" data-testid={testId}>
-        <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center text-primary shrink-0">
+        <div className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${accent}`}>
           {icon}
         </div>
         <div className="flex-1 min-w-0">

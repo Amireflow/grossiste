@@ -12,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarHeader,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,6 @@ import {
   Store,
   LogOut,
   Plus,
-  Sparkles,
   Globe,
   Zap,
   Wallet,
@@ -76,7 +76,7 @@ export function AppSidebar() {
     { title: "Mes produits", url: "/products", icon: Package },
     { title: "Mes Boosts", url: "/boosts", icon: Zap },
     { title: "Portefeuille", url: "/wallet", icon: Wallet },
-    { title: "Commandes reçues", url: "/orders", icon: ClipboardList },
+    { title: "Commandes recues", url: "/orders", icon: ClipboardList },
   ];
 
   const menuItems = isSupplier ? supplierMenuItems : shopMenuItems;
@@ -102,12 +102,20 @@ export function AppSidebar() {
       </SidebarHeader>
 
       {profile && (
-        <div className="px-4 pb-3">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-primary/5">
-            <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
-            <span className="text-xs font-medium text-primary">
-              {isSupplier ? "Espace Fournisseur" : "Espace Commerçant"}
-            </span>
+        <div className="px-4 pb-2">
+          <div className="flex items-center gap-2.5 px-3 py-2 rounded-md bg-sidebar-accent">
+            <Avatar className="w-7 h-7">
+              <AvatarImage src={user?.profileImageUrl || undefined} />
+              <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium truncate" data-testid="text-sidebar-user">
+                {user?.firstName || user?.email || "Utilisateur"}
+              </p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                {isSupplier ? "Fournisseur" : "Commercant"}
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -136,7 +144,7 @@ export function AppSidebar() {
                         </Badge>
                       )}
                       {item.url === "/wallet" && walletBalance > 0 && (
-                        <span className="text-[10px] text-muted-foreground font-medium" data-testid="text-sidebar-wallet-balance">
+                        <span className="text-[10px] text-muted-foreground font-medium tabular-nums" data-testid="text-sidebar-wallet-balance">
                           {formatPrice(walletBalance)}
                         </span>
                       )}
@@ -147,6 +155,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
         {isSupplier && (
           <SidebarGroup>
             <SidebarGroupLabel>Actions rapides</SidebarGroupLabel>
@@ -164,8 +173,11 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        <SidebarSeparator />
+
         <SidebarGroup>
-          <SidebarGroupLabel>Découvrir</SidebarGroupLabel>
+          <SidebarGroupLabel>Decouvrir</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -180,18 +192,15 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter className="p-4 border-t">
         <div className="flex items-center gap-3 mb-3">
-          <Avatar className="w-9 h-9">
-            <AvatarImage src={user?.profileImageUrl || undefined} />
-            <AvatarFallback className="text-xs bg-primary/10 text-primary">{initials}</AvatarFallback>
-          </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate" data-testid="text-user-name">
-              {user?.firstName || user?.email || "Utilisateur"}
+            <p className="text-xs font-medium truncate" data-testid="text-user-name">
+              {profile?.businessName || user?.firstName || ""}
             </p>
-            <p className="text-xs text-muted-foreground truncate" data-testid="text-business-name">
-              {profile?.businessName || ""}
+            <p className="text-[10px] text-muted-foreground truncate" data-testid="text-business-name">
+              {profile?.city || ""}
             </p>
           </div>
         </div>
@@ -203,7 +212,7 @@ export function AppSidebar() {
           data-testid="button-logout"
         >
           <LogOut className="w-4 h-4 mr-2" />
-          Déconnexion
+          Deconnexion
         </Button>
       </SidebarFooter>
     </Sidebar>

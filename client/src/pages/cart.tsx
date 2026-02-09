@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, MapPin, Truck, CreditCard } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, MapPin, Truck, CreditCard, ArrowLeft } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -55,7 +55,7 @@ export default function CartPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-      toast({ title: "Retiré du panier" });
+      toast({ title: "Retire du panier" });
     },
   });
 
@@ -72,7 +72,7 @@ export default function CartPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      toast({ title: "Commande confirmée", description: "Votre commande a été envoyée aux fournisseurs" });
+      toast({ title: "Commande confirmee", description: "Votre commande a ete envoyee aux fournisseurs" });
       navigate("/orders");
     },
     onError: () => {
@@ -88,14 +88,22 @@ export default function CartPage() {
   const currency = cartItems?.[0]?.product?.currency || "XOF";
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-5">
-      <div>
-        <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-cart-title">Mon panier</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          {cartItems
-            ? `${cartItems.length} article${cartItems.length !== 1 ? "s" : ""} - ${totalItems} unité${totalItems !== 1 ? "s" : ""}`
-            : "Chargement..."}
-        </p>
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-5 animate-fade-in">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold" data-testid="text-cart-title">Mon panier</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {cartItems
+              ? `${cartItems.length} article${cartItems.length !== 1 ? "s" : ""} - ${totalItems} unite${totalItems !== 1 ? "s" : ""}`
+              : "Chargement..."}
+          </p>
+        </div>
+        <Link href="/marketplace">
+          <Button variant="outline" size="sm" data-testid="button-continue-shopping">
+            <ArrowLeft className="w-3.5 h-3.5 mr-1" />
+            Continuer mes achats
+          </Button>
+        </Link>
       </div>
 
       {isLoading ? (
@@ -118,18 +126,18 @@ export default function CartPage() {
       ) : cartItems && cartItems.length > 0 ? (
         <div className="grid lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 space-y-3">
-            {cartItems.map((item) => {
+            {cartItems.map((item, index) => {
               const lineTotal = parseFloat(item.product.price) * item.quantity;
               return (
-                <Card key={item.id} data-testid={`cart-item-${item.id}`}>
+                <Card key={item.id} className={`animate-fade-in-up stagger-${Math.min(index + 1, 6)}`} data-testid={`cart-item-${item.id}`}>
                   <CardContent className="p-3 sm:p-4">
                     <div className="flex gap-3 sm:gap-4">
                       <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden bg-muted shrink-0">
                         {item.product.imageUrl ? (
                           <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Package className="w-6 h-6 text-muted-foreground/30" />
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                            <Package className="w-6 h-6 text-muted-foreground/25" />
                           </div>
                         )}
                       </div>
@@ -171,7 +179,7 @@ export default function CartPage() {
                               <Plus className="w-3 h-3" />
                             </Button>
                           </div>
-                          <span className="text-sm font-bold" data-testid={`text-line-total-${item.id}`}>
+                          <span className="text-sm font-bold tabular-nums" data-testid={`text-line-total-${item.id}`}>
                             {formatPrice(lineTotal, item.product.currency)}
                           </span>
                         </div>
@@ -184,7 +192,7 @@ export default function CartPage() {
           </div>
 
           <div className="space-y-4">
-            <Card>
+            <Card className="animate-fade-in-up stagger-2">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-muted-foreground" />
@@ -206,7 +214,7 @@ export default function CartPage() {
                   <Label htmlFor="delivery-address" className="text-xs">Adresse</Label>
                   <Input
                     id="delivery-address"
-                    placeholder="Quartier, rue, repère..."
+                    placeholder="Quartier, rue, repere..."
                     value={deliveryAddress}
                     onChange={(e) => setDeliveryAddress(e.target.value)}
                     data-testid="input-delivery-address"
@@ -217,7 +225,7 @@ export default function CartPage() {
                   <Textarea
                     id="notes"
                     className="resize-none"
-                    placeholder="Instructions spéciales..."
+                    placeholder="Instructions speciales..."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     data-testid="input-order-notes"
@@ -226,29 +234,29 @@ export default function CartPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="animate-fade-in-up stagger-3">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-muted-foreground" />
-                  <h2 className="font-semibold text-sm">Résumé</h2>
+                  <h2 className="font-semibold text-sm">Resume</h2>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Sous-total ({totalItems} unités)</span>
-                  <span>{formatPrice(total, currency)}</span>
+                <div className="flex items-center justify-between gap-4 text-sm">
+                  <span className="text-muted-foreground">Sous-total ({totalItems} unites)</span>
+                  <span className="tabular-nums">{formatPrice(total, currency)}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between gap-4 text-sm">
                   <span className="text-muted-foreground flex items-center gap-1.5">
                     <Truck className="w-3.5 h-3.5" />
                     Livraison
                   </span>
-                  <Badge variant="secondary" className="text-[10px]">À déterminer</Badge>
+                  <Badge variant="secondary" className="text-[10px]">A determiner</Badge>
                 </div>
                 <Separator />
-                <div className="flex items-center justify-between font-bold text-base">
+                <div className="flex items-center justify-between gap-4 font-bold text-base">
                   <span>Total</span>
-                  <span className="text-primary" data-testid="text-cart-total">{formatPrice(total, currency)}</span>
+                  <span className="text-primary tabular-nums" data-testid="text-cart-total">{formatPrice(total, currency)}</span>
                 </div>
                 <Button
                   className="w-full mt-2"
@@ -261,24 +269,24 @@ export default function CartPage() {
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
                 <p className="text-[11px] text-muted-foreground text-center">
-                  Paiement mobile money ou cash à la livraison
+                  Paiement mobile money ou cash a la livraison
                 </p>
               </CardContent>
             </Card>
           </div>
         </div>
       ) : (
-        <div className="text-center py-20">
+        <div className="text-center py-20 animate-scale-in">
           <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-5">
             <ShoppingCart className="w-8 h-8 text-muted-foreground/40" />
           </div>
           <h3 className="font-medium text-lg mb-2">Votre panier est vide</h3>
           <p className="text-sm text-muted-foreground mb-5 max-w-xs mx-auto">
-            Parcourez le catalogue pour trouver les meilleurs produits pour votre commerce
+            Parcourez le marketplace pour trouver les meilleurs produits pour votre commerce
           </p>
-          <Link href="/catalog">
+          <Link href="/marketplace">
             <Button data-testid="button-start-shopping">
-              Parcourir le catalogue
+              Parcourir le marketplace
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </Link>

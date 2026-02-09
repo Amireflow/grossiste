@@ -378,7 +378,7 @@ export default function MarketplacePage() {
               ))}
             </div>
           ) : sortedProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
               {sortedProducts.map((product) => (
                 <MarketplaceProductCard
                   key={product.id}
@@ -512,18 +512,18 @@ function MarketplaceProductCard({
   };
 
   return (
-    <Card className={`overflow-visible group ${product.isSponsored && product.boostLevel === "premium" ? "border-amber-400/50 dark:border-amber-500/30" : ""}`} data-testid={`card-marketplace-product-${product.id}`}>
+    <Card className={`overflow-visible group transition-all ${product.isSponsored && product.boostLevel === "premium" ? "border-amber-400/50 dark:border-amber-500/30" : ""}`} data-testid={`card-marketplace-product-${product.id}`}>
       <CardContent className="p-3 sm:p-4">
         <div className="relative w-full aspect-square rounded-md overflow-hidden mb-3 bg-muted">
           {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Package className="w-10 h-10 text-muted-foreground/30" />
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+              <Package className="w-10 h-10 text-muted-foreground/25" />
             </div>
           )}
           {isOutOfStock && (
-            <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+            <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px] flex items-center justify-center">
               <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-400">Rupture</Badge>
             </div>
           )}
@@ -538,7 +538,7 @@ function MarketplaceProductCard({
             <div className="absolute top-2 left-2 flex flex-col gap-1">
               <Badge className="text-[10px] bg-amber-500 text-white border-0 gap-1" data-testid={`badge-sponsored-${product.id}`}>
                 {product.boostLevel === "premium" ? <Star className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
-                Sponsoris\u00e9
+                Sponsorise
               </Badge>
               {categoryName && (
                 <Badge variant="secondary" className="text-[10px] bg-black/50 text-white border-0 backdrop-blur-sm">
@@ -567,10 +567,10 @@ function MarketplaceProductCard({
         </div>
 
         <div className="flex items-baseline gap-1.5 mb-2.5 flex-wrap">
-          <span className="font-bold text-primary text-sm" data-testid={`text-marketplace-price-${product.id}`}>
+          <span className="font-bold text-primary text-sm tabular-nums" data-testid={`text-marketplace-price-${product.id}`}>
             {formatPrice(product.price, product.currency || "XOF")}
           </span>
-          <span className="text-xs text-muted-foreground">/ {product.unit}</span>
+          <span className="text-[11px] text-muted-foreground">/ {product.unit}</span>
         </div>
 
         {product.minOrder && product.minOrder > 1 && (
@@ -617,7 +617,7 @@ function MarketplaceProductCard({
                 {justAdded ? (
                   <>
                     <CheckCircle className="w-3.5 h-3.5 mr-1" />
-                    Ajouté
+                    Ajoute
                   </>
                 ) : (
                   <>
