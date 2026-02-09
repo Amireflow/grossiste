@@ -107,8 +107,8 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-4 sm:gap-6">
-        <Card className="lg:col-span-3 animate-fade-in-up stagger-3">
+      <div className={`grid ${isSupplier ? '' : 'lg:grid-cols-5'} gap-4 sm:gap-6`}>
+        <Card className={`${isSupplier ? '' : 'lg:col-span-3'} animate-fade-in-up stagger-3`}>
           <CardHeader className="flex flex-row items-center justify-between gap-4 pb-4 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="font-semibold text-sm">Commandes recentes</h2>
@@ -198,72 +198,43 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 animate-fade-in-up stagger-4">
-          <CardHeader className="pb-4">
-            <h2 className="font-semibold text-sm flex items-center gap-2">
-              Actions rapides
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {isSupplier ? (
-                <>
-                  <QuickAction
-                    icon={<Package className="w-4 h-4" />}
-                    title="Ajouter un produit"
-                    description="Ajoutez au catalogue"
-                    href="/products/new"
-                    testId="quick-add-product"
-                    accent="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400"
-                  />
-                  <QuickAction
-                    icon={<ClipboardList className="w-4 h-4" />}
-                    title="Gerer les commandes"
-                    description="Commandes en cours"
-                    href="/orders"
-                    testId="quick-manage-orders"
-                    accent="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
-                  />
-                  <QuickAction
-                    icon={<Store className="w-4 h-4" />}
-                    title="Voir le marketplace"
-                    description="Voir vos produits en ligne"
-                    href="/marketplace"
-                    testId="quick-view-marketplace"
-                    accent="bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400"
-                  />
-                </>
-              ) : (
-                <>
-                  <QuickAction
-                    icon={<Package className="w-4 h-4" />}
-                    title="Parcourir le marketplace"
-                    description="Trouvez vos produits"
-                    href="/marketplace"
-                    testId="quick-browse-catalog"
-                    accent="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400"
-                  />
-                  <QuickAction
-                    icon={<ShoppingCart className="w-4 h-4" />}
-                    title="Mon panier"
-                    description="Finalisez la commande"
-                    href="/cart"
-                    testId="quick-view-cart"
-                    accent="bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400"
-                  />
-                  <QuickAction
-                    icon={<ClipboardList className="w-4 h-4" />}
-                    title="Mes commandes"
-                    description="Suivi des livraisons"
-                    href="/orders"
-                    testId="quick-order-history"
-                    accent="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
-                  />
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {!isSupplier && (
+          <Card className="lg:col-span-2 animate-fade-in-up stagger-4">
+            <CardHeader className="pb-4">
+              <h2 className="font-semibold text-sm flex items-center gap-2">
+                Actions rapides
+              </h2>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <QuickAction
+                  icon={<Package className="w-4 h-4" />}
+                  title="Parcourir le marketplace"
+                  description="Trouvez vos produits"
+                  href="/marketplace"
+                  testId="quick-browse-catalog"
+                  accent="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400"
+                />
+                <QuickAction
+                  icon={<ShoppingCart className="w-4 h-4" />}
+                  title="Mon panier"
+                  description="Finalisez la commande"
+                  href="/cart"
+                  testId="quick-view-cart"
+                  accent="bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400"
+                />
+                <QuickAction
+                  icon={<ClipboardList className="w-4 h-4" />}
+                  title="Mes commandes"
+                  description="Suivi des livraisons"
+                  href="/orders"
+                  testId="quick-order-history"
+                  accent="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
