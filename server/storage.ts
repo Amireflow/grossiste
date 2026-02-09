@@ -21,7 +21,7 @@ export interface IStorage {
   getProducts(categoryId?: string): Promise<Product[]>;
   getProductById(id: string): Promise<Product | undefined>;
   getProductsBySupplier(supplierId: string): Promise<Product[]>;
-  getMarketplaceProducts(categoryId?: string, search?: string): Promise<(Product & { supplierName: string; supplierCity: string | null })[]>;
+  getMarketplaceProducts(categoryId?: string, search?: string, supplierId?: string): Promise<(Product & { supplierName: string; supplierCity: string | null })[]>;
   createProduct(data: InsertProduct): Promise<Product>;
   updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined>;
 
@@ -38,6 +38,7 @@ export interface IStorage {
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
 
   getStats(userId: string, role: string): Promise<{ totalOrders: number; pendingOrders: number; totalProducts: number; totalRevenue: string }>;
+  getSuppliers(): Promise<{ id: string; businessName: string; city: string | null; country: string | null; description: string | null; productCount: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -87,10 +88,13 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(products.createdAt));
   }
 
-  async getMarketplaceProducts(categoryId?: string, search?: string): Promise<(Product & { supplierName: string; supplierCity: string | null })[]> {
+  async getMarketplaceProducts(categoryId?: string, search?: string, supplierId?: string): Promise<(Product & { supplierName: string; supplierCity: string | null })[]> {
     const conditions = [eq(products.isActive, true)];
     if (categoryId) {
       conditions.push(eq(products.categoryId, categoryId));
+    }
+    if (supplierId) {
+      conditions.push(eq(products.supplierId, supplierId));
     }
     if (search) {
       conditions.push(
@@ -267,6 +271,23 @@ export class DatabaseStorage implements IStorage {
       totalProducts: Number(productsResult[0]?.count || 0),
       totalRevenue: String(revenueResult[0]?.total || "0"),
     };
+  }
+
+  async getSuppliers(): Promise<{ id: string; businessName: string; city: string | null; country: string | null; description: string | null; productCount: number }[]> {
+    const rows = await db.select({
+      id: userProfiles.userId,
+      businessName: userProfiles.businessName,
+      city: userProfiles.city,
+      country: userProfiles.country,
+      description: userProfiles.description,
+      productCount: sql<number>`count(${products.id})::int`,
+    })
+      .from(userProfiles)
+      .leftJoin(products, and(eq(products.supplierId, userProfiles.userId), eq(products.isActive, true)))
+      .where(eq(userProfiles.role, "supplier"))
+      .groupBy(userProfiles.userId, userProfiles.businessName, userProfiles.city, userProfiles.country, userProfiles.description);
+
+    return rows;
   }
 }
 

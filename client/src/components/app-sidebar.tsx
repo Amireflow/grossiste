@@ -26,6 +26,7 @@ import {
   Plus,
   Sparkles,
   Globe,
+  Users,
 } from "lucide-react";
 import type { UserProfile } from "@shared/schema";
 
@@ -152,6 +153,14 @@ export function AppSidebar() {
                   <Link href="/marketplace" data-testid="link-nav-marketplace">
                     <Globe className="w-4 h-4" />
                     <span>Marketplace</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location === "/suppliers"}>
+                  <Link href="/suppliers" data-testid="link-nav-suppliers">
+                    <Users className="w-4 h-4" />
+                    <span>Fournisseurs</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

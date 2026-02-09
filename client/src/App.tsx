@@ -13,6 +13,7 @@ import { Store } from "lucide-react";
 
 import LandingPage from "@/pages/landing";
 import MarketplacePage from "@/pages/marketplace";
+import SuppliersPage from "@/pages/suppliers";
 import OnboardingPage from "@/pages/onboarding";
 import DashboardPage from "@/pages/dashboard";
 import CartPage from "@/pages/cart";
@@ -103,6 +104,10 @@ function AppContent() {
 
   if (location === "/marketplace" || location === "/catalog") {
     return <MarketplacePage />;
+  }
+
+  if (location === "/suppliers") {
+    return <SuppliersPage />;
   }
 
   if (isLoading) {

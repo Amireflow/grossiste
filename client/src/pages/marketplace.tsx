@@ -17,7 +17,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import type { Product, Category, UserProfile } from "@shared/schema";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 
 type MarketplaceProduct = Product & { supplierName: string; supplierCity: string | null };
 
@@ -32,6 +32,9 @@ const SORT_LABELS: Record<SortOption, string> = {
 
 export default function MarketplacePage() {
   const [search, setSearch] = useState("");
+  const searchString = useSearch();
+  const urlParams = new URLSearchParams(searchString);
+  const supplierFilter = urlParams.get("supplier") || undefined;
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
@@ -49,9 +52,10 @@ export default function MarketplacePage() {
     const params = new URLSearchParams();
     if (selectedCategory !== "all") params.set("category", selectedCategory);
     if (search) params.set("search", search);
+    if (supplierFilter) params.set("supplier", supplierFilter);
     const qs = params.toString();
     return `/api/marketplace/products${qs ? `?${qs}` : ""}`;
-  }, [selectedCategory, search]);
+  }, [selectedCategory, search, supplierFilter]);
 
   const { data: products, isLoading } = useQuery<MarketplaceProduct[]>({
     queryKey: [marketplaceUrl],
@@ -123,6 +127,10 @@ export default function MarketplacePage() {
     ? categories?.find(c => c.id === selectedCategory)?.nameFr
     : null;
 
+  const supplierName = supplierFilter && products && products.length > 0
+    ? products[0].supplierName
+    : null;
+
   const visibleCategories = showAllCategories ? categories : categories?.slice(0, 8);
   const supplierCount = useMemo(() => {
     if (!products) return 0;
@@ -144,6 +152,12 @@ export default function MarketplacePage() {
               </div>
             </Link>
             <div className="flex items-center gap-2">
+              <Link href="/suppliers">
+                <Button variant="ghost" size="sm" data-testid="link-to-suppliers">
+                  <Users className="w-3.5 h-3.5 mr-1.5" />
+                  Fournisseurs
+                </Button>
+              </Link>
               <ThemeToggle />
               {user ? (
                 <div className="flex items-center gap-2">
@@ -307,6 +321,31 @@ export default function MarketplacePage() {
                 >
                   <X className="w-3 h-3" />
                 </Button>
+              </Badge>
+            </div>
+          )}
+
+          {supplierFilter && (
+            <div className="flex items-center gap-3 mb-5 flex-wrap">
+              <Link href="/suppliers">
+                <Button variant="ghost" size="sm" data-testid="button-back-all-suppliers">
+                  <ChevronDown className="w-3.5 h-3.5 mr-1.5 rotate-90" />
+                  Tous les fournisseurs
+                </Button>
+              </Link>
+              <Badge variant="secondary" className="text-xs gap-1.5 pr-1">
+                <Store className="w-3 h-3" />
+                {supplierName || "Fournisseur"}
+                <Link href="/marketplace">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="no-default-hover-elevate ml-0.5"
+                    data-testid="button-clear-supplier-filter"
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </Link>
               </Badge>
             </div>
           )}

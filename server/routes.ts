@@ -120,9 +120,11 @@ export async function registerRoutes(
     try {
       const categoryId = req.query.category as string | undefined;
       const search = req.query.search as string | undefined;
+      const supplierId = req.query.supplier as string | undefined;
       const prods = await storage.getMarketplaceProducts(
         categoryId === "all" ? undefined : categoryId,
-        search || undefined
+        search || undefined,
+        supplierId || undefined
       );
       res.json(prods);
     } catch (error) {
@@ -341,6 +343,15 @@ export async function registerRoutes(
       res.json(order);
     } catch (error) {
       res.status(500).json({ message: "Failed to update order status" });
+    }
+  });
+
+  app.get("/api/suppliers", async (_req, res) => {
+    try {
+      const suppliers = await storage.getSuppliers();
+      res.json(suppliers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get suppliers" });
     }
   });
 

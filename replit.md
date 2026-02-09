@@ -58,9 +58,11 @@ shared/
 - `POST /api/orders/checkout` - Place order from cart (shop_owner only)
 - `PATCH /api/orders/:id/status` - Update order status (supplier only)
 - `GET /api/stats` - Dashboard statistics
+- `GET /api/suppliers` - List all suppliers with product counts (public)
 
 ### Public Pages
-- `/marketplace` - Public marketplace browsable by anyone (no auth required), shows all products with supplier info
+- `/marketplace` - Public marketplace browsable by anyone (no auth required), shows all products with supplier info, supports ?supplier filter
+- `/suppliers` - Public suppliers directory showing all verified suppliers with product counts
 - `/` - Landing page (unauthenticated) or Dashboard (authenticated)
 
 ## Recent Changes
@@ -69,6 +71,7 @@ shared/
 - Order items now include product info (name, imageUrl) via JOIN
 - 2026-02-09: Added public Marketplace page accessible to everyone, expanded from 4 to 12 categories, added 30 products from 3 demo suppliers, suppliers can switch between workspace and marketplace via sidebar link
 - 2026-02-09: Removed Catalogue page - marketplace is now the primary browsing experience. Shop owners can add to cart directly from marketplace. Added sorting, category counts, trust indicators, improved product cards with category badges and stock info
+- 2026-02-09: Added Suppliers directory page (/suppliers) showing all verified suppliers with product counts, locations, descriptions. Clicking "Voir les produits" filters marketplace by supplier. Added suppliers link in sidebar, landing page nav, and marketplace nav
 
 ## User Preferences
 - French language UI
