@@ -327,6 +327,47 @@ export default function MarketplacePage() {
             </div>
           )}
 
+          {suppliers && suppliers.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-start gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin">
+                <button
+                  onClick={() => setSelectedSupplier("all")}
+                  className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
+                  data-testid="button-supplier-all"
+                >
+                  <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 transition-colors ${selectedSupplier === "all" ? "border-primary" : "border-transparent"}`}>
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <Users className="w-6 h-6 sm:w-7 sm:h-7 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[68px] sm:max-w-[84px] line-clamp-2 ${selectedSupplier === "all" ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                    Tous
+                  </span>
+                </button>
+                {suppliers.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setSelectedSupplier(s.id)}
+                    className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
+                    data-testid={`option-supplier-${s.id}`}
+                  >
+                    <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 transition-colors ${selectedSupplier === s.id ? "border-primary" : "border-transparent"}`}>
+                      <div className="w-full h-full bg-primary/15 flex items-center justify-center">
+                        <span className="text-lg sm:text-xl font-bold text-primary">
+                          {s.businessName.substring(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                    <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[68px] sm:max-w-[84px] line-clamp-2 ${selectedSupplier === s.id ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                      {s.businessName}
+                      <span className="text-muted-foreground ml-0.5">({s.productCount})</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
             <p className="text-sm text-muted-foreground" data-testid="text-marketplace-count">
               {sortedProducts.length > 0
@@ -334,20 +375,6 @@ export default function MarketplacePage() {
                 : isLoading ? "Chargement..." : "Aucun produit"}
             </p>
             <div className="flex items-center gap-2 flex-wrap">
-              <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
-                <SelectTrigger className="w-[200px]" data-testid="select-marketplace-supplier">
-                  <Store className="w-3.5 h-3.5 mr-2 text-muted-foreground shrink-0" />
-                  <SelectValue placeholder="Tous les fournisseurs" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les fournisseurs</SelectItem>
-                  {suppliers?.map((s) => (
-                    <SelectItem key={s.id} value={s.id} data-testid={`option-supplier-${s.id}`}>
-                      {s.businessName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
                 <SelectTrigger className="w-[170px]" data-testid="select-marketplace-sort">
                   <ArrowUpDown className="w-3.5 h-3.5 mr-2 text-muted-foreground shrink-0" />
