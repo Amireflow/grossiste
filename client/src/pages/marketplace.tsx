@@ -1,16 +1,18 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, type RefObject } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Search, Package, Store, ArrowRight, X, MapPin, ShoppingCart,
-  ChevronDown, Shield, Truck, Users, TrendingUp,
-  ArrowUpDown, Plus, Minus, CheckCircle, Filter, Zap, Star,
+  ChevronRight, Shield, Truck, Users, TrendingUp,
+  ArrowUpDown, Plus, Minus, CheckCircle, Zap, Star,
+  ChevronLeft, Sparkles, Eye, Grid3X3,
 } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -33,9 +35,9 @@ interface Supplier {
 type SortOption = "newest" | "price_asc" | "price_desc" | "name_asc";
 
 const SORT_LABELS: Record<SortOption, string> = {
-  newest: "Plus récents",
+  newest: "Plus recents",
   price_asc: "Prix croissant",
-  price_desc: "Prix décroissant",
+  price_desc: "Prix decroissant",
   name_asc: "Nom A-Z",
 };
 
@@ -44,12 +46,14 @@ export default function MarketplacePage() {
   const searchString = useSearch();
   const urlParams = new URLSearchParams(searchString);
   const supplierFilterFromUrl = urlParams.get("supplier") || undefined;
-  const [selectedSupplier, setSelectedSupplier] = useState<string>("all");
-  const supplierFilter = selectedSupplier !== "all" ? selectedSupplier : supplierFilterFromUrl;
+  const [selectedSupplier, setSelectedSupplier] = useState<string>(supplierFilterFromUrl || "all");
+  const supplierFilter = selectedSupplier !== "all" ? selectedSupplier : undefined;
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const { user } = useAuth();
   const { toast } = useToast();
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+  const supplierScrollRef = useRef<HTMLDivElement>(null);
 
   const { data: categories } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
   const { data: suppliers } = useQuery<Supplier[]>({ queryKey: ["/api/suppliers"] });
@@ -80,8 +84,8 @@ export default function MarketplacePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
-        title: "Produit ajouté",
-        description: "Le produit a été ajouté à votre panier",
+        title: "Produit ajoute",
+        description: "Le produit a ete ajoute a votre panier",
       });
     },
     onError: () => {
@@ -106,16 +110,13 @@ export default function MarketplacePage() {
     }
   }, [products, sortBy]);
 
-  const categoryCounts = useMemo(() => {
-    if (!products || selectedCategory !== "all") return {};
-    const counts: Record<string, number> = {};
-    products.forEach(p => {
-      if (p.categoryId) {
-        counts[p.categoryId] = (counts[p.categoryId] || 0) + 1;
-      }
-    });
-    return counts;
-  }, [products, selectedCategory]);
+  const sponsoredProducts = useMemo(() => {
+    return sortedProducts.filter(p => p.isSponsored);
+  }, [sortedProducts]);
+
+  const regularProducts = useMemo(() => {
+    return sortedProducts.filter(p => !p.isSponsored);
+  }, [sortedProducts]);
 
   const allProductsUrl = "/api/marketplace/products";
   const { data: allProducts } = useQuery<MarketplaceProduct[]>({
@@ -134,14 +135,30 @@ export default function MarketplacePage() {
     return counts;
   }, [allProducts, products, selectedCategory, search]);
 
-  const supplierName = supplierFilter && products && products.length > 0
-    ? products[0].supplierName
-    : null;
-
   const supplierCount = useMemo(() => {
     if (!products) return 0;
     return new Set(products.map(p => p.supplierId)).size;
   }, [products]);
+
+  const activeFilters = useMemo(() => {
+    const filters: { label: string; onClear: () => void }[] = [];
+    if (selectedCategory !== "all") {
+      const cat = categories?.find(c => c.id === selectedCategory);
+      filters.push({ label: cat?.nameFr || "Categorie", onClear: () => setSelectedCategory("all") });
+    }
+    if (supplierFilter) {
+      const sup = suppliers?.find(s => s.id === supplierFilter);
+      filters.push({ label: sup?.businessName || "Fournisseur", onClear: () => setSelectedSupplier("all") });
+    }
+    if (search) {
+      filters.push({ label: `"${search}"`, onClear: () => setSearch("") });
+    }
+    return filters;
+  }, [selectedCategory, supplierFilter, search, categories, suppliers]);
+
+  const scrollContainer = (ref: RefObject<HTMLDivElement | null>, dir: "left" | "right") => {
+    ref.current?.scrollBy({ left: dir === "left" ? -200 : 200, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -154,7 +171,6 @@ export default function MarketplacePage() {
                   <Store className="w-4 h-4 text-primary-foreground" />
                 </div>
                 <span className="font-serif text-xl font-bold tracking-tight">SokoB2B</span>
-                <Badge variant="secondary" className="text-[10px] hidden sm:inline-flex">Marketplace</Badge>
               </div>
             </Link>
             <div className="flex items-center gap-2">
@@ -195,72 +211,81 @@ export default function MarketplacePage() {
       </nav>
 
       <div className="pt-14">
-        <div className="bg-card border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
-              <div>
-                <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-marketplace-title">
-                  Marketplace B2B
-                </h1>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Trouvez les meilleurs prix de gros pour votre commerce
-                </p>
-              </div>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-                <span className="flex items-center gap-1.5" data-testid="text-stat-products">
-                  <Package className="w-3.5 h-3.5 text-primary" />
-                  <span className="font-medium text-foreground">{products?.length || 0}</span> produits
-                </span>
-                <span className="flex items-center gap-1.5" data-testid="text-stat-suppliers">
-                  <Users className="w-3.5 h-3.5 text-primary" />
-                  <span className="font-medium text-foreground">{supplierCount}</span> fournisseurs
-                </span>
-                <span className="flex items-center gap-1.5" data-testid="text-stat-categories">
-                  <Filter className="w-3.5 h-3.5 text-primary" />
-                  <span className="font-medium text-foreground">{categories?.length || 0}</span> categories
-                </span>
+        <div className="bg-primary/[0.04] dark:bg-primary/[0.06] border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+            <div className="max-w-2xl">
+              <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight mb-2" data-testid="text-marketplace-title">
+                Trouvez vos produits de gros
+              </h1>
+              <p className="text-muted-foreground text-sm sm:text-base mb-6">
+                Comparez les prix, commandez directement aupres des fournisseurs verifies
+              </p>
+              <div className="relative max-w-xl">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher un produit, une marque..."
+                  className="pl-10 pr-10 bg-background border-border/60 h-11"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  data-testid="input-marketplace-search"
+                />
+                {search && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 no-default-hover-elevate"
+                    onClick={() => setSearch("")}
+                    data-testid="button-clear-marketplace-search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                )}
               </div>
             </div>
-            <div className="relative max-w-xl">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher un produit, une marque..."
-                className="pl-9 bg-background"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                data-testid="input-marketplace-search"
-              />
-              {search && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 no-default-hover-elevate"
-                  onClick={() => setSearch("")}
-                  data-testid="button-clear-marketplace-search"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </Button>
-              )}
+            <div className="flex items-center gap-5 mt-6 text-xs text-muted-foreground flex-wrap">
+              <span className="flex items-center gap-1.5" data-testid="text-stat-products">
+                <Package className="w-3.5 h-3.5 text-primary" />
+                <span className="font-semibold text-foreground">{products?.length || 0}</span> produits
+              </span>
+              <span className="flex items-center gap-1.5" data-testid="text-stat-suppliers">
+                <Users className="w-3.5 h-3.5 text-primary" />
+                <span className="font-semibold text-foreground">{supplierCount}</span> fournisseurs
+              </span>
+              <span className="flex items-center gap-1.5" data-testid="text-stat-categories">
+                <Grid3X3 className="w-3.5 h-3.5 text-primary" />
+                <span className="font-semibold text-foreground">{categories?.length || 0}</span> categories
+              </span>
             </div>
           </div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
           {categories && categories.length > 0 && !search && (
-            <div className="mb-5">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Categories</p>
-              <div className="flex items-start gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin">
+            <div className="mb-6">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Categories</p>
+                <div className="flex items-center gap-1">
+                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(categoryScrollRef, "left")} data-testid="button-scroll-categories-left">
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(categoryScrollRef, "right")} data-testid="button-scroll-categories-right">
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+              <div ref={categoryScrollRef} className="flex items-start gap-2.5 overflow-x-auto pb-2 scrollbar-thin scroll-smooth">
                 <button
                   onClick={() => setSelectedCategory("all")}
                   className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
                   data-testid="button-category-all"
                 >
-                  <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden border-2 transition-colors ${selectedCategory === "all" ? "border-primary" : "border-transparent"}`}>
+                  <div className={`w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-lg overflow-hidden border-2 transition-all ${selectedCategory === "all" ? "border-primary ring-2 ring-primary/20" : "border-transparent"}`}>
                     <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <Package className="w-6 h-6 sm:w-7 sm:h-7 text-muted-foreground" />
+                      <Package className="w-6 h-6 text-muted-foreground" />
                     </div>
                   </div>
-                  <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[68px] sm:max-w-[84px] line-clamp-2 ${selectedCategory === "all" ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                  <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[68px] sm:max-w-[76px] line-clamp-2 ${selectedCategory === "all" ? "font-bold text-primary" : "text-muted-foreground font-medium"}`}>
                     Tout
                   </span>
                 </button>
@@ -271,17 +296,17 @@ export default function MarketplacePage() {
                     className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
                     data-testid={`button-category-${cat.slug}`}
                   >
-                    <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden border-2 transition-colors ${selectedCategory === cat.id ? "border-primary" : "border-transparent"}`}>
+                    <div className={`w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-lg overflow-hidden border-2 transition-all ${selectedCategory === cat.id ? "border-primary ring-2 ring-primary/20" : "border-transparent"}`}>
                       {cat.imageUrl ? (
                         <img src={cat.imageUrl} alt={cat.nameFr} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-muted" />
                       )}
                     </div>
-                    <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[68px] sm:max-w-[84px] line-clamp-2 ${selectedCategory === cat.id ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                    <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[68px] sm:max-w-[76px] line-clamp-2 ${selectedCategory === cat.id ? "font-bold text-primary" : "text-muted-foreground font-medium"}`}>
                       {cat.nameFr}
                       {globalCategoryCounts[cat.id] !== undefined && (
-                        <span className="text-muted-foreground ml-0.5">({globalCategoryCounts[cat.id]})</span>
+                        <span className="text-muted-foreground/70 ml-0.5 font-normal">({globalCategoryCounts[cat.id]})</span>
                       )}
                     </span>
                   </button>
@@ -290,57 +315,31 @@ export default function MarketplacePage() {
             </div>
           )}
 
-          {supplierFilter && (
-            <div className="flex items-center gap-3 mb-5 flex-wrap">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedSupplier("all")}
-                data-testid="button-back-all-suppliers"
-              >
-                <ChevronDown className="w-3.5 h-3.5 mr-1.5 rotate-90" />
-                Tous les fournisseurs
-              </Button>
-              <Badge variant="secondary" className="text-xs gap-1.5 pr-1">
-                <Store className="w-3 h-3" />
-                {supplierName || "Fournisseur"}
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="no-default-hover-elevate ml-0.5"
-                  onClick={() => setSelectedSupplier("all")}
-                  data-testid="button-clear-supplier-filter"
-                >
-                  <X className="w-3 h-3" />
-                </Button>
-              </Badge>
-            </div>
-          )}
-
-          {search && (
-            <div className="flex items-center gap-3 mb-5 flex-wrap">
-              <p className="text-sm text-muted-foreground">
-                Résultats pour "<span className="font-medium text-foreground">{search}</span>"
-                {sortedProducts.length > 0 && ` (${sortedProducts.length} produit${sortedProducts.length !== 1 ? "s" : ""})`}
-              </p>
-            </div>
-          )}
-
           {suppliers && suppliers.length > 0 && (
-            <div className="mb-5">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Fournisseurs</p>
-              <div className="flex items-start gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin">
+            <div className="mb-6">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fournisseurs</p>
+                <div className="flex items-center gap-1">
+                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(supplierScrollRef, "left")} data-testid="button-scroll-suppliers-left">
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(supplierScrollRef, "right")} data-testid="button-scroll-suppliers-right">
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+              <div ref={supplierScrollRef} className="flex items-start gap-2.5 overflow-x-auto pb-2 scrollbar-thin scroll-smooth">
                 <button
                   onClick={() => setSelectedSupplier("all")}
                   className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
                   data-testid="button-supplier-all"
                 >
-                  <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 transition-colors ${selectedSupplier === "all" ? "border-primary" : "border-transparent"}`}>
+                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 transition-all ${selectedSupplier === "all" ? "border-primary ring-2 ring-primary/20" : "border-transparent"}`}>
                     <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <Users className="w-6 h-6 sm:w-7 sm:h-7 text-muted-foreground" />
+                      <Users className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
                     </div>
                   </div>
-                  <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[68px] sm:max-w-[84px] line-clamp-2 ${selectedSupplier === "all" ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                  <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[64px] sm:max-w-[72px] line-clamp-2 ${selectedSupplier === "all" ? "font-bold text-primary" : "text-muted-foreground font-medium"}`}>
                     Tous
                   </span>
                 </button>
@@ -351,20 +350,51 @@ export default function MarketplacePage() {
                     className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
                     data-testid={`option-supplier-${s.id}`}
                   >
-                    <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 transition-colors ${selectedSupplier === s.id ? "border-primary" : "border-transparent"}`}>
-                      <div className="w-full h-full bg-primary/15 flex items-center justify-center">
-                        <span className="text-lg sm:text-xl font-bold text-primary">
+                    <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 transition-all ${selectedSupplier === s.id ? "border-primary ring-2 ring-primary/20" : "border-transparent"}`}>
+                      <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-base sm:text-lg font-bold text-primary">
                           {s.businessName.substring(0, 2).toUpperCase()}
                         </span>
                       </div>
                     </div>
-                    <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[68px] sm:max-w-[84px] line-clamp-2 ${selectedSupplier === s.id ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                    <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[64px] sm:max-w-[72px] line-clamp-2 ${selectedSupplier === s.id ? "font-bold text-primary" : "text-muted-foreground font-medium"}`}>
                       {s.businessName}
-                      <span className="text-muted-foreground ml-0.5">({s.productCount})</span>
+                      <span className="text-muted-foreground/70 ml-0.5 font-normal">({s.productCount})</span>
                     </span>
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {activeFilters.length > 0 && (
+            <div className="flex items-center gap-2 mb-5 flex-wrap">
+              <span className="text-xs text-muted-foreground">Filtres actifs :</span>
+              {activeFilters.map((f, i) => (
+                <Badge key={i} variant="secondary" className="text-xs gap-1 pr-1">
+                  {f.label}
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="no-default-hover-elevate ml-0.5 h-4 w-4"
+                    onClick={f.onClear}
+                    data-testid={`button-clear-filter-${i}`}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </Badge>
+              ))}
+              {activeFilters.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-muted-foreground"
+                  onClick={() => { setSearch(""); setSelectedCategory("all"); setSelectedSupplier("all"); }}
+                  data-testid="button-marketplace-reset-filters"
+                >
+                  Tout effacer
+                </Button>
+              )}
             </div>
           )}
 
@@ -374,102 +404,135 @@ export default function MarketplacePage() {
                 ? `${sortedProducts.length} produit${sortedProducts.length !== 1 ? "s" : ""} disponible${sortedProducts.length !== 1 ? "s" : ""}`
                 : isLoading ? "Chargement..." : "Aucun produit"}
             </p>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-                <SelectTrigger className="w-[170px]" data-testid="select-marketplace-sort">
-                  <ArrowUpDown className="w-3.5 h-3.5 mr-2 text-muted-foreground shrink-0" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(SORT_LABELS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+              <SelectTrigger className="w-[170px]" data-testid="select-marketplace-sort">
+                <ArrowUpDown className="w-3.5 h-3.5 mr-2 text-muted-foreground shrink-0" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(SORT_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <Card key={i}>
-                  <CardContent className="p-3 sm:p-4">
-                    <Skeleton className="w-full aspect-square rounded-md mb-3" />
-                    <Skeleton className="h-4 w-3/4 mb-2" />
-                    <Skeleton className="h-3 w-1/2 mb-2" />
-                    <Skeleton className="h-3 w-2/3 mb-3" />
-                    <Skeleton className="h-8 w-full" />
+                  <CardContent className="p-0">
+                    <Skeleton className="w-full aspect-[4/3] rounded-t-md" />
+                    <div className="p-3 sm:p-4 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                      <Skeleton className="h-3 w-2/3" />
+                      <Skeleton className="h-9 w-full mt-2" />
+                    </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
           ) : sortedProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
-              {sortedProducts.map((product) => (
-                <MarketplaceProductCard
-                  key={product.id}
-                  product={product}
-                  isShopOwner={isShopOwner}
-                  isLoggedIn={!!user}
-                  onAddToCart={(qty) => addToCart.mutate({ productId: product.id, quantity: qty })}
-                  isAdding={addToCart.isPending}
-                  categories={categories}
-                />
-              ))}
+            <div className="space-y-8">
+              {sponsoredProducts.length > 0 && selectedCategory === "all" && !search && !supplierFilter && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <p className="text-sm font-semibold">Produits mis en avant</p>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
+                    {sponsoredProducts.map((product) => (
+                      <MarketplaceProductCard
+                        key={product.id}
+                        product={product}
+                        isShopOwner={isShopOwner}
+                        isLoggedIn={!!user}
+                        onAddToCart={(qty) => addToCart.mutate({ productId: product.id, quantity: qty })}
+                        isAdding={addToCart.isPending}
+                        categories={categories}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                {sponsoredProducts.length > 0 && selectedCategory === "all" && !search && !supplierFilter && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <Package className="w-4 h-4 text-muted-foreground" />
+                    <p className="text-sm font-semibold">Tous les produits</p>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
+                  {(sponsoredProducts.length > 0 && selectedCategory === "all" && !search && !supplierFilter ? regularProducts : sortedProducts).map((product) => (
+                    <MarketplaceProductCard
+                      key={product.id}
+                      product={product}
+                      isShopOwner={isShopOwner}
+                      isLoggedIn={!!user}
+                      onAddToCart={(qty) => addToCart.mutate({ productId: product.id, quantity: qty })}
+                      isAdding={addToCart.isPending}
+                      categories={categories}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                <Package className="w-7 h-7 text-muted-foreground" />
+            <div className="text-center py-20">
+              <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-5">
+                <Search className="w-8 h-8 text-muted-foreground" />
               </div>
-              <h3 className="font-medium text-lg mb-2">Aucun produit trouvé</h3>
-              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+              <h3 className="font-serif text-xl font-bold mb-2">Aucun produit trouve</h3>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-5">
                 {search
-                  ? "Essayez avec d'autres termes de recherche"
-                  : "Les fournisseurs ajouteront bientôt leurs produits"}
+                  ? "Essayez avec d'autres termes de recherche ou modifiez vos filtres"
+                  : "Les fournisseurs ajouteront bientot leurs produits"}
               </p>
-              {(search || selectedCategory !== "all" || supplierFilter) && (
+              {activeFilters.length > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-4"
                   onClick={() => { setSearch(""); setSelectedCategory("all"); setSelectedSupplier("all"); }}
-                  data-testid="button-marketplace-reset-filters"
+                  data-testid="button-marketplace-reset-filters-empty"
                 >
-                  Réinitialiser les filtres
+                  Reinitialiser les filtres
                 </Button>
               )}
             </div>
           )}
 
-          <div className="mt-16 grid sm:grid-cols-3 gap-8 py-10 border-t">
-            <div className="text-center">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                <Shield className="w-4 h-4 text-primary" />
+          <div className="mt-16 py-10 border-t">
+            <div className="grid sm:grid-cols-3 gap-8">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                  <Shield className="w-5 h-5 text-primary" />
+                </div>
+                <h4 className="font-semibold text-sm mb-1" data-testid="text-trust-verified">Fournisseurs verifies</h4>
+                <p className="text-xs text-muted-foreground max-w-[200px]">Tous nos partenaires sont verifies et fiables</p>
               </div>
-              <h4 className="font-medium text-sm mb-1" data-testid="text-trust-verified">Fournisseurs verifies</h4>
-              <p className="text-xs text-muted-foreground">Tous nos partenaires sont verifies et fiables</p>
-            </div>
-            <div className="text-center">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                <Truck className="w-4 h-4 text-primary" />
+              <div className="flex flex-col items-center text-center">
+                <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                  <Truck className="w-5 h-5 text-primary" />
+                </div>
+                <h4 className="font-semibold text-sm mb-1" data-testid="text-trust-delivery">Livraison rapide</h4>
+                <p className="text-xs text-muted-foreground max-w-[200px]">Reseau de livreurs dans toute l'Afrique de l'Ouest</p>
               </div>
-              <h4 className="font-medium text-sm mb-1" data-testid="text-trust-delivery">Livraison rapide</h4>
-              <p className="text-xs text-muted-foreground">Reseau de livreurs dans toute l'Afrique de l'Ouest</p>
-            </div>
-            <div className="text-center">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                <TrendingUp className="w-4 h-4 text-primary" />
+              <div className="flex flex-col items-center text-center">
+                <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                </div>
+                <h4 className="font-semibold text-sm mb-1" data-testid="text-trust-prices">Meilleurs prix de gros</h4>
+                <p className="text-xs text-muted-foreground max-w-[200px]">Comparez et economisez sur vos approvisionnements</p>
               </div>
-              <h4 className="font-medium text-sm mb-1" data-testid="text-trust-prices">Meilleurs prix de gros</h4>
-              <p className="text-xs text-muted-foreground">Comparez et economisez sur vos approvisionnements</p>
             </div>
           </div>
 
           {!user && products && products.length > 0 && (
-            <Card className="mt-6 overflow-visible">
+            <Card className="overflow-visible mb-8">
               <CardContent className="p-8 sm:p-10 text-center">
-                <h3 className="font-serif text-xl sm:text-2xl font-bold mb-3" data-testid="text-marketplace-cta-title">
+                <h3 className="font-serif text-xl sm:text-2xl font-bold mb-2" data-testid="text-marketplace-cta-title">
                   Pret a passer commande ?
                 </h3>
                 <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm">
@@ -494,7 +557,7 @@ export default function MarketplacePage() {
         </div>
       </div>
 
-      <footer className="border-t mt-8">
+      <footer className="border-t">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
@@ -540,134 +603,149 @@ function MarketplaceProductCard({
   };
 
   return (
-    <Card className={`overflow-visible group transition-all ${product.isSponsored && product.boostLevel === "premium" ? "border-amber-400 dark:border-amber-600" : ""}`} data-testid={`card-marketplace-product-${product.id}`}>
-      <CardContent className="p-3 sm:p-4">
-        <div className="relative w-full aspect-square rounded-md overflow-hidden mb-3 bg-muted">
+    <Card
+      className={`overflow-visible group transition-all ${
+        product.isSponsored && product.boostLevel === "premium"
+          ? "ring-1 ring-amber-400/50 dark:ring-amber-600/50"
+          : ""
+      }`}
+      data-testid={`card-marketplace-product-${product.id}`}
+    >
+      <CardContent className="p-0">
+        <div className="relative w-full aspect-[4/3] rounded-t-md overflow-hidden bg-muted">
           {product.imageUrl ? (
             <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-muted">
-              <Package className="w-10 h-10 text-muted-foreground/50" />
+              <Package className="w-10 h-10 text-muted-foreground/30" />
             </div>
           )}
           {isOutOfStock && (
             <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-              <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">Rupture</Badge>
+              <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">Rupture de stock</Badge>
             </div>
           )}
-          {product.stock && product.stock > 0 && product.stock <= 10 && (
+          {product.stock && product.stock > 0 && product.stock <= 10 && !isOutOfStock && (
             <div className="absolute top-2 right-2">
               <Badge variant="secondary" className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                {product.stock} en stock
+                {product.stock} restant{product.stock > 1 ? "s" : ""}
               </Badge>
             </div>
           )}
-          {product.isSponsored ? (
-            <div className="absolute top-2 left-2 flex flex-col gap-1">
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            {product.isSponsored && (
               <Badge className="text-[10px] bg-amber-500 text-white border-0 gap-1" data-testid={`badge-sponsored-${product.id}`}>
                 {product.boostLevel === "premium" ? <Star className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
                 Sponsorise
               </Badge>
-              {categoryName && (
-                <Badge variant="secondary" className="text-[10px] bg-black/70 text-white border-0">
-                  {categoryName}
-                </Badge>
-              )}
-            </div>
-          ) : categoryName ? (
-            <div className="absolute top-2 left-2">
-              <Badge variant="secondary" className="text-[10px] bg-black/70 text-white border-0">
+            )}
+            {categoryName && (
+              <Badge variant="secondary" className="text-[10px] bg-black/60 text-white border-0">
                 {categoryName}
               </Badge>
-            </div>
-          ) : null}
+            )}
+          </div>
         </div>
 
-        <h3 className="font-medium text-sm mb-0.5 line-clamp-2 leading-tight min-h-[2.5rem]" title={product.name} data-testid={`text-marketplace-product-name-${product.id}`}>
-          {product.name}
-        </h3>
+        <div className="p-3 sm:p-4">
+          <h3 className="font-semibold text-sm mb-1 line-clamp-2 leading-snug min-h-[2.5rem]" title={product.name} data-testid={`text-marketplace-product-name-${product.id}`}>
+            {product.name}
+          </h3>
 
-        <div className="flex items-center gap-1.5 mb-1.5 text-muted-foreground">
-          <MapPin className="w-3 h-3 shrink-0" />
-          <span className="text-[11px] truncate" data-testid={`text-supplier-${product.id}`}>
-            {product.supplierName}{product.supplierCity ? ` - ${product.supplierCity}` : ""}
-          </span>
-        </div>
+          {product.description && (
+            <p className="text-[11px] text-muted-foreground line-clamp-1 mb-1.5">{product.description}</p>
+          )}
 
-        <div className="flex items-baseline gap-1.5 mb-2.5 flex-wrap">
-          <span className="font-bold text-primary text-sm tabular-nums" data-testid={`text-marketplace-price-${product.id}`}>
-            {formatPrice(product.price, product.currency || "XOF")}
-          </span>
-          <span className="text-[11px] text-muted-foreground">/ {product.unit}</span>
-        </div>
+          <div className="flex items-center gap-1.5 mb-2 text-muted-foreground">
+            <Store className="w-3 h-3 shrink-0" />
+            <span className="text-[11px] truncate" data-testid={`text-supplier-${product.id}`}>
+              {product.supplierName}
+            </span>
+            {product.supplierCity && (
+              <>
+                <span className="text-[9px]">-</span>
+                <MapPin className="w-2.5 h-2.5 shrink-0" />
+                <span className="text-[11px] truncate">{product.supplierCity}</span>
+              </>
+            )}
+          </div>
 
-        {product.minOrder && product.minOrder > 1 && (
-          <p className="text-[11px] text-muted-foreground mb-2">
-            Min. {product.minOrder} {product.unit}
-          </p>
-        )}
+          <div className="flex items-baseline gap-1.5 mb-3 flex-wrap">
+            <span className="font-bold text-primary text-base tabular-nums" data-testid={`text-marketplace-price-${product.id}`}>
+              {formatPrice(product.price, product.currency || "XOF")}
+            </span>
+            <span className="text-[11px] text-muted-foreground">/ {product.unit}</span>
+          </div>
 
-        {isShopOwner ? (
-          isOutOfStock ? (
-            <Button variant="secondary" size="sm" className="w-full" disabled data-testid={`button-unavailable-${product.id}`}>
-              Indisponible
-            </Button>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center border rounded-md shrink-0">
+          {product.minOrder && product.minOrder > 1 && (
+            <p className="text-[10px] text-muted-foreground mb-2 flex items-center gap-1">
+              <Package className="w-3 h-3" />
+              Min. {product.minOrder} {product.unit}
+            </p>
+          )}
+
+          {isShopOwner ? (
+            isOutOfStock ? (
+              <Button variant="secondary" size="sm" className="w-full" disabled data-testid={`button-unavailable-${product.id}`}>
+                Indisponible
+              </Button>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center border rounded-md shrink-0">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="no-default-hover-elevate"
+                    onClick={() => setQty(Math.max(product.minOrder || 1, qty - 1))}
+                    data-testid={`button-qty-minus-${product.id}`}
+                  >
+                    <Minus className="w-3 h-3" />
+                  </Button>
+                  <span className="text-xs w-6 text-center tabular-nums" data-testid={`text-qty-${product.id}`}>{qty}</span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="no-default-hover-elevate"
+                    onClick={() => setQty(qty + 1)}
+                    data-testid={`button-qty-plus-${product.id}`}
+                  >
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                </div>
                 <Button
-                  size="icon"
-                  variant="ghost"
-                  className="no-default-hover-elevate"
-                  onClick={() => setQty(Math.max(product.minOrder || 1, qty - 1))}
-                  data-testid={`button-qty-minus-${product.id}`}
+                  size="sm"
+                  className="flex-1 text-xs"
+                  onClick={handleAdd}
+                  disabled={isAdding}
+                  data-testid={`button-add-cart-${product.id}`}
                 >
-                  <Minus className="w-3 h-3" />
-                </Button>
-                <span className="text-xs w-6 text-center tabular-nums" data-testid={`text-qty-${product.id}`}>{qty}</span>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="no-default-hover-elevate"
-                  onClick={() => setQty(qty + 1)}
-                  data-testid={`button-qty-plus-${product.id}`}
-                >
-                  <Plus className="w-3 h-3" />
+                  {justAdded ? (
+                    <>
+                      <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                      Ajoute
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                      Ajouter
+                    </>
+                  )}
                 </Button>
               </div>
-              <Button
-                size="sm"
-                className="flex-1 text-xs"
-                onClick={handleAdd}
-                disabled={isAdding}
-                data-testid={`button-add-cart-${product.id}`}
-              >
-                {justAdded ? (
-                  <>
-                    <CheckCircle className="w-3.5 h-3.5 mr-1" />
-                    Ajoute
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-                    Ajouter
-                  </>
-                )}
-              </Button>
-            </div>
-          )
-        ) : isLoggedIn ? (
-          <Button variant="outline" size="sm" className="w-full text-xs" disabled data-testid={`button-supplier-view-${product.id}`}>
-            <Package className="w-3.5 h-3.5 mr-1" />
-            Voir le produit
-          </Button>
-        ) : (
-          <a href="/api/login">
-            <Button variant="outline" size="sm" className="w-full text-xs" data-testid={`button-login-to-order-${product.id}`}>
-              Connexion pour commander
+            )
+          ) : isLoggedIn ? (
+            <Button variant="outline" size="sm" className="w-full text-xs" disabled data-testid={`button-supplier-view-${product.id}`}>
+              <Eye className="w-3.5 h-3.5 mr-1" />
+              Voir le produit
             </Button>
-          </a>
-        )}
+          ) : (
+            <a href="/api/login">
+              <Button variant="outline" size="sm" className="w-full text-xs" data-testid={`button-login-to-order-${product.id}`}>
+                Connexion pour commander
+              </Button>
+            </a>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
