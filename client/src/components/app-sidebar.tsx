@@ -28,12 +28,19 @@ import {
   Globe,
   Users,
   Zap,
+  Wallet,
 } from "lucide-react";
-import type { UserProfile } from "@shared/schema";
+import type { UserProfile, WalletTransaction } from "@shared/schema";
+import { formatPrice } from "@/lib/constants";
 
 interface CartItemBasic {
   id: string;
   quantity: number;
+}
+
+interface WalletData {
+  balance: string;
+  transactions: WalletTransaction[];
 }
 
 export function AppSidebar() {
@@ -50,8 +57,14 @@ export function AppSidebar() {
     enabled: !!user && profile?.role === "shop_owner",
   });
 
+  const { data: walletData } = useQuery<WalletData>({
+    queryKey: ["/api/wallet"],
+    enabled: !!user && profile?.role === "supplier",
+  });
+
   const isSupplier = profile?.role === "supplier";
   const cartCount = cartItems?.length || 0;
+  const walletBalance = parseFloat(walletData?.balance || "0");
 
   const shopMenuItems = [
     { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
@@ -63,6 +76,7 @@ export function AppSidebar() {
     { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
     { title: "Mes produits", url: "/products", icon: Package },
     { title: "Mes Boosts", url: "/boosts", icon: Zap },
+    { title: "Portefeuille", url: "/wallet", icon: Wallet },
     { title: "Commandes reçues", url: "/orders", icon: ClipboardList },
   ];
 
@@ -121,6 +135,11 @@ export function AppSidebar() {
                         <Badge variant="default" className="text-[10px]" data-testid="badge-cart-count">
                           {(item as any).badge}
                         </Badge>
+                      )}
+                      {item.url === "/wallet" && walletBalance > 0 && (
+                        <span className="text-[10px] text-muted-foreground font-medium" data-testid="text-sidebar-wallet-balance">
+                          {formatPrice(walletBalance)}
+                        </span>
                       )}
                     </Link>
                   </SidebarMenuButton>

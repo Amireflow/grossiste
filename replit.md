@@ -63,6 +63,8 @@ shared/
 - `GET /api/boosts` - Supplier's boosts with product names
 - `POST /api/boosts` - Create boost (productId, boostLevel, durationDays)
 - `PATCH /api/boosts/:id` - Update boost status (active/paused/expired)
+- `GET /api/wallet` - Supplier's wallet balance and transaction history
+- `POST /api/wallet/topup` - Top up wallet (amount: number, min 1000, max 1000000)
 
 ### Public Pages
 - `/marketplace` - Public marketplace browsable by anyone (no auth required), shows all products with supplier info, supports ?supplier filter
@@ -77,6 +79,7 @@ shared/
 - 2026-02-09: Removed Catalogue page - marketplace is now the primary browsing experience. Shop owners can add to cart directly from marketplace. Added sorting, category counts, trust indicators, improved product cards with category badges and stock info
 - 2026-02-09: Added Suppliers directory page (/suppliers) showing all verified suppliers with product counts, locations, descriptions. Clicking "Voir les produits" filters marketplace by supplier. Added suppliers link in sidebar, landing page nav, and marketplace nav
 - 2026-02-09: Added Boost/Sponsored Ads system - suppliers can boost products (standard/premium levels, 7/14/30 day durations). Marketplace prioritizes boosted products (premium > standard > regular) with "Sponsorisé" badges. Added /boosts management page, boost controls on Products page, sidebar link for suppliers
+- 2026-02-09: Added Prepaid Wallet system for suppliers - walletBalance field on user_profiles, wallet_transactions table for audit trail. Suppliers must have sufficient balance to activate boosts (atomic charge with DB transaction). Wallet page (/wallet) with preset top-up amounts, custom amount input, transaction history. Wallet balance shown in sidebar and boost dialog. Pricing: standard 5k/8.5k/15k FCFA, premium 10k/17k/30k FCFA for 7/14/30 days
 
 ## User Preferences
 - French language UI

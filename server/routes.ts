@@ -369,6 +369,50 @@ export async function registerRoutes(
     }
   });
 
+  const BOOST_PRICES: Record<string, Record<string, number>> = {
+    standard: { "7": 5000, "14": 8500, "30": 15000 },
+    premium: { "7": 10000, "14": 17000, "30": 30000 },
+  };
+
+  app.get("/api/wallet", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profile = await storage.getProfileByUserId(userId);
+      if (!profile || profile.role !== "supplier") {
+        return res.status(403).json({ message: "Only suppliers can access wallet" });
+      }
+      const balance = await storage.getWalletBalance(userId);
+      const transactions = await storage.getWalletTransactions(userId);
+      res.json({ balance, transactions });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get wallet" });
+    }
+  });
+
+  app.post("/api/wallet/topup", isAuthenticated, async (req: any, res) => {
+    try {
+      const topupSchema = z.object({
+        amount: z.number().min(1000).max(1000000),
+      });
+      const parsed = topupSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Montant invalide (min 1 000 FCFA)", errors: parsed.error.flatten() });
+      }
+
+      const userId = req.user.claims.sub;
+      const profile = await storage.getProfileByUserId(userId);
+      if (!profile || profile.role !== "supplier") {
+        return res.status(403).json({ message: "Only suppliers can top up wallet" });
+      }
+
+      const tx = await storage.topUpWallet(userId, parsed.data.amount, `Recharge de ${parsed.data.amount.toLocaleString("fr-FR")} FCFA`);
+      const newBalance = await storage.getWalletBalance(userId);
+      res.status(201).json({ transaction: tx, balance: newBalance });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to top up wallet" });
+    }
+  });
+
   app.post("/api/boosts", isAuthenticated, async (req: any, res) => {
     try {
       const schema = z.object({
@@ -397,6 +441,19 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Product already has an active boost" });
       }
 
+      const durationKey = String(parsed.data.durationDays);
+      const price = BOOST_PRICES[parsed.data.boostLevel]?.[durationKey];
+      if (!price) {
+        return res.status(400).json({ message: "Invalid boost level or duration combination" });
+      }
+
+      const walletTx = await storage.chargeWalletForBoost(
+        userId,
+        price,
+        "",
+        `Boost ${parsed.data.boostLevel} - ${product.name} (${parsed.data.durationDays}j)`
+      );
+
       const startDate = new Date();
       const endDate = new Date();
       endDate.setDate(endDate.getDate() + parsed.data.durationDays);
@@ -409,9 +466,14 @@ export async function registerRoutes(
         startDate,
         endDate,
       });
-      res.status(201).json(boost);
-    } catch (error) {
+
+      const newBalance = await storage.getWalletBalance(userId);
+      res.status(201).json({ ...boost, newBalance });
+    } catch (error: any) {
       console.error("Error creating boost:", error);
+      if (error.message === "Solde insuffisant") {
+        return res.status(400).json({ message: "Solde insuffisant", code: "INSUFFICIENT_BALANCE" });
+      }
       res.status(500).json({ message: "Failed to create boost" });
     }
   });

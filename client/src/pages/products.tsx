@@ -15,11 +15,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Link } from "wouter";
-import { Plus, Package, Pencil, EyeOff, Zap, Rocket, Clock, Star } from "lucide-react";
+import { Plus, Package, Pencil, EyeOff, Zap, Rocket, Clock, Star, Wallet, AlertTriangle } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Product, ProductBoost } from "@shared/schema";
+import type { Product, ProductBoost, WalletTransaction } from "@shared/schema";
 
 interface BoostWithProduct extends ProductBoost {
   productName: string;
@@ -37,6 +37,10 @@ export default function ProductsPage() {
 
   const { data: boosts } = useQuery<BoostWithProduct[]>({
     queryKey: ["/api/boosts"],
+  });
+
+  const { data: walletData } = useQuery<{ balance: string; transactions: WalletTransaction[] }>({
+    queryKey: ["/api/wallet"],
   });
 
   const toggleActive = useMutation({
@@ -61,11 +65,17 @@ export default function ProductsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/boosts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/my-products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/wallet"] });
       toast({ title: "Boost activ\u00e9", description: "Votre produit est maintenant sponsoris\u00e9 dans le marketplace" });
       setBoostDialogProduct(null);
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error?.message || "Impossible d'activer le boost", variant: "destructive" });
+      const msg = error?.message || "";
+      if (msg.includes("insuffisant") || msg.includes("INSUFFICIENT")) {
+        toast({ title: "Solde insuffisant", description: "Rechargez votre portefeuille pour activer ce boost", variant: "destructive" });
+      } else {
+        toast({ title: "Erreur", description: msg || "Impossible d'activer le boost", variant: "destructive" });
+      }
     },
   });
 
@@ -315,11 +325,39 @@ export default function ProductsPage() {
               </Select>
             </div>
 
-            <div className="rounded-md bg-muted/50 p-3 flex items-center justify-between gap-3">
-              <span className="text-sm">Co\u00fbt du boost</span>
-              <span className="font-bold text-primary" data-testid="text-boost-price">
-                {formatPrice(BOOST_PRICES[boostLevel]?.[boostDuration] || 0)}
-              </span>
+            <div className="space-y-2">
+              <div className="rounded-md bg-muted/50 p-3 flex items-center justify-between gap-3">
+                <span className="text-sm">Co\u00fbt du boost</span>
+                <span className="font-bold text-foreground" data-testid="text-boost-price">
+                  {formatPrice(BOOST_PRICES[boostLevel]?.[boostDuration] || 0)}
+                </span>
+              </div>
+              <div className="rounded-md bg-muted/50 p-3 flex items-center justify-between gap-3">
+                <span className="text-sm flex items-center gap-1.5">
+                  <Wallet className="w-3.5 h-3.5" />
+                  Mon solde
+                </span>
+                <span className="font-bold text-foreground" data-testid="text-wallet-balance">
+                  {formatPrice(parseFloat(walletData?.balance || "0"))}
+                </span>
+              </div>
+              {parseFloat(walletData?.balance || "0") < (BOOST_PRICES[boostLevel]?.[boostDuration] || 0) && (
+                <div className="rounded-md bg-destructive/10 p-3 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-medium text-destructive">Solde insuffisant</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Rechargez votre portefeuille pour activer ce boost.
+                    </p>
+                    <Link href="/wallet">
+                      <Button variant="outline" size="sm" className="mt-2 text-xs" data-testid="button-goto-topup">
+                        <Wallet className="w-3 h-3 mr-1" />
+                        Recharger
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -337,11 +375,11 @@ export default function ProductsPage() {
                   });
                 }
               }}
-              disabled={createBoost.isPending}
+              disabled={createBoost.isPending || parseFloat(walletData?.balance || "0") < (BOOST_PRICES[boostLevel]?.[boostDuration] || 0)}
               data-testid="button-confirm-boost"
             >
               <Zap className="w-4 h-4 mr-1" />
-              {createBoost.isPending ? "Activation..." : "Activer le boost"}
+              {createBoost.isPending ? "Activation..." : "Payer et activer"}
             </Button>
           </DialogFooter>
         </DialogContent>

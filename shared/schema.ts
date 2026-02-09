@@ -1,5 +1,5 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal, timestamp, pgEnum, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, decimal, timestamp, pgEnum, boolean, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -11,6 +11,7 @@ export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "
 export const currencyEnum = pgEnum("currency", ["XOF", "XAF", "NGN", "GHS"]);
 export const boostLevelEnum = pgEnum("boost_level", ["standard", "premium"]);
 export const boostStatusEnum = pgEnum("boost_status", ["active", "paused", "expired"]);
+export const walletTransactionTypeEnum = pgEnum("wallet_transaction_type", ["topup", "boost_charge", "refund"]);
 
 export const userProfiles = pgTable("user_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -25,6 +26,7 @@ export const userProfiles = pgTable("user_profiles", {
   description: text("description"),
   latitude: decimal("latitude"),
   longitude: decimal("longitude"),
+  walletBalance: decimal("wallet_balance", { precision: 12, scale: 2 }).default("0"),
 });
 
 export const categories = pgTable("categories", {
@@ -94,6 +96,17 @@ export const productBoosts = pgTable("product_boosts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const walletTransactions = pgTable("wallet_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: walletTransactionTypeEnum("type").notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  currency: currencyEnum("currency").default("XOF"),
+  description: text("description"),
+  boostId: varchar("boost_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
   user: one(users, { fields: [userProfiles.userId], references: [users.id] }),
 }));
@@ -124,6 +137,10 @@ export const productBoostsRelations = relations(productBoosts, ({ one }) => ({
   supplier: one(users, { fields: [productBoosts.supplierId], references: [users.id] }),
 }));
 
+export const walletTransactionsRelations = relations(walletTransactions, ({ one }) => ({
+  user: one(users, { fields: [walletTransactions.userId], references: [users.id] }),
+}));
+
 export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({ id: true });
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true });
@@ -131,6 +148,7 @@ export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, cre
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true });
 export const insertProductBoostSchema = createInsertSchema(productBoosts).omit({ id: true, createdAt: true });
+export const insertWalletTransactionSchema = createInsertSchema(walletTransactions).omit({ id: true, createdAt: true });
 
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 export type UserProfile = typeof userProfiles.$inferSelect;
@@ -146,3 +164,5 @@ export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type CartItem = typeof cartItems.$inferSelect;
 export type InsertProductBoost = z.infer<typeof insertProductBoostSchema>;
 export type ProductBoost = typeof productBoosts.$inferSelect;
+export type InsertWalletTransaction = z.infer<typeof insertWalletTransactionSchema>;
+export type WalletTransaction = typeof walletTransactions.$inferSelect;

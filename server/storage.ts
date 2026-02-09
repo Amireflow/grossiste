@@ -1,5 +1,5 @@
 import {
-  users, userProfiles, categories, products, orders, orderItems, cartItems, productBoosts,
+  users, userProfiles, categories, products, orders, orderItems, cartItems, productBoosts, walletTransactions,
   type UserProfile, type InsertUserProfile,
   type Category, type InsertCategory,
   type Product, type InsertProduct,
@@ -7,6 +7,7 @@ import {
   type OrderItem, type InsertOrderItem,
   type CartItem, type InsertCartItem,
   type ProductBoost, type InsertProductBoost,
+  type WalletTransaction, type InsertWalletTransaction,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, ilike, or, gte, lte } from "drizzle-orm";
@@ -46,6 +47,11 @@ export interface IStorage {
   createBoost(data: InsertProductBoost): Promise<ProductBoost>;
   updateBoost(id: string, data: Partial<{ status: string; endDate: Date }>): Promise<ProductBoost | undefined>;
   getActiveBoostProductIds(): Promise<Set<string>>;
+
+  getWalletBalance(userId: string): Promise<string>;
+  getWalletTransactions(userId: string): Promise<WalletTransaction[]>;
+  topUpWallet(userId: string, amount: number, description: string): Promise<WalletTransaction>;
+  chargeWalletForBoost(userId: string, amount: number, boostId: string, description: string): Promise<WalletTransaction>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -361,6 +367,60 @@ export class DatabaseStorage implements IStorage {
         gte(productBoosts.endDate, now)
       ));
     return new Set(rows.map(r => r.productId));
+  }
+
+  async getWalletBalance(userId: string): Promise<string> {
+    const [profile] = await db.select({ walletBalance: userProfiles.walletBalance })
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, userId));
+    return profile?.walletBalance || "0";
+  }
+
+  async getWalletTransactions(userId: string): Promise<WalletTransaction[]> {
+    return db.select().from(walletTransactions)
+      .where(eq(walletTransactions.userId, userId))
+      .orderBy(desc(walletTransactions.createdAt));
+  }
+
+  async topUpWallet(userId: string, amount: number, description: string): Promise<WalletTransaction> {
+    return db.transaction(async (tx) => {
+      await tx.update(userProfiles)
+        .set({ walletBalance: sql`(coalesce(${userProfiles.walletBalance}::numeric, 0) + ${amount})::text` })
+        .where(eq(userProfiles.userId, userId));
+
+      const [walletTx] = await tx.insert(walletTransactions).values({
+        userId,
+        type: "topup",
+        amount: String(amount),
+        description,
+      }).returning();
+      return walletTx;
+    });
+  }
+
+  async chargeWalletForBoost(userId: string, amount: number, boostId: string, description: string): Promise<WalletTransaction> {
+    return db.transaction(async (tx) => {
+      const [result] = await tx.update(userProfiles)
+        .set({ walletBalance: sql`(coalesce(${userProfiles.walletBalance}::numeric, 0) - ${amount})::text` })
+        .where(and(
+          eq(userProfiles.userId, userId),
+          sql`coalesce(${userProfiles.walletBalance}::numeric, 0) >= ${amount}`
+        ))
+        .returning({ walletBalance: userProfiles.walletBalance });
+
+      if (!result) {
+        throw new Error("Solde insuffisant");
+      }
+
+      const [walletTx] = await tx.insert(walletTransactions).values({
+        userId,
+        type: "boost_charge",
+        amount: String(amount),
+        boostId,
+        description,
+      }).returning();
+      return walletTx;
+    });
   }
 }
 
