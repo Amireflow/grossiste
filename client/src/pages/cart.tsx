@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, MapPin, Truck, CreditCard, ArrowLeft, User, Phone, Smartphone, Banknote } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, MapPin, Truck, ArrowLeft, User, Phone } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -44,7 +44,6 @@ export default function CartPage() {
   const [deliveryPhone, setDeliveryPhone] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryCity, setDeliveryCity] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"mobile_money" | "cash_on_delivery">("mobile_money");
   const [notes, setNotes] = useState("");
 
   const { data: profile } = useQuery<UserProfile>({
@@ -89,7 +88,6 @@ export default function CartPage() {
         deliveryPhone,
         deliveryAddress,
         deliveryCity,
-        paymentMethod,
         notes,
       });
       return res.json();
@@ -295,47 +293,6 @@ export default function CartPage() {
 
             <Card className="animate-fade-in-up stagger-4">
               <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-muted-foreground" />
-                  <h2 className="font-semibold text-sm">Paiement</h2>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("mobile_money")}
-                    className={`flex flex-col items-center gap-2 p-3 rounded-md border text-center transition-colors ${
-                      paymentMethod === "mobile_money"
-                        ? "border-primary bg-primary/5"
-                        : "hover-elevate"
-                    }`}
-                    data-testid="button-payment-mobile-money"
-                  >
-                    <Smartphone className={`w-5 h-5 ${paymentMethod === "mobile_money" ? "text-primary" : "text-muted-foreground"}`} />
-                    <span className="text-xs font-medium">Mobile Money</span>
-                    <span className="text-[10px] text-muted-foreground leading-tight">Orange, MTN, Moov</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("cash_on_delivery")}
-                    className={`flex flex-col items-center gap-2 p-3 rounded-md border text-center transition-colors ${
-                      paymentMethod === "cash_on_delivery"
-                        ? "border-primary bg-primary/5"
-                        : "hover-elevate"
-                    }`}
-                    data-testid="button-payment-cash"
-                  >
-                    <Banknote className={`w-5 h-5 ${paymentMethod === "cash_on_delivery" ? "text-primary" : "text-muted-foreground"}`} />
-                    <span className="text-xs font-medium">Cash a la livraison</span>
-                    <span className="text-[10px] text-muted-foreground leading-tight">Payer a la reception</span>
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="animate-fade-in-up stagger-5">
-              <CardHeader className="pb-3">
                 <h2 className="font-semibold text-sm">Resume de la commande</h2>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -366,9 +323,7 @@ export default function CartPage() {
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
                 <p className="text-[11px] text-muted-foreground text-center">
-                  {paymentMethod === "mobile_money"
-                    ? "Vous recevrez une demande de paiement Mobile Money"
-                    : "Vous paierez en especes a la reception de la commande"}
+                  Le paiement sera convenu avec le fournisseur
                 </p>
               </CardContent>
             </Card>

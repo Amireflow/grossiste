@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   ClipboardList, Package, ChevronDown, ChevronUp, MapPin, StickyNote,
   Truck, CheckCircle2, Clock, XCircle, ArrowRight, RefreshCw,
-  User, Phone, Smartphone, Banknote, CreditCard,
+  User, Phone,
 } from "lucide-react";
 import { formatPrice, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -192,17 +192,6 @@ export default function OrdersPage() {
                             <div>
                               <p className="text-xs text-muted-foreground">Livraison</p>
                               <p className="text-sm">{order.deliveryAddress}{order.deliveryCity ? `, ${order.deliveryCity}` : ""}</p>
-                            </div>
-                          </div>
-                        )}
-                        {order.paymentMethod && (
-                          <div className="flex items-start gap-2">
-                            <CreditCard className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Paiement</p>
-                              <p className="text-sm">
-                                {order.paymentMethod === "mobile_money" ? "Mobile Money" : "Cash a la livraison"}
-                              </p>
                             </div>
                           </div>
                         )}
