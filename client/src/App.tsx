@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -15,7 +15,6 @@ import LandingPage from "@/pages/landing";
 import MarketplacePage from "@/pages/marketplace";
 import OnboardingPage from "@/pages/onboarding";
 import DashboardPage from "@/pages/dashboard";
-import CatalogPage from "@/pages/catalog";
 import CartPage from "@/pages/cart";
 import OrdersPage from "@/pages/orders";
 import ProductsPage from "@/pages/products";
@@ -26,7 +25,6 @@ import type { UserProfile } from "@shared/schema";
 
 const PAGE_TITLES: Record<string, string> = {
   "/": "Tableau de bord",
-  "/catalog": "Catalogue",
   "/cart": "Mon panier",
   "/orders": "Commandes",
   "/products": "Mes produits",
@@ -85,7 +83,6 @@ function AuthenticatedRouter() {
           <main className="flex-1 overflow-auto">
             <Switch>
               <Route path="/" component={DashboardPage} />
-              <Route path="/catalog" component={CatalogPage} />
               <Route path="/cart" component={CartPage} />
               <Route path="/orders" component={OrdersPage} />
               <Route path="/products" component={ProductsPage} />
@@ -104,7 +101,7 @@ function AppContent() {
   const [location] = useLocation();
   const { user, isLoading } = useAuth();
 
-  if (location === "/marketplace") {
+  if (location === "/marketplace" || location === "/catalog") {
     return <MarketplacePage />;
   }
 

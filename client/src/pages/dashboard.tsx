@@ -40,9 +40,9 @@ export default function DashboardPage() {
             : "Approvisionnez votre commerce facilement"}
         </p>
         {!isSupplier && (
-          <Link href="/catalog">
+          <Link href="/marketplace">
             <Button size="sm" className="mt-4" data-testid="button-explore-catalog">
-              Parcourir le catalogue
+              Parcourir le marketplace
               <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </Button>
           </Link>
@@ -176,12 +176,12 @@ export default function DashboardPage() {
                 <p className="text-xs text-muted-foreground mb-4 max-w-[240px] mx-auto">
                   {isSupplier
                     ? "Les commandes de vos clients apparaîtront ici"
-                    : "Parcourez le catalogue pour passer votre première commande"}
+                    : "Parcourez le marketplace pour passer votre première commande"}
                 </p>
                 {!isSupplier && (
-                  <Link href="/catalog">
+                  <Link href="/marketplace">
                     <Button variant="outline" size="sm" data-testid="button-browse-catalog">
-                      Voir le catalogue
+                      Voir le marketplace
                     </Button>
                   </Link>
                 )}
@@ -217,9 +217,9 @@ export default function DashboardPage() {
                 <>
                   <QuickAction
                     icon={<Package className="w-4 h-4" />}
-                    title="Parcourir le catalogue"
+                    title="Parcourir le marketplace"
                     description="Trouvez vos produits"
-                    href="/catalog"
+                    href="/marketplace"
                     testId="quick-browse-catalog"
                   />
                   <QuickAction

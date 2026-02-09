@@ -53,7 +53,6 @@ export function AppSidebar() {
 
   const shopMenuItems = [
     { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
-    { title: "Catalogue", url: "/catalog", icon: Package },
     { title: "Mon panier", url: "/cart", icon: ShoppingCart, badge: cartCount },
     { title: "Mes commandes", url: "/orders", icon: ClipboardList },
   ];

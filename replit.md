@@ -18,7 +18,7 @@ SokoB2B is a B2B marketplace web application connecting neighborhood shops (épi
 ### Project Structure
 ```
 client/src/
-├── pages/           # Route pages (landing, onboarding, dashboard, catalog, cart, orders, products, product-form)
+├── pages/           # Route pages (landing, onboarding, dashboard, marketplace, cart, orders, products, product-form)
 ├── components/      # Reusable components (app-sidebar, theme-provider, theme-toggle, ui/)
 ├── hooks/           # Custom hooks (use-auth, use-toast, use-mobile)
 ├── lib/             # Utilities (queryClient, constants, utils, auth-utils)
@@ -68,6 +68,7 @@ shared/
 - Added Zod validation on all POST/PATCH routes
 - Order items now include product info (name, imageUrl) via JOIN
 - 2026-02-09: Added public Marketplace page accessible to everyone, expanded from 4 to 12 categories, added 30 products from 3 demo suppliers, suppliers can switch between workspace and marketplace via sidebar link
+- 2026-02-09: Removed Catalogue page - marketplace is now the primary browsing experience. Shop owners can add to cart directly from marketplace. Added sorting, category counts, trust indicators, improved product cards with category badges and stock info
 
 ## User Preferences
 - French language UI
