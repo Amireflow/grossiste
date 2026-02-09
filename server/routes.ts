@@ -116,6 +116,20 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/marketplace/products", async (req, res) => {
+    try {
+      const categoryId = req.query.category as string | undefined;
+      const search = req.query.search as string | undefined;
+      const prods = await storage.getMarketplaceProducts(
+        categoryId === "all" ? undefined : categoryId,
+        search || undefined
+      );
+      res.json(prods);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get marketplace products" });
+    }
+  });
+
   app.get("/api/products/:id", async (req, res) => {
     try {
       const product = await storage.getProductById(req.params.id);

@@ -37,7 +37,7 @@ shared/
 ### Data Model
 - **Users** (from Replit Auth): id, email, firstName, lastName, profileImageUrl
 - **UserProfiles**: role (shop_owner/supplier), businessName, phone, city, country, currency
-- **Categories**: 4 seeded (Alimentation, Boissons, Hygiène, Parapharmacie)
+- **Categories**: 12 seeded (Alimentation, Boissons, Hygiène, Parapharmacie, Bébé & Puériculture, Cosmétique & Beauté, Tabac & Accessoires, Papeterie & Fournitures, Téléphonie & Accessoires, Condiments & Épices, Confiserie & Biscuits, Ménage & Cuisine)
 - **Products**: name, price, unit, stock, categoryId, supplierId
 - **Orders**: buyerId, supplierId, status, totalAmount, deliveryAddress
 - **OrderItems**: orderId, productId, productName, quantity, unitPrice
@@ -49,8 +49,9 @@ shared/
 
 ### Key API Endpoints
 - `GET/POST /api/profile` - User profile CRUD
-- `GET /api/categories` - Product categories
+- `GET /api/categories` - Product categories (public)
 - `GET /api/products` - All active products
+- `GET /api/marketplace/products` - Public marketplace products with supplier info (supports ?category and ?search query params)
 - `GET /api/my-products` - Supplier's own products
 - `POST/PATCH /api/products` - Create/update products (supplier only)
 - `GET/POST/PATCH/DELETE /api/cart` - Cart management
@@ -58,10 +59,15 @@ shared/
 - `PATCH /api/orders/:id/status` - Update order status (supplier only)
 - `GET /api/stats` - Dashboard statistics
 
+### Public Pages
+- `/marketplace` - Public marketplace browsable by anyone (no auth required), shows all products with supplier info
+- `/` - Landing page (unauthenticated) or Dashboard (authenticated)
+
 ## Recent Changes
 - 2026-02-09: Initial MVP build with all core features
 - Added Zod validation on all POST/PATCH routes
 - Order items now include product info (name, imageUrl) via JOIN
+- 2026-02-09: Added public Marketplace page accessible to everyone, expanded from 4 to 12 categories, added 30 products from 3 demo suppliers, suppliers can switch between workspace and marketplace via sidebar link
 
 ## User Preferences
 - French language UI

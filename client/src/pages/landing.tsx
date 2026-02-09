@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Store, Truck, Shield, ArrowRight, ShoppingCart, Users, TrendingUp } from "lucide-react";
+import { Store, Truck, Shield, ArrowRight, ShoppingCart, Users, TrendingUp, Package } from "lucide-react";
+import { Link } from "wouter";
 
 export default function LandingPage() {
   return (
@@ -16,6 +17,10 @@ export default function LandingPage() {
               <span className="font-serif text-xl font-bold">SokoB2B</span>
             </div>
             <div className="hidden md:flex items-center gap-6">
+              <Link href="/marketplace" className="text-sm font-medium text-foreground hover:text-primary transition-colors flex items-center gap-1.5" data-testid="link-marketplace">
+                <Package className="w-3.5 h-3.5" />
+                Marketplace
+              </Link>
               <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="link-features">
                 Fonctionnalités
               </a>

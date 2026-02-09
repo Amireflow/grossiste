@@ -25,6 +25,7 @@ import {
   LogOut,
   Plus,
   Sparkles,
+  Globe,
 } from "lucide-react";
 import type { UserProfile } from "@shared/schema";
 
@@ -143,6 +144,21 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+        <SidebarGroup>
+          <SidebarGroupLabel>Découvrir</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location === "/marketplace"}>
+                  <Link href="/marketplace" data-testid="link-nav-marketplace">
+                    <Globe className="w-4 h-4" />
+                    <span>Marketplace</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-4 border-t">
         <div className="flex items-center gap-3 mb-3">

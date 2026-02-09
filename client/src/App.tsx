@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Store } from "lucide-react";
 
 import LandingPage from "@/pages/landing";
+import MarketplacePage from "@/pages/marketplace";
 import OnboardingPage from "@/pages/onboarding";
 import DashboardPage from "@/pages/dashboard";
 import CatalogPage from "@/pages/catalog";
@@ -30,6 +31,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/orders": "Commandes",
   "/products": "Mes produits",
   "/products/new": "Nouveau produit",
+  "/marketplace": "Marketplace",
 };
 
 function AuthenticatedRouter() {
@@ -99,7 +101,12 @@ function AuthenticatedRouter() {
 }
 
 function AppContent() {
+  const [location] = useLocation();
   const { user, isLoading } = useAuth();
+
+  if (location === "/marketplace") {
+    return <MarketplacePage />;
+  }
 
   if (isLoading) {
     return (

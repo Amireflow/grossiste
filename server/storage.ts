@@ -8,7 +8,7 @@ import {
   type CartItem, type InsertCartItem,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, ilike, or } from "drizzle-orm";
 
 export interface IStorage {
   getProfileByUserId(userId: string): Promise<UserProfile | undefined>;
@@ -21,6 +21,7 @@ export interface IStorage {
   getProducts(categoryId?: string): Promise<Product[]>;
   getProductById(id: string): Promise<Product | undefined>;
   getProductsBySupplier(supplierId: string): Promise<Product[]>;
+  getMarketplaceProducts(categoryId?: string, search?: string): Promise<(Product & { supplierName: string; supplierCity: string | null })[]>;
   createProduct(data: InsertProduct): Promise<Product>;
   updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined>;
 
@@ -84,6 +85,37 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(products)
       .where(eq(products.supplierId, supplierId))
       .orderBy(desc(products.createdAt));
+  }
+
+  async getMarketplaceProducts(categoryId?: string, search?: string): Promise<(Product & { supplierName: string; supplierCity: string | null })[]> {
+    const conditions = [eq(products.isActive, true)];
+    if (categoryId) {
+      conditions.push(eq(products.categoryId, categoryId));
+    }
+    if (search) {
+      conditions.push(
+        or(
+          ilike(products.name, `%${search}%`),
+          ilike(products.description, `%${search}%`)
+        )!
+      );
+    }
+
+    const rows = await db.select({
+      product: products,
+      supplierName: userProfiles.businessName,
+      supplierCity: userProfiles.city,
+    })
+      .from(products)
+      .innerJoin(userProfiles, eq(products.supplierId, userProfiles.userId))
+      .where(and(...conditions))
+      .orderBy(desc(products.createdAt));
+
+    return rows.map(row => ({
+      ...row.product,
+      supplierName: row.supplierName,
+      supplierCity: row.supplierCity,
+    }));
   }
 
   async createProduct(data: InsertProduct): Promise<Product> {
