@@ -80,6 +80,7 @@ export default function MarketplacePage() {
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const { user } = useAuth();
   const { toast } = useToast();
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
   const supplierScrollRef = useRef<HTMLDivElement>(null);
 
   const { data: categories } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
@@ -292,46 +293,56 @@ export default function MarketplacePage() {
             <div className="mb-8">
               <div className="flex items-center justify-between gap-2 mb-4">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Categories</p>
-                {selectedCategory !== "all" && (
-                  <Button variant="ghost" size="sm" onClick={() => setSelectedCategory("all")} data-testid="button-category-all">
-                    <X className="w-3.5 h-3.5 mr-1" /> Effacer
+                <div className="flex items-center gap-1">
+                  {selectedCategory !== "all" && (
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedCategory("all")} data-testid="button-category-all">
+                      <X className="w-3.5 h-3.5 mr-1" /> Effacer
+                    </Button>
+                  )}
+                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(categoryScrollRef, "left")} data-testid="button-scroll-categories-left">
+                    <ChevronLeft className="w-3.5 h-3.5" />
                   </Button>
-                )}
+                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(categoryScrollRef, "right")} data-testid="button-scroll-categories-right">
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {categories.map((cat) => {
-                  const catImage = CATEGORY_IMAGES[cat.slug];
-                  const isSelected = selectedCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategory(isSelected ? "all" : cat.id)}
-                      className={`relative rounded-md overflow-hidden cursor-pointer transition-all group ${isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
-                      data-testid={`button-category-${cat.slug}`}
-                    >
-                      <div className="aspect-[4/3] w-full">
-                        {catImage ? (
-                          <img src={catImage} alt={cat.nameFr} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full bg-muted flex items-center justify-center">
-                            <Package className="w-8 h-8 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                        <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-3">
-                          <p className="text-white text-xs sm:text-sm font-semibold leading-tight drop-shadow-sm">
-                            {cat.nameFr}
-                          </p>
-                          {globalCategoryCounts[cat.id] !== undefined && (
-                            <p className="text-white/70 text-[10px] sm:text-xs mt-0.5">
-                              {globalCategoryCounts[cat.id]} produit{globalCategoryCounts[cat.id] !== 1 ? "s" : ""}
-                            </p>
+              <div className="relative">
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scroll-smooth" ref={categoryScrollRef}>
+                  {categories.map((cat) => {
+                    const catImage = CATEGORY_IMAGES[cat.slug];
+                    const isSelected = selectedCategory === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(isSelected ? "all" : cat.id)}
+                        className={`relative shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] md:w-[calc(25%-9px)] rounded-md overflow-hidden cursor-pointer transition-all group ${isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
+                        data-testid={`button-category-${cat.slug}`}
+                      >
+                        <div className="aspect-[4/3] w-full">
+                          {catImage ? (
+                            <img src={catImage} alt={cat.nameFr} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-muted flex items-center justify-center">
+                              <Package className="w-8 h-8 text-muted-foreground" />
+                            </div>
                           )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                          <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-3">
+                            <p className="text-white text-xs sm:text-sm font-semibold leading-tight drop-shadow-sm">
+                              {cat.nameFr}
+                            </p>
+                            {globalCategoryCounts[cat.id] !== undefined && (
+                              <p className="text-white/70 text-[10px] sm:text-xs mt-0.5">
+                                {globalCategoryCounts[cat.id]} produit{globalCategoryCounts[cat.id] !== 1 ? "s" : ""}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
