@@ -355,6 +355,93 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/boosts", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profile = await storage.getProfileByUserId(userId);
+      if (!profile || profile.role !== "supplier") {
+        return res.status(403).json({ message: "Only suppliers can view boosts" });
+      }
+      const boosts = await storage.getBoostsBySupplier(userId);
+      res.json(boosts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get boosts" });
+    }
+  });
+
+  app.post("/api/boosts", isAuthenticated, async (req: any, res) => {
+    try {
+      const schema = z.object({
+        productId: z.string().min(1),
+        boostLevel: z.enum(["standard", "premium"]),
+        durationDays: z.number().int().min(1).max(90),
+      });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Invalid data", errors: parsed.error.flatten() });
+      }
+
+      const userId = req.user.claims.sub;
+      const profile = await storage.getProfileByUserId(userId);
+      if (!profile || profile.role !== "supplier") {
+        return res.status(403).json({ message: "Only suppliers can create boosts" });
+      }
+
+      const product = await storage.getProductById(parsed.data.productId);
+      if (!product || product.supplierId !== userId) {
+        return res.status(403).json({ message: "Not authorized to boost this product" });
+      }
+
+      const existing = await storage.getActiveBoostForProduct(parsed.data.productId);
+      if (existing) {
+        return res.status(400).json({ message: "Product already has an active boost" });
+      }
+
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + parsed.data.durationDays);
+
+      const boost = await storage.createBoost({
+        productId: parsed.data.productId,
+        supplierId: userId,
+        boostLevel: parsed.data.boostLevel,
+        status: "active",
+        startDate,
+        endDate,
+      });
+      res.status(201).json(boost);
+    } catch (error) {
+      console.error("Error creating boost:", error);
+      res.status(500).json({ message: "Failed to create boost" });
+    }
+  });
+
+  app.patch("/api/boosts/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const schema = z.object({
+        status: z.enum(["active", "paused", "expired"]).optional(),
+      });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Invalid data" });
+      }
+
+      const userId = req.user.claims.sub;
+      const profile = await storage.getProfileByUserId(userId);
+      if (!profile || profile.role !== "supplier") {
+        return res.status(403).json({ message: "Only suppliers can update boosts" });
+      }
+
+      const boost = await storage.updateBoost(req.params.id, {
+        status: parsed.data.status,
+      });
+      if (!boost) return res.status(404).json({ message: "Boost not found" });
+      res.json(boost);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update boost" });
+    }
+  });
+
   app.get("/api/stats", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

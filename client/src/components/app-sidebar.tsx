@@ -27,6 +27,7 @@ import {
   Sparkles,
   Globe,
   Users,
+  Zap,
 } from "lucide-react";
 import type { UserProfile } from "@shared/schema";
 
@@ -61,6 +62,7 @@ export function AppSidebar() {
   const supplierMenuItems = [
     { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
     { title: "Mes produits", url: "/products", icon: Package },
+    { title: "Mes Boosts", url: "/boosts", icon: Zap },
     { title: "Commandes reçues", url: "/orders", icon: ClipboardList },
   ];
 

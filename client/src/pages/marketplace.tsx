@@ -10,7 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Search, Package, Store, ArrowRight, X, MapPin, ShoppingCart,
   ChevronDown, ChevronUp, Shield, Truck, Users, TrendingUp,
-  ArrowUpDown, Plus, Minus, CheckCircle, Filter,
+  ArrowUpDown, Plus, Minus, CheckCircle, Filter, Zap, Star,
 } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Product, Category, UserProfile } from "@shared/schema";
 import { Link, useSearch } from "wouter";
 
-type MarketplaceProduct = Product & { supplierName: string; supplierCity: string | null };
+type MarketplaceProduct = Product & { supplierName: string; supplierCity: string | null; isSponsored?: boolean; boostLevel?: string | null };
 
 type SortOption = "newest" | "price_asc" | "price_desc" | "name_asc";
 
@@ -548,7 +548,7 @@ function MarketplaceProductCard({
   };
 
   return (
-    <Card className="overflow-visible group" data-testid={`card-marketplace-product-${product.id}`}>
+    <Card className={`overflow-visible group ${product.isSponsored && product.boostLevel === "premium" ? "border-amber-400/50 dark:border-amber-500/30" : ""}`} data-testid={`card-marketplace-product-${product.id}`}>
       <CardContent className="p-3 sm:p-4">
         <div className="relative w-full aspect-square rounded-md overflow-hidden mb-3 bg-muted">
           {product.imageUrl ? (
@@ -570,13 +570,25 @@ function MarketplaceProductCard({
               </Badge>
             </div>
           )}
-          {categoryName && (
+          {product.isSponsored ? (
+            <div className="absolute top-2 left-2 flex flex-col gap-1">
+              <Badge className="text-[10px] bg-amber-500 text-white border-0 gap-1" data-testid={`badge-sponsored-${product.id}`}>
+                {product.boostLevel === "premium" ? <Star className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
+                Sponsoris\u00e9
+              </Badge>
+              {categoryName && (
+                <Badge variant="secondary" className="text-[10px] bg-black/50 text-white border-0 backdrop-blur-sm">
+                  {categoryName}
+                </Badge>
+              )}
+            </div>
+          ) : categoryName ? (
             <div className="absolute top-2 left-2">
               <Badge variant="secondary" className="text-[10px] bg-black/50 text-white border-0 backdrop-blur-sm">
                 {categoryName}
               </Badge>
             </div>
-          )}
+          ) : null}
         </div>
 
         <h3 className="font-medium text-sm mb-0.5 line-clamp-2 leading-tight min-h-[2.5rem]" title={product.name} data-testid={`text-marketplace-product-name-${product.id}`}>

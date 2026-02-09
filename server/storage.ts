@@ -1,14 +1,15 @@
 import {
-  users, userProfiles, categories, products, orders, orderItems, cartItems,
+  users, userProfiles, categories, products, orders, orderItems, cartItems, productBoosts,
   type UserProfile, type InsertUserProfile,
   type Category, type InsertCategory,
   type Product, type InsertProduct,
   type Order, type InsertOrder,
   type OrderItem, type InsertOrderItem,
   type CartItem, type InsertCartItem,
+  type ProductBoost, type InsertProductBoost,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, ilike, or } from "drizzle-orm";
+import { eq, and, desc, sql, ilike, or, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   getProfileByUserId(userId: string): Promise<UserProfile | undefined>;
@@ -21,7 +22,7 @@ export interface IStorage {
   getProducts(categoryId?: string): Promise<Product[]>;
   getProductById(id: string): Promise<Product | undefined>;
   getProductsBySupplier(supplierId: string): Promise<Product[]>;
-  getMarketplaceProducts(categoryId?: string, search?: string, supplierId?: string): Promise<(Product & { supplierName: string; supplierCity: string | null })[]>;
+  getMarketplaceProducts(categoryId?: string, search?: string, supplierId?: string): Promise<(Product & { supplierName: string; supplierCity: string | null; isSponsored: boolean; boostLevel: string | null })[]>;
   createProduct(data: InsertProduct): Promise<Product>;
   updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined>;
 
@@ -39,6 +40,12 @@ export interface IStorage {
 
   getStats(userId: string, role: string): Promise<{ totalOrders: number; pendingOrders: number; totalProducts: number; totalRevenue: string }>;
   getSuppliers(): Promise<{ id: string; businessName: string; city: string | null; country: string | null; description: string | null; productCount: number }[]>;
+
+  getBoostsBySupplier(supplierId: string): Promise<(ProductBoost & { productName: string })[]>;
+  getActiveBoostForProduct(productId: string): Promise<ProductBoost | undefined>;
+  createBoost(data: InsertProductBoost): Promise<ProductBoost>;
+  updateBoost(id: string, data: Partial<{ status: string; endDate: Date }>): Promise<ProductBoost | undefined>;
+  getActiveBoostProductIds(): Promise<Set<string>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -88,7 +95,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(products.createdAt));
   }
 
-  async getMarketplaceProducts(categoryId?: string, search?: string, supplierId?: string): Promise<(Product & { supplierName: string; supplierCity: string | null })[]> {
+  async getMarketplaceProducts(categoryId?: string, search?: string, supplierId?: string): Promise<(Product & { supplierName: string; supplierCity: string | null; isSponsored: boolean; boostLevel: string | null })[]> {
     const conditions = [eq(products.isActive, true)];
     if (categoryId) {
       conditions.push(eq(products.categoryId, categoryId));
@@ -105,20 +112,36 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
+    const now = new Date();
     const rows = await db.select({
       product: products,
       supplierName: userProfiles.businessName,
       supplierCity: userProfiles.city,
+      boostLevel: productBoosts.boostLevel,
+      boostStatus: productBoosts.status,
+      boostEnd: productBoosts.endDate,
+      boostStart: productBoosts.startDate,
     })
       .from(products)
       .innerJoin(userProfiles, eq(products.supplierId, userProfiles.userId))
+      .leftJoin(productBoosts, and(
+        eq(productBoosts.productId, products.id),
+        eq(productBoosts.status, "active"),
+        lte(productBoosts.startDate, now),
+        gte(productBoosts.endDate, now)
+      ))
       .where(and(...conditions))
-      .orderBy(desc(products.createdAt));
+      .orderBy(
+        sql`CASE WHEN ${productBoosts.boostLevel} = 'premium' THEN 0 WHEN ${productBoosts.boostLevel} = 'standard' THEN 1 ELSE 2 END`,
+        desc(products.createdAt)
+      );
 
     return rows.map(row => ({
       ...row.product,
       supplierName: row.supplierName,
       supplierCity: row.supplierCity,
+      isSponsored: !!row.boostLevel && !!row.boostStatus,
+      boostLevel: row.boostLevel || null,
     }));
   }
 
@@ -288,6 +311,56 @@ export class DatabaseStorage implements IStorage {
       .groupBy(userProfiles.userId, userProfiles.businessName, userProfiles.city, userProfiles.country, userProfiles.description);
 
     return rows;
+  }
+
+  async getBoostsBySupplier(supplierId: string): Promise<(ProductBoost & { productName: string })[]> {
+    const rows = await db.select({
+      boost: productBoosts,
+      productName: products.name,
+    })
+      .from(productBoosts)
+      .innerJoin(products, eq(productBoosts.productId, products.id))
+      .where(eq(productBoosts.supplierId, supplierId))
+      .orderBy(desc(productBoosts.createdAt));
+
+    return rows.map(r => ({ ...r.boost, productName: r.productName }));
+  }
+
+  async getActiveBoostForProduct(productId: string): Promise<ProductBoost | undefined> {
+    const now = new Date();
+    const [boost] = await db.select().from(productBoosts)
+      .where(and(
+        eq(productBoosts.productId, productId),
+        eq(productBoosts.status, "active"),
+        lte(productBoosts.startDate, now),
+        gte(productBoosts.endDate, now)
+      ));
+    return boost || undefined;
+  }
+
+  async createBoost(data: InsertProductBoost): Promise<ProductBoost> {
+    const [boost] = await db.insert(productBoosts).values(data).returning();
+    return boost;
+  }
+
+  async updateBoost(id: string, data: Partial<{ status: string; endDate: Date }>): Promise<ProductBoost | undefined> {
+    const updateData: any = {};
+    if (data.status) updateData.status = data.status;
+    if (data.endDate) updateData.endDate = data.endDate;
+    const [boost] = await db.update(productBoosts).set(updateData).where(eq(productBoosts.id, id)).returning();
+    return boost || undefined;
+  }
+
+  async getActiveBoostProductIds(): Promise<Set<string>> {
+    const now = new Date();
+    const rows = await db.select({ productId: productBoosts.productId })
+      .from(productBoosts)
+      .where(and(
+        eq(productBoosts.status, "active"),
+        lte(productBoosts.startDate, now),
+        gte(productBoosts.endDate, now)
+      ));
+    return new Set(rows.map(r => r.productId));
   }
 }
 

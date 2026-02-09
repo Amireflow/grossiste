@@ -42,6 +42,7 @@ shared/
 - **Orders**: buyerId, supplierId, status, totalAmount, deliveryAddress
 - **OrderItems**: orderId, productId, productName, quantity, unitPrice
 - **CartItems**: userId, productId, quantity
+- **ProductBoosts**: productId, supplierId, boostLevel (standard/premium), status (active/paused/expired), startDate, endDate
 
 ### User Roles
 - **shop_owner**: Browse catalog, add to cart, checkout, view orders
@@ -59,6 +60,9 @@ shared/
 - `PATCH /api/orders/:id/status` - Update order status (supplier only)
 - `GET /api/stats` - Dashboard statistics
 - `GET /api/suppliers` - List all suppliers with product counts (public)
+- `GET /api/boosts` - Supplier's boosts with product names
+- `POST /api/boosts` - Create boost (productId, boostLevel, durationDays)
+- `PATCH /api/boosts/:id` - Update boost status (active/paused/expired)
 
 ### Public Pages
 - `/marketplace` - Public marketplace browsable by anyone (no auth required), shows all products with supplier info, supports ?supplier filter
@@ -72,6 +76,7 @@ shared/
 - 2026-02-09: Added public Marketplace page accessible to everyone, expanded from 4 to 12 categories, added 30 products from 3 demo suppliers, suppliers can switch between workspace and marketplace via sidebar link
 - 2026-02-09: Removed Catalogue page - marketplace is now the primary browsing experience. Shop owners can add to cart directly from marketplace. Added sorting, category counts, trust indicators, improved product cards with category badges and stock info
 - 2026-02-09: Added Suppliers directory page (/suppliers) showing all verified suppliers with product counts, locations, descriptions. Clicking "Voir les produits" filters marketplace by supplier. Added suppliers link in sidebar, landing page nav, and marketplace nav
+- 2026-02-09: Added Boost/Sponsored Ads system - suppliers can boost products (standard/premium levels, 7/14/30 day durations). Marketplace prioritizes boosted products (premium > standard > regular) with "Sponsorisé" badges. Added /boosts management page, boost controls on Products page, sidebar link for suppliers
 
 ## User Preferences
 - French language UI

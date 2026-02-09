@@ -9,6 +9,8 @@ import { users } from "./models/auth";
 export const userRoleEnum = pgEnum("user_role", ["shop_owner", "supplier"]);
 export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]);
 export const currencyEnum = pgEnum("currency", ["XOF", "XAF", "NGN", "GHS"]);
+export const boostLevelEnum = pgEnum("boost_level", ["standard", "premium"]);
+export const boostStatusEnum = pgEnum("boost_status", ["active", "paused", "expired"]);
 
 export const userProfiles = pgTable("user_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -81,6 +83,17 @@ export const cartItems = pgTable("cart_items", {
   quantity: integer("quantity").notNull().default(1),
 });
 
+export const productBoosts = pgTable("product_boosts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productId: varchar("product_id").notNull().references(() => products.id),
+  supplierId: varchar("supplier_id").notNull().references(() => users.id),
+  boostLevel: boostLevelEnum("boost_level").notNull().default("standard"),
+  status: boostStatusEnum("status").notNull().default("active"),
+  startDate: timestamp("start_date").notNull().defaultNow(),
+  endDate: timestamp("end_date").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
   user: one(users, { fields: [userProfiles.userId], references: [users.id] }),
 }));
@@ -106,12 +119,18 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   product: one(products, { fields: [cartItems.productId], references: [products.id] }),
 }));
 
+export const productBoostsRelations = relations(productBoosts, ({ one }) => ({
+  product: one(products, { fields: [productBoosts.productId], references: [products.id] }),
+  supplier: one(users, { fields: [productBoosts.supplierId], references: [users.id] }),
+}));
+
 export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({ id: true });
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true });
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true });
+export const insertProductBoostSchema = createInsertSchema(productBoosts).omit({ id: true, createdAt: true });
 
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 export type UserProfile = typeof userProfiles.$inferSelect;
@@ -125,3 +144,5 @@ export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type CartItem = typeof cartItems.$inferSelect;
+export type InsertProductBoost = z.infer<typeof insertProductBoostSchema>;
+export type ProductBoost = typeof productBoosts.$inferSelect;
