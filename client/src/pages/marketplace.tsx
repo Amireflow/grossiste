@@ -21,6 +21,34 @@ import { useToast } from "@/hooks/use-toast";
 import type { Product, Category, UserProfile } from "@shared/schema";
 import { Link, useSearch } from "wouter";
 
+import catAlimentation from "@assets/cat-alimentation.png";
+import catBoissons from "@assets/cat-boissons.png";
+import catHygiene from "@assets/cat-hygiene.png";
+import catParapharmacie from "@assets/cat-parapharmacie.png";
+import catBebe from "@assets/cat-bebe.png";
+import catCosmetique from "@assets/cat-cosmetique.png";
+import catTabac from "@assets/cat-tabac.png";
+import catPapeterie from "@assets/cat-papeterie.png";
+import catTelephonie from "@assets/cat-telephonie.png";
+import catCondiments from "@assets/cat-condiments.png";
+import catConfiserie from "@assets/cat-confiserie.png";
+import catMenage from "@assets/cat-menage.png";
+
+const CATEGORY_IMAGES: Record<string, string> = {
+  "alimentation": catAlimentation,
+  "boissons": catBoissons,
+  "hygiene-entretien": catHygiene,
+  "parapharmacie": catParapharmacie,
+  "bebe-puericulture": catBebe,
+  "cosmetique-beaute": catCosmetique,
+  "tabac-accessoires": catTabac,
+  "papeterie-fournitures": catPapeterie,
+  "telephonie-accessoires": catTelephonie,
+  "condiments-epices": catCondiments,
+  "confiserie-biscuits": catConfiserie,
+  "menage-cuisine": catMenage,
+};
+
 type MarketplaceProduct = Product & { supplierName: string; supplierCity: string | null; isSponsored?: boolean; boostLevel?: string | null };
 
 interface Supplier {
@@ -52,7 +80,6 @@ export default function MarketplacePage() {
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const { user } = useAuth();
   const { toast } = useToast();
-  const categoryScrollRef = useRef<HTMLDivElement>(null);
   const supplierScrollRef = useRef<HTMLDivElement>(null);
 
   const { data: categories } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
@@ -262,55 +289,49 @@ export default function MarketplacePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
           {categories && categories.length > 0 && !search && (
-            <div className="mb-6">
-              <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="mb-8">
+              <div className="flex items-center justify-between gap-2 mb-4">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Categories</p>
-                <div className="flex items-center gap-1">
-                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(categoryScrollRef, "left")} data-testid="button-scroll-categories-left">
-                    <ChevronLeft className="w-3.5 h-3.5" />
+                {selectedCategory !== "all" && (
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedCategory("all")} data-testid="button-category-all">
+                    <X className="w-3.5 h-3.5 mr-1" /> Effacer
                   </Button>
-                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(categoryScrollRef, "right")} data-testid="button-scroll-categories-right">
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
+                )}
               </div>
-              <div ref={categoryScrollRef} className="flex items-start gap-2.5 overflow-x-auto pb-2 scrollbar-thin scroll-smooth">
-                <button
-                  onClick={() => setSelectedCategory("all")}
-                  className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
-                  data-testid="button-category-all"
-                >
-                  <div className={`w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-lg overflow-hidden border-2 transition-all ${selectedCategory === "all" ? "border-primary ring-2 ring-primary/20" : "border-transparent"}`}>
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <Package className="w-6 h-6 text-muted-foreground" />
-                    </div>
-                  </div>
-                  <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[68px] sm:max-w-[76px] line-clamp-2 ${selectedCategory === "all" ? "font-bold text-primary" : "text-muted-foreground font-medium"}`}>
-                    Tout
-                  </span>
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
-                    data-testid={`button-category-${cat.slug}`}
-                  >
-                    <div className={`w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-lg overflow-hidden border-2 transition-all ${selectedCategory === cat.id ? "border-primary ring-2 ring-primary/20" : "border-transparent"}`}>
-                      {cat.imageUrl ? (
-                        <img src={cat.imageUrl} alt={cat.nameFr} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-muted" />
-                      )}
-                    </div>
-                    <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[68px] sm:max-w-[76px] line-clamp-2 ${selectedCategory === cat.id ? "font-bold text-primary" : "text-muted-foreground font-medium"}`}>
-                      {cat.nameFr}
-                      {globalCategoryCounts[cat.id] !== undefined && (
-                        <span className="text-muted-foreground/70 ml-0.5 font-normal">({globalCategoryCounts[cat.id]})</span>
-                      )}
-                    </span>
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {categories.map((cat) => {
+                  const catImage = CATEGORY_IMAGES[cat.slug];
+                  const isSelected = selectedCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(isSelected ? "all" : cat.id)}
+                      className={`relative rounded-md overflow-hidden cursor-pointer transition-all group ${isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
+                      data-testid={`button-category-${cat.slug}`}
+                    >
+                      <div className="aspect-[4/3] w-full">
+                        {catImage ? (
+                          <img src={catImage} alt={cat.nameFr} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <Package className="w-8 h-8 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-3">
+                          <p className="text-white text-xs sm:text-sm font-semibold leading-tight drop-shadow-sm">
+                            {cat.nameFr}
+                          </p>
+                          {globalCategoryCounts[cat.id] !== undefined && (
+                            <p className="text-white/70 text-[10px] sm:text-xs mt-0.5">
+                              {globalCategoryCounts[cat.id]} produit{globalCategoryCounts[cat.id] !== 1 ? "s" : ""}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
