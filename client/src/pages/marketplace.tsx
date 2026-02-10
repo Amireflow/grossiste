@@ -574,31 +574,31 @@ export function MarketplaceProductCard({
             )}
             {isOutOfStock && (
               <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">Rupture de stock</Badge>
+                <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 font-medium">Rupture de stock</Badge>
               </div>
             )}
             {product.stock && product.stock > 0 && product.stock <= 10 && !isOutOfStock && (
               <div className="absolute top-2 right-2">
-                <Badge variant="secondary" className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 font-medium shadow-sm">
                   {product.stock} restant{product.stock > 1 ? "s" : ""}
                 </Badge>
               </div>
             )}
-            <div className="absolute top-2 left-2 flex flex-col gap-1">
+            <div className="absolute top-2 left-2 flex flex-col gap-1.5">
               {product.isSponsored && (
                 <Badge
-                  className={`text-[10px] text-white border-0 gap-1 shadow-sm ${product.boostLevel === "premium"
+                  className={`text-xs text-white border-0 gap-1.5 shadow-sm px-2 py-0.5 ${product.boostLevel === "premium"
                     ? "bg-gradient-to-r from-amber-500 to-orange-500"
                     : "bg-blue-500"
                     }`}
                   data-testid={`badge-sponsored-${product.id}`}
                 >
-                  {product.boostLevel === "premium" ? <Star className="w-3 h-3 fill-current" /> : <Zap className="w-3 h-3 fill-current" />}
+                  {product.boostLevel === "premium" ? <Star className="w-3.5 h-3.5 fill-current" /> : <Zap className="w-3.5 h-3.5 fill-current" />}
                   {product.boostLevel === "premium" ? "Premium" : "Sponsorisé"}
                 </Badge>
               )}
               {categoryName && (
-                <Badge variant="secondary" className="text-[10px] bg-black/60 text-white border-0">
+                <Badge variant="secondary" className="text-xs bg-black/60 text-white border-0 backdrop-blur-md shadow-sm">
                   {categoryName}
                 </Badge>
               )}
@@ -606,36 +606,35 @@ export function MarketplaceProductCard({
           </div>
         </Link>
 
-        <div className="p-3 sm:p-4">
+        <div className="p-4">
           <Link href={`/product/${product.id}`}>
-            <h3 className="font-semibold text-sm mb-1 line-clamp-2 leading-snug min-h-[2.5rem] cursor-pointer hover:text-primary transition-colors" title={product.name} data-testid={`text-marketplace-product-name-${product.id}`}>
+            <h3 className="font-semibold text-base mb-2 line-clamp-2 leading-snug min-h-[3rem] cursor-pointer hover:text-primary transition-colors" title={product.name} data-testid={`text-marketplace-product-name-${product.id}`}>
               {product.name}
             </h3>
           </Link>
 
           {product.description && (
-            <p className="text-[11px] text-muted-foreground line-clamp-1 mb-1.5">{product.description}</p>
+            <p className="text-xs text-muted-foreground line-clamp-1 mb-2.5">{product.description}</p>
           )}
 
-          <div className="flex items-center gap-1.5 mb-2 text-muted-foreground">
-            <Store className="w-3 h-3 shrink-0" />
-            <span className="text-[11px] truncate" data-testid={`text-supplier-${product.id}`}>
+          <div className="flex items-center gap-2 mb-3 text-muted-foreground">
+            <Store className="w-3.5 h-3.5 shrink-0" />
+            <span className="text-xs truncate font-medium" data-testid={`text-supplier-${product.id}`}>
               {product.supplierName}
             </span>
             {product.supplierCity && (
               <>
-                <span className="text-[9px]">·</span>
-                <MapPin className="w-2.5 h-2.5 shrink-0" />
-                <span className="text-[10px] truncate">{product.supplierCity}</span>
+                <span className="text-[10px] text-muted-foreground/60">●</span>
+                <span className="text-xs truncate">{product.supplierCity}</span>
               </>
             )}
           </div>
 
-          <div className="flex items-baseline gap-1.5 mb-3 flex-wrap">
-            <span className="font-bold text-primary text-base tabular-nums" data-testid={`text-marketplace-price-${product.id}`}>
+          <div className="flex items-baseline gap-1.5 mb-4 flex-wrap">
+            <span className="font-bold text-primary text-xl tabular-nums" data-testid={`text-marketplace-price-${product.id}`}>
               {formatPrice(product.price, product.currency || "XOF")}
             </span>
-            <span className="text-[11px] text-muted-foreground">/ {product.unit}</span>
+            <span className="text-xs text-muted-foreground font-medium">/ {product.unit}</span>
           </div>
 
           {product.minOrder && product.minOrder > 1 && (
@@ -647,46 +646,55 @@ export function MarketplaceProductCard({
 
           {isShopOwner ? (
             isOutOfStock ? (
-              <Button variant="secondary" size="sm" className="w-full" disabled data-testid={`button-unavailable-${product.id}`}>
+              <Button variant="secondary" size="sm" className="w-full h-9" disabled data-testid={`button-unavailable-${product.id}`}>
                 Indisponible
               </Button>
             ) : (
-              <div className="flex items-center gap-1.5">
-                <div className="flex items-center bg-muted/40 rounded-lg shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center bg-muted/40 rounded-lg shrink-0 border border-input">
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="no-default-hover-elevate h-7 w-7"
-                    onClick={() => setQty(Math.max(product.minOrder || 1, qty - 1))}
+                    className="no-default-hover-elevate h-9 w-9 hover:bg-background"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setQty(Math.max(product.minOrder || 1, qty - 1));
+                    }}
                     data-testid={`button-qty-minus-${product.id}`}
                   >
-                    <Minus className="w-3 h-3" />
+                    <Minus className="w-4 h-4" />
                   </Button>
-                  <span className="text-xs w-6 text-center tabular-nums" data-testid={`text-qty-${product.id}`}>{qty}</span>
+                  <span className="text-sm w-8 text-center tabular-nums font-medium" data-testid={`text-qty-${product.id}`}>{qty}</span>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="no-default-hover-elevate h-7 w-7"
-                    onClick={() => setQty(qty + 1)}
+                    className="no-default-hover-elevate h-9 w-9 hover:bg-background"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setQty(qty + 1);
+                    }}
                     data-testid={`button-qty-plus-${product.id}`}
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-4 h-4" />
                   </Button>
                 </div>
                 <Button
-                  className="flex-1 text-xs h-7"
-                  onClick={handleAdd}
+                  className="flex-1 text-sm h-9 font-medium shadow-sm transition-all active:scale-95"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleAdd();
+                  }}
                   disabled={isAdding}
                   data-testid={`button-add-cart-${product.id}`}
                 >
                   {justAdded ? (
                     <>
-                      <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                      <CheckCircle className="w-4 h-4 mr-1.5" />
                       Ajouté
                     </>
                   ) : (
                     <>
-                      <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                      <ShoppingCart className="w-4 h-4 mr-1.5" />
                       Ajouter
                     </>
                   )}
@@ -694,16 +702,18 @@ export function MarketplaceProductCard({
               </div>
             )
           ) : isLoggedIn ? (
-            <Button variant="outline" size="sm" className="w-full text-xs h-7" disabled data-testid={`button-supplier-view-${product.id}`}>
-              <Eye className="w-3.5 h-3.5 mr-1" />
-              Voir le produit
-            </Button>
+            <Link href={`/product/${product.id}`}>
+              <Button variant="outline" size="sm" className="w-full text-sm h-9 font-medium" data-testid={`button-supplier-view-${product.id}`}>
+                <Eye className="w-4 h-4 mr-2" />
+                Voir le produit
+              </Button>
+            </Link>
           ) : (
-            <a href="/api/login">
-              <Button variant="outline" size="sm" className="w-full text-xs h-7" data-testid={`button-login-to-order-${product.id}`}>
+            <Link href="/login">
+              <Button variant="outline" size="sm" className="w-full text-sm h-9" data-testid={`button-login-to-order-${product.id}`}>
                 Connexion pour commander
               </Button>
-            </a>
+            </Link>
           )}
         </div>
       </CardContent>
