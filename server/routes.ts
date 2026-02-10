@@ -77,6 +77,7 @@ const productCreateSchema = z.object({
   minOrder: z.coerce.number().int().min(1).optional(),
   stock: z.coerce.number().int().min(0).optional(),
   imageUrl: z.string().optional(),
+  images: z.string().optional(),
 });
 
 const productUpdateSchema = z.object({
@@ -88,6 +89,7 @@ const productUpdateSchema = z.object({
   minOrder: z.coerce.number().int().min(1).optional(),
   stock: z.coerce.number().int().min(0).optional(),
   imageUrl: z.string().optional(),
+  images: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -177,7 +179,14 @@ export async function registerRoutes(
     try {
       const product = await storage.getProductById(req.params.id);
       if (!product) return res.status(404).json({ message: "Product not found" });
-      res.json(product);
+      const supplierProfile = await storage.getProfileByUserId(product.supplierId);
+      res.json({
+        ...product,
+        supplierName: supplierProfile?.businessName || "Fournisseur",
+        supplierCity: supplierProfile?.city || null,
+        supplierCountry: supplierProfile?.country || null,
+        supplierDescription: supplierProfile?.description || null,
+      });
     } catch (error) {
       res.status(500).json({ message: "Failed to get product" });
     }

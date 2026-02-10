@@ -368,7 +368,7 @@ export default function MarketplacePage() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <Card key={i}>
                   <CardContent className="p-0">
@@ -391,7 +391,7 @@ export default function MarketplacePage() {
                     <Sparkles className="w-4 h-4 text-amber-500" />
                     <p className="text-sm font-semibold">Produits mis en avant</p>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
                     {sponsoredProducts.map((product) => (
                       <MarketplaceProductCard
                         key={product.id}
@@ -414,7 +414,7 @@ export default function MarketplacePage() {
                     <p className="text-sm font-semibold">Tous les produits</p>
                   </div>
                 )}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
                   {(sponsoredProducts.length > 0 && selectedCategory === "all" && !search && !supplierFilter ? regularProducts : sortedProducts).map((product) => (
                     <MarketplaceProductCard
                       key={product.id}
@@ -563,68 +563,71 @@ export function MarketplaceProductCard({
       data-testid={`card-marketplace-product-${product.id}`}
     >
       <CardContent className="p-0">
-        <div className="relative w-full aspect-[4/3] rounded-t-xl overflow-hidden bg-muted">
-          {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-muted">
-              <Package className="w-10 h-10 text-muted-foreground/30" />
-            </div>
-          )}
-          {isOutOfStock && (
-            <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-              <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">Rupture de stock</Badge>
-            </div>
-          )}
-          {product.stock && product.stock > 0 && product.stock <= 10 && !isOutOfStock && (
-            <div className="absolute top-2 right-2">
-              <Badge variant="secondary" className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                {product.stock} restant{product.stock > 1 ? "s" : ""}
-              </Badge>
-            </div>
-          )}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {product.isSponsored && (
-              <Badge
-                className={`text-[10px] text-white border-0 gap-1 shadow-sm ${product.boostLevel === "premium"
-                  ? "bg-gradient-to-r from-amber-500 to-orange-500"
-                  : "bg-blue-500"
-                  }`}
-                data-testid={`badge-sponsored-${product.id}`}
-              >
-                {product.boostLevel === "premium" ? <Star className="w-3 h-3 fill-current" /> : <Zap className="w-3 h-3 fill-current" />}
-                {product.boostLevel === "premium" ? "Premium" : "Sponsorisé"}
-              </Badge>
+        <Link href={`/product/${product.id}`}>
+          <div className="relative w-full aspect-[4/3] rounded-t-xl overflow-hidden bg-muted cursor-pointer">
+            {product.imageUrl ? (
+              <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-muted">
+                <Package className="w-10 h-10 text-muted-foreground/30" />
+              </div>
             )}
-            {categoryName && (
-              <Badge variant="secondary" className="text-[10px] bg-black/60 text-white border-0">
-                {categoryName}
-              </Badge>
+            {isOutOfStock && (
+              <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">Rupture de stock</Badge>
+              </div>
             )}
+            {product.stock && product.stock > 0 && product.stock <= 10 && !isOutOfStock && (
+              <div className="absolute top-2 right-2">
+                <Badge variant="secondary" className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                  {product.stock} restant{product.stock > 1 ? "s" : ""}
+                </Badge>
+              </div>
+            )}
+            <div className="absolute top-2 left-2 flex flex-col gap-1">
+              {product.isSponsored && (
+                <Badge
+                  className={`text-[10px] text-white border-0 gap-1 shadow-sm ${product.boostLevel === "premium"
+                    ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                    : "bg-blue-500"
+                    }`}
+                  data-testid={`badge-sponsored-${product.id}`}
+                >
+                  {product.boostLevel === "premium" ? <Star className="w-3 h-3 fill-current" /> : <Zap className="w-3 h-3 fill-current" />}
+                  {product.boostLevel === "premium" ? "Premium" : "Sponsorisé"}
+                </Badge>
+              )}
+              {categoryName && (
+                <Badge variant="secondary" className="text-[10px] bg-black/60 text-white border-0">
+                  {categoryName}
+                </Badge>
+              )}
+            </div>
           </div>
-        </div>
+        </Link>
 
         <div className="p-3 sm:p-4">
-          <h3 className="font-semibold text-sm mb-1 line-clamp-2 leading-snug min-h-[2.5rem]" title={product.name} data-testid={`text-marketplace-product-name-${product.id}`}>
-            {product.name}
-          </h3>
+          <Link href={`/product/${product.id}`}>
+            <h3 className="font-semibold text-sm mb-1 line-clamp-2 leading-snug min-h-[2.5rem] cursor-pointer hover:text-primary transition-colors" title={product.name} data-testid={`text-marketplace-product-name-${product.id}`}>
+              {product.name}
+            </h3>
+          </Link>
 
           {product.description && (
             <p className="text-[11px] text-muted-foreground line-clamp-1 mb-1.5">{product.description}</p>
           )}
 
-          <div className="mb-2">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Store className="w-3 h-3 shrink-0" />
-              <span className="text-[11px] truncate" data-testid={`text-supplier-${product.id}`}>
-                {product.supplierName}
-              </span>
-            </div>
+          <div className="flex items-center gap-1.5 mb-2 text-muted-foreground">
+            <Store className="w-3 h-3 shrink-0" />
+            <span className="text-[11px] truncate" data-testid={`text-supplier-${product.id}`}>
+              {product.supplierName}
+            </span>
             {product.supplierCity && (
-              <div className="flex items-center gap-1 text-muted-foreground">
+              <>
+                <span className="text-[9px]">·</span>
                 <MapPin className="w-2.5 h-2.5 shrink-0" />
                 <span className="text-[10px] truncate">{product.supplierCity}</span>
-              </div>
+              </>
             )}
           </div>
 
@@ -648,8 +651,8 @@ export function MarketplaceProductCard({
                 Indisponible
               </Button>
             ) : (
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center bg-muted/40 rounded-lg w-fit">
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center bg-muted/40 rounded-lg shrink-0">
                   <Button
                     size="icon"
                     variant="ghost"
@@ -671,7 +674,7 @@ export function MarketplaceProductCard({
                   </Button>
                 </div>
                 <Button
-                  className="w-full text-xs h-7"
+                  className="flex-1 text-xs h-7"
                   onClick={handleAdd}
                   disabled={isAdding}
                   data-testid={`button-add-cart-${product.id}`}
@@ -704,6 +707,6 @@ export function MarketplaceProductCard({
           )}
         </div>
       </CardContent>
-    </Card>
+    </Card >
   );
 }

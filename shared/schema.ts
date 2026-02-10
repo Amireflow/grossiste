@@ -50,6 +50,7 @@ export const products = pgTable("products", {
   minOrder: integer("min_order").default(1),
   stock: integer("stock").default(0),
   imageUrl: text("image_url"),
+  images: text("images"), // JSON array of image URLs
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });

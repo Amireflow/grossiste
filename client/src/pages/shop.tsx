@@ -164,13 +164,13 @@ export default function ShopPage() {
                 {/* Liste Produits */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     {loadingProducts ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                             {[1, 2, 3, 4].map((i) => (
                                 <Skeleton key={i} className="h-48 w-full rounded-lg" />
                             ))}
                         </div>
                     ) : products && products.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                             {products.map((product) => (
                                 <MarketplaceProductCard
                                     key={product.id}

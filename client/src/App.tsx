@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route, useLocation, useRoute, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
@@ -17,6 +18,7 @@ import MarketplacePage from "@/pages/marketplace";
 import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
 import ShopPage from "@/pages/shop";
+import ProductDetailPage from "@/pages/product-detail";
 import OrderDetailsPage from "@/pages/order-details";
 
 import OnboardingPage from "@/pages/onboarding";
@@ -121,6 +123,7 @@ function AppContent() {
   const { user, isLoading } = useAuth();
 
   const [isShopPage] = useRoute("/shop/:id");
+  const [isProductPage] = useRoute("/product/:id");
 
   // Public routes that don't require auth check
   if (location === "/marketplace" || location === "/catalog") {
@@ -129,6 +132,10 @@ function AppContent() {
 
   if (isShopPage) {
     return <ShopPage />;
+  }
+
+  if (isProductPage) {
+    return <ProductDetailPage />;
   }
 
   if (location === "/login") {
@@ -159,12 +166,21 @@ function AppContent() {
   return <AuthenticatedRouter />;
 }
 
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+  return null;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
           <Toaster />
+          <ScrollToTop />
           <AppContent />
         </TooltipProvider>
       </ThemeProvider>
