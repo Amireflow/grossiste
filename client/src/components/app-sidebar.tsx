@@ -13,6 +13,7 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,11 @@ interface WalletData {
 export function AppSidebar() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const { setOpenMobile, isMobile } = useSidebar();
+
+  const closeSidebar = () => {
+    if (isMobile) setOpenMobile(false);
+  };
 
   const { data: profile } = useQuery<UserProfile>({
     queryKey: ["/api/profile"],
@@ -118,7 +124,7 @@ export function AppSidebar() {
                         : location.startsWith(item.url)
                     }
                   >
-                    <Link href={item.url} data-testid={`link-nav-${item.url.replace("/", "") || "dashboard"}`}>
+                    <Link href={item.url} onClick={closeSidebar} data-testid={`link-nav-${item.url.replace("/", "") || "dashboard"}`}>
                       <item.icon className="w-4 h-4" />
                       <span className="flex-1">{item.title}</span>
                       {"badge" in item && (item as any).badge > 0 && (
@@ -146,7 +152,7 @@ export function AppSidebar() {
               <SidebarMenu className="gap-2.5">
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <Link href="/products/new" data-testid="link-add-product">
+                    <Link href="/products/new" onClick={closeSidebar} data-testid="link-add-product">
                       <Plus className="w-4 h-4" />
                       <span>Ajouter un produit</span>
                     </Link>
@@ -165,7 +171,7 @@ export function AppSidebar() {
             <SidebarMenu className="gap-2.5">
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location === "/marketplace"}>
-                  <Link href="/marketplace" data-testid="link-nav-marketplace">
+                  <Link href="/marketplace" onClick={closeSidebar} data-testid="link-nav-marketplace">
                     <Globe className="w-4 h-4" />
                     <span>Marketplace</span>
                   </Link>

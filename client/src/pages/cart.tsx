@@ -153,10 +153,10 @@ export default function CartPage() {
             {cartItems.map((item, index) => {
               const lineTotal = parseFloat(item.product.price) * item.quantity;
               return (
-                <Card key={item.id} className={`animate-fade-in-up stagger-${Math.min(index + 1, 6)}`} data-testid={`cart-item-${item.id}`}>
-                  <CardContent className="p-2 md:p-3">
-                    <div className="flex gap-3">
-                      <div className="w-14 h-14 rounded-md overflow-hidden bg-muted shrink-0">
+                <Card key={item.id} className={`animate-fade-in-up stagger-${Math.min(index + 1, 6)} overflow-hidden`} data-testid={`cart-item-${item.id}`}>
+                  <CardContent className="p-0">
+                    <div className="flex">
+                      <div className="w-24 sm:w-28 shrink-0 self-stretch bg-muted">
                         {item.product.imageUrl ? (
                           <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
                         ) : (
@@ -165,7 +165,7 @@ export default function CartPage() {
                           </div>
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 p-2 md:p-3">
                         <div className="flex items-start justify-between gap-2">
                           <h3 className="font-medium text-xs line-clamp-2">{item.product.name}</h3>
                           <Button
