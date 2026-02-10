@@ -25,9 +25,9 @@ export function MarketplaceNavbar() {
     const cartItemCount = cartItems?.reduce((acc, item) => acc + item.quantity, 0) || 0;
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b shadow-sm">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between gap-4 h-20">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b shadow-sm overflow-hidden">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between gap-2 sm:gap-4 h-16 sm:h-20">
                     <Link href="/marketplace">
                         <div className="flex items-center gap-2.5 cursor-pointer" data-testid="link-marketplace-logo">
                             <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
@@ -53,9 +53,10 @@ export function MarketplaceNavbar() {
                                     </Link>
                                 )}
                                 <Link href="/">
-                                    <Button size="sm" className="shadow-sm" data-testid="button-back-dashboard">
-                                        Mon espace
-                                        <ChevronRight className="w-4 h-4 ml-1" />
+                                    <Button size="sm" className="shadow-sm text-xs sm:text-sm" data-testid="button-back-dashboard">
+                                        <span className="hidden sm:inline">Mon espace</span>
+                                        <span className="sm:hidden">Espace</span>
+                                        <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-0.5 sm:ml-1" />
                                     </Button>
                                 </Link>
                             </div>

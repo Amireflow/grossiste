@@ -210,6 +210,55 @@ export default function MarketplacePage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
+          {suppliers && suppliers.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fournisseurs recommandés</p>
+                <div className="flex items-center gap-1">
+                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(supplierScrollRef, "left")} data-testid="button-scroll-suppliers-left">
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(supplierScrollRef, "right")} data-testid="button-scroll-suppliers-right">
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+              <div ref={supplierScrollRef} className="flex items-stretch gap-2 overflow-x-auto pb-3 px-1 scrollbar-thin scroll-smooth -mx-1">
+                {/* "All" Card */}
+                <button
+                  onClick={() => setSelectedSupplier("all")}
+                  className={`group shrink-0 w-20 aspect-square rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${selectedSupplier === "all" ? "bg-primary text-primary-foreground border-primary shadow-md" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
+                  data-testid="button-supplier-all"
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${selectedSupplier === "all" ? "bg-white/20" : "bg-muted"}`}>
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <span className="font-semibold text-[10px]">Tous</span>
+                </button>
+                {suppliers.map((s) => (
+                  <Link key={s.id} href={`/shop/${s.id}`}>
+                    <div
+                      className={`group shrink-0 w-20 aspect-square rounded-2xl border p-2 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${selectedSupplier === s.id ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border flex items-center justify-center text-primary font-bold text-xs shadow-sm group-hover:scale-105 transition-transform">
+                        {s.businessName.substring(0, 2).toUpperCase()}
+                      </div>
+                      <span className={`block font-semibold text-[9px] leading-tight truncate w-full text-center ${selectedSupplier === s.id ? "text-primary" : "text-foreground"}`}>
+                        {s.businessName}
+                      </span>
+                      {s.city && (
+                        <div className="flex items-center gap-0.5 text-[8px] text-muted-foreground">
+                          <MapPin className="w-2 h-2 shrink-0" />
+                          <span className="truncate">{s.city}</span>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {categories && categories.length > 0 && !search && (
             <div className="mb-8">
               <div className="flex items-center justify-between gap-2 mb-4">
@@ -264,65 +313,6 @@ export default function MarketplacePage() {
                     );
                   })}
                 </div>
-              </div>
-            </div>
-          )}
-
-          {suppliers && suppliers.length > 0 && (
-            <div className="mb-8">
-              <div className="flex items-center justify-between gap-2 mb-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fournisseurs recommandés</p>
-                <div className="flex items-center gap-1">
-                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(supplierScrollRef, "left")} data-testid="button-scroll-suppliers-left">
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(supplierScrollRef, "right")} data-testid="button-scroll-suppliers-right">
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </div>
-              <div ref={supplierScrollRef} className="flex items-stretch gap-3 overflow-x-auto pb-4 px-1 scrollbar-thin scroll-smooth -mx-1">
-                {/* "All" Card */}
-                <button
-                  onClick={() => setSelectedSupplier("all")}
-                  className={`group shrink-0 w-32 rounded-xl border flex flex-col items-center justify-center gap-3 transition-all cursor-pointer ${selectedSupplier === "all" ? "bg-primary text-primary-foreground border-primary shadow-md" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
-                  data-testid="button-supplier-all"
-                >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${selectedSupplier === "all" ? "bg-white/20" : "bg-muted"}`}>
-                    <Users className="w-6 h-6" />
-                  </div>
-                  <span className="font-semibold text-sm">Tous</span>
-                </button>
-                {suppliers.map((s) => (
-                  <Link key={s.id} href={`/shop/${s.id}`}>
-                    <div
-                      className={`group shrink-0 w-36 rounded-xl border p-3 flex flex-col items-center justify-between gap-2.5 transition-all cursor-pointer text-left ${selectedSupplier === s.id ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
-                    >
-                      <div className="flex flex-col items-center gap-2 text-center w-full">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border flex items-center justify-center text-primary font-bold text-lg shadow-sm group-hover:scale-105 transition-transform">
-                          {s.businessName.substring(0, 2).toUpperCase()}
-                        </div>
-                        <div className="min-w-0 w-full">
-                          <span className={`block font-semibold text-xs leading-tight truncate mb-0.5 ${selectedSupplier === s.id ? "text-primary" : "text-foreground"}`}>
-                            {s.businessName}
-                          </span>
-                          {s.city && (
-                            <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
-                              <MapPin className="w-2.5 h-2.5" />
-                              <span className="truncate">{s.city}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="w-full pt-2 border-t mt-0.5">
-                        <Badge variant="secondary" className="w-full justify-center text-[9px] h-5 px-1 font-normal bg-muted group-hover:bg-primary/10 transition-colors">
-                          Voir la boutique
-                        </Badge>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
               </div>
             </div>
           )}
@@ -623,17 +613,18 @@ export function MarketplaceProductCard({
             <p className="text-[11px] text-muted-foreground line-clamp-1 mb-1.5">{product.description}</p>
           )}
 
-          <div className="flex items-center gap-1.5 mb-2 text-muted-foreground">
-            <Store className="w-3 h-3 shrink-0" />
-            <span className="text-[11px] truncate" data-testid={`text-supplier-${product.id}`}>
-              {product.supplierName}
-            </span>
+          <div className="mb-2">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Store className="w-3 h-3 shrink-0" />
+              <span className="text-[11px] truncate" data-testid={`text-supplier-${product.id}`}>
+                {product.supplierName}
+              </span>
+            </div>
             {product.supplierCity && (
-              <>
-                <span className="text-[9px]">-</span>
+              <div className="flex items-center gap-1 text-muted-foreground">
                 <MapPin className="w-2.5 h-2.5 shrink-0" />
-                <span className="text-[11px] truncate">{product.supplierCity}</span>
-              </>
+                <span className="text-[10px] truncate">{product.supplierCity}</span>
+              </div>
             )}
           </div>
 
@@ -657,8 +648,8 @@ export function MarketplaceProductCard({
                 Indisponible
               </Button>
             ) : (
-              <div className="flex items-center gap-1.5">
-                <div className="flex items-center bg-muted/40 rounded-lg shrink-0">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center bg-muted/40 rounded-lg w-fit">
                   <Button
                     size="icon"
                     variant="ghost"
@@ -680,7 +671,7 @@ export function MarketplaceProductCard({
                   </Button>
                 </div>
                 <Button
-                  className="flex-1 text-xs h-7"
+                  className="w-full text-xs h-7"
                   onClick={handleAdd}
                   disabled={isAdding}
                   data-testid={`button-add-cart-${product.id}`}
@@ -688,7 +679,7 @@ export function MarketplaceProductCard({
                   {justAdded ? (
                     <>
                       <CheckCircle className="w-3.5 h-3.5 mr-1" />
-                      Ajoute
+                      Ajouté
                     </>
                   ) : (
                     <>
