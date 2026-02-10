@@ -21,6 +21,12 @@ import ShopPage from "@/pages/shop";
 import ProductDetailPage from "@/pages/product-detail";
 import OrderDetailsPage from "@/pages/order-details";
 
+import AdminDashboard from "@/pages/admin/dashboard";
+import AdminUsers from "@/pages/admin/users";
+import AdminProducts from "@/pages/admin/products";
+import AdminOrders from "@/pages/admin/orders";
+import AdminSettings from "@/pages/admin/settings";
+
 import OnboardingPage from "@/pages/onboarding";
 import DashboardPage from "@/pages/dashboard";
 import CartPage from "@/pages/cart";
@@ -43,6 +49,11 @@ const PAGE_TITLES: Record<string, string> = {
   "/boosts": "Mes Boosts",
   "/wallet": "Mon Portefeuille",
   "/marketplace": "Marketplace",
+  "/admin": "Administration",
+  "/admin/users": "Gestion Utilisateurs",
+  "/admin/products": "Gestion Produits",
+  "/admin/orders": "Gestion Commandes",
+  "/admin/settings": "Paramètres Plateforme",
 };
 
 function AuthenticatedRouter() {
@@ -108,6 +119,13 @@ function AuthenticatedRouter() {
               <Route path="/boosts" component={BoostsPage} />
               <Route path="/wallet" component={WalletPage} />
               <Route path="/profile" component={ProfilePage} />
+
+              {/* Admin Routes */}
+              <Route path="/admin" component={AdminDashboard} />
+              <Route path="/admin/users" component={AdminUsers} />
+              <Route path="/admin/products" component={AdminProducts} />
+              <Route path="/admin/orders" component={AdminOrders} />
+              <Route path="/admin/settings" component={AdminSettings} />
 
               <Route component={NotFound} />
             </Switch>

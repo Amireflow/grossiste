@@ -6,7 +6,7 @@ import { z } from "zod";
 export * from "./models/auth";
 import { users } from "./models/auth";
 
-export const userRoleEnum = pgEnum("user_role", ["shop_owner", "supplier"]);
+export const userRoleEnum = pgEnum("user_role", ["shop_owner", "supplier", "admin", "banned"]);
 export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]);
 export const currencyEnum = pgEnum("currency", ["XOF", "XAF", "NGN", "GHS"]);
 export const boostLevelEnum = pgEnum("boost_level", ["standard", "premium"]);

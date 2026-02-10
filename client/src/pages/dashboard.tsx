@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "wouter";
+import { Link, Redirect } from "wouter";
 import {
   Package, ShoppingCart, ClipboardList, TrendingUp, ChevronRight,
   AlertCircle, Truck, CheckCircle2, BarChart3, Zap, Store,
@@ -24,6 +24,10 @@ export default function DashboardPage() {
   const { data: recentOrders, isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
   });
+
+  if (profile?.role === "admin") {
+    return <Redirect to="/admin" />;
+  }
 
   const isSupplier = profile?.role === "supplier";
   const greeting = user?.firstName

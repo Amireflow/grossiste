@@ -1,1 +1,1 @@
-export { setupAuth, registerAuthRoutes, isAuthenticated } from "./supabaseAuth";
+export { setupAuth, registerAuthRoutes, isAuthenticated, requireAdmin } from "./supabaseAuth";

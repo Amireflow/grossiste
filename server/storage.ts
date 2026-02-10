@@ -12,6 +12,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, ilike, or, gte, lte } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 export interface IStorage {
   getProfileByUserId(userId: string): Promise<UserProfile | undefined>;
@@ -56,6 +57,21 @@ export interface IStorage {
   getWalletTransactions(userId: string): Promise<WalletTransaction[]>;
   topUpWallet(userId: string, amount: number, description: string): Promise<WalletTransaction>;
   chargeWalletForBoost(userId: string, amount: number, boostId: string, description: string): Promise<WalletTransaction>;
+
+  // Admin methods
+  getAllUsers(): Promise<(User & { profile: UserProfile | null })[]>;
+  getPlatformStats(): Promise<{
+    totalUsers: number;
+    totalProducts: number;
+    totalOrders: number;
+    totalRevenue: string;
+  }>;
+  getAllProducts(): Promise<(Product & { supplierName: string; categoryName: string })[]>;
+  getAllOrders(): Promise<(Order & { buyerName: string; supplierName: string; itemsCount: number })[]>;
+  updateProductStatus(id: string, isActive: boolean): Promise<Product>;
+  updateUserRole(userId: string, role: string): Promise<UserProfile>;
+  getRevenueStats(): Promise<{ date: string; revenue: number }[]>;
+  getUserStats(): Promise<{ role: string; count: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -453,12 +469,154 @@ export class DatabaseStorage implements IStorage {
       const [walletTx] = await tx.insert(walletTransactions).values({
         userId,
         type: "boost_charge",
-        amount: String(amount),
-        boostId,
+        amount: amount.toString(),
         description,
+        boostId, // Use direct column - metadata doesn't exist
       }).returning();
       return walletTx;
     });
+  }
+
+  async getAllUsers(): Promise<(User & { profile: UserProfile | null })[]> {
+    const rows = await db.select({
+      user: users,
+      profile: userProfiles,
+    })
+      .from(users)
+      .leftJoin(userProfiles, eq(users.id, userProfiles.userId));
+
+    return rows.map(row => ({
+      ...row.user,
+      profile: row.profile,
+    }));
+  }
+
+  async getAllProducts(): Promise<(Product & { supplierName: string; categoryName: string })[]> {
+    const rows = await db.select({
+      product: products,
+      supplierName: userProfiles.businessName,
+      categoryName: categories.nameFr,
+    })
+      .from(products)
+      .leftJoin(userProfiles, eq(products.supplierId, userProfiles.userId))
+      .leftJoin(categories, eq(products.categoryId, categories.id))
+      .orderBy(desc(products.createdAt));
+
+    return rows.map(row => ({
+      ...row.product,
+      supplierName: row.supplierName || "Inconnu",
+      categoryName: row.categoryName || "Non classé",
+    }));
+  }
+
+  async getAllOrders(): Promise<(Order & { buyerName: string; supplierName: string; itemsCount: number })[]> {
+    const buyer = alias(users, "buyer");
+    const supplier = alias(users, "supplier");
+    const buyerProfile = alias(userProfiles, "buyer_profile");
+    const supplierProfile = alias(userProfiles, "supplier_profile");
+
+    const rows = await db.select({
+      order: orders,
+      buyerName: sql<string>`coalesce(${buyer.firstName} || ' ' || ${buyer.lastName}, ${buyer.email})`,
+      supplierName: supplierProfile.businessName,
+      itemsCount: sql<number>`count(${orderItems.id})::int`,
+    })
+      .from(orders)
+      .leftJoin(buyer, eq(orders.buyerId, buyer.id))
+      .leftJoin(supplier, eq(orders.supplierId, supplier.id))
+      .leftJoin(supplierProfile, eq(supplier.id, supplierProfile.userId))
+      .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
+      .groupBy(orders.id, buyer.id, buyer.email, buyer.firstName, buyer.lastName, supplierProfile.businessName)
+      .orderBy(desc(orders.createdAt));
+
+    return rows.map(row => ({
+      ...row.order,
+      buyerName: row.buyerName || "Client inconnu",
+      supplierName: row.supplierName || "Fournisseur inconnu",
+      itemsCount: row.itemsCount || 0,
+    }));
+  }
+
+  async updateProductStatus(id: string, isActive: boolean): Promise<Product> {
+    const [product] = await db
+      .update(products)
+      .set({ isActive })
+      .where(eq(products.id, id))
+      .returning();
+    return product;
+  }
+
+  async updateUserRole(userId: string, role: "shop_owner" | "supplier" | "admin"): Promise<UserProfile> {
+    const [profile] = await db
+      .update(userProfiles)
+      .set({ role })
+      .where(eq(userProfiles.userId, userId))
+      .returning();
+    return profile;
+  }
+
+
+  async getPlatformStats(): Promise<{
+    totalUsers: number;
+    totalProducts: number;
+    totalOrders: number;
+    totalRevenue: string;
+  }> {
+    const [usersCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const [productsCount] = await db.select({ count: sql<number>`count(*)` }).from(products);
+    const [ordersCount] = await db.select({ count: sql<number>`count(*)` }).from(orders);
+    const [revenue] = await db.select({ total: sql<string>`coalesce(sum(total_amount::numeric), 0)` }).from(orders);
+
+    return {
+      totalUsers: Number(usersCount?.count || 0),
+      totalProducts: Number(productsCount?.count || 0),
+      totalOrders: Number(ordersCount?.count || 0),
+      totalRevenue: String(revenue?.total || "0"),
+    };
+  }
+
+  async getRevenueStats(): Promise<{ date: string; revenue: number }[]> {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const result = await db
+      .select({
+        date: sql<string>`to_char(${orders.createdAt}, 'YYYY-MM-DD')`,
+        total: sql<string>`sum(${orders.totalAmount}::numeric)`,
+      })
+      .from(orders)
+      .where(gte(orders.createdAt, sevenDaysAgo))
+      .groupBy(sql`to_char(${orders.createdAt}, 'YYYY-MM-DD')`)
+      .orderBy(sql`to_char(${orders.createdAt}, 'YYYY-MM-DD')`);
+
+    // Fill in missing dates with 0
+    const stats = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const existing = result.find(r => r.date === dateStr);
+      stats.push({
+        date: dateStr,
+        revenue: existing ? Number(existing.total) : 0
+      });
+    }
+    return stats.reverse();
+  }
+
+  async getUserStats(): Promise<{ role: string; count: number }[]> {
+    const result = await db
+      .select({
+        role: userProfiles.role,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(userProfiles)
+      .groupBy(userProfiles.role);
+
+    return result.map(r => ({
+      role: r.role === 'shop_owner' ? 'Commerçants' : r.role === 'supplier' ? 'Fournisseurs' : r.role === 'admin' ? 'Admin' : r.role,
+      count: r.count
+    }));
   }
 }
 

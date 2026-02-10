@@ -4,6 +4,8 @@ import connectPg from "connect-pg-simple";
 import { supabaseAdmin } from "./supabaseClient";
 import { db } from "../db";
 import { users } from "@shared/models/auth";
+import { users } from "@shared/models/auth";
+import { userProfiles } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 // Extend Express Request to include user
@@ -234,4 +236,36 @@ export const isAuthenticated: RequestHandler = async (req: Request, res: Respons
     (req as any).user = sessionUser;
 
     next();
+};
+
+export const requireAdmin: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const sessionUser = (req.session as any)?.user;
+
+    if (!sessionUser?.claims?.sub) {
+        return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+        console.log("Checking admin access for user:", sessionUser.claims.sub);
+        const [profile] = await db
+            .select()
+            .from(userProfiles)
+            .where(eq(userProfiles.userId, sessionUser.claims.sub));
+
+        console.log("Found profile:", profile ? `Role: ${profile.role}` : "No profile found");
+
+        if (!profile || profile.role !== "admin") {
+            console.log("Access denied: User is not admin");
+            return res.status(403).json({ message: "Admin access required" });
+        }
+
+        // Attach user and profile to request
+        (req as any).user = sessionUser;
+        (req as any).userProfile = profile;
+
+        next();
+    } catch (error) {
+        console.error("Admin check error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
 };

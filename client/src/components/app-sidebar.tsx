@@ -29,6 +29,8 @@ import {
   Globe,
   Zap,
   Wallet,
+  Users,
+  Settings,
 } from "lucide-react";
 import type { UserProfile, WalletTransaction } from "@shared/schema";
 import { formatPrice } from "@/lib/constants";
@@ -68,6 +70,7 @@ export function AppSidebar() {
   });
 
   const isSupplier = profile?.role === "supplier";
+  const isAdmin = profile?.role === "admin";
   const cartCount = cartItems?.length || 0;
   const walletBalance = parseFloat(walletData?.balance || "0");
 
@@ -85,7 +88,15 @@ export function AppSidebar() {
     { title: "Commandes recues", url: "/orders", icon: ClipboardList },
   ];
 
-  const menuItems = isSupplier ? supplierMenuItems : shopMenuItems;
+  const adminMenuItems = [
+    { title: "Vue d'ensemble", url: "/admin", icon: LayoutDashboard },
+    { title: "Utilisateurs", url: "/admin/users", icon: Users },
+    { title: "Commandes", url: "/admin/orders", icon: ShoppingCart },
+    { title: "Produits", url: "/admin/products", icon: Package },
+    { title: "Paramètres", url: "/admin/settings", icon: Settings },
+  ];
+
+  const menuItems = isAdmin ? adminMenuItems : isSupplier ? supplierMenuItems : shopMenuItems;
 
   const initials = user
     ? `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() || "U"
