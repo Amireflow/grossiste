@@ -52,13 +52,13 @@ export function MarketplaceNavbar() {
                                         </Button>
                                     </Link>
                                 )}
-                                <Link href="/">
+                                <a href="/">
                                     <Button size="sm" className="shadow-sm text-xs sm:text-sm" data-testid="button-back-dashboard">
                                         <span className="hidden sm:inline">Mon espace</span>
                                         <span className="sm:hidden">Espace</span>
                                         <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-0.5 sm:ml-1" />
                                     </Button>
-                                </Link>
+                                </a>
                             </div>
                         ) : (
                             <>

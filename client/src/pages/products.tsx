@@ -121,16 +121,16 @@ export default function ProductsPage() {
             {totalCount > 0 ? `${activeCount} actif${activeCount !== 1 ? "s" : ""} sur ${totalCount}` : "Gérez votre catalogue"}
           </p>
         </div>
-        <div className="w-full sm:w-auto flex items-center justify-between gap-2 sm:gap-4 flex-wrap">
-          <Link href="/boosts">
-            <Button variant="outline" data-testid="button-manage-boosts">
-              <Zap className="w-4 h-4 mr-1" />
+        <div className="w-full sm:w-auto grid grid-cols-2 sm:flex items-center gap-2 sm:gap-4">
+          <Link href="/boosts" className="w-full sm:w-auto">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm" data-testid="button-manage-boosts">
+              <Zap className="w-3.5 h-3.5 mr-1" />
               Gérer les boosts
             </Button>
           </Link>
-          <Link href="/products/new">
-            <Button data-testid="button-add-product">
-              <Plus className="w-4 h-4 mr-1" />
+          <Link href="/products/new" className="w-full sm:w-auto">
+            <Button size="sm" className="w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm" data-testid="button-add-product">
+              <Plus className="w-3.5 h-3.5 mr-1" />
               Ajouter un produit
             </Button>
           </Link>
@@ -220,7 +220,7 @@ export default function ProductsPage() {
                         <Link href={`/products/${product.id}/edit`} className="flex-1">
                           <Button variant="outline" size="sm" className="w-full h-8 sm:h-9 text-xs" data-testid={`button-edit-${product.id}`}>
                             <Pencil className="w-3.5 h-3.5 sm:mr-1.5" />
-                            <span className="hidden sm:inline">Modifier</span>
+                            <span>Modifier</span>
                           </Button>
                         </Link>
                         <Button
@@ -241,7 +241,7 @@ export default function ProductsPage() {
                       <Link href={`/products/${product.id}/edit`} className="flex-1">
                         <Button variant="outline" size="sm" className="w-full h-8 sm:h-9 text-xs" data-testid={`button-edit-${product.id}`}>
                           <Pencil className="w-3.5 h-3.5 sm:mr-1.5" />
-                          <span className="hidden sm:inline">Modifier</span>
+                          <span>Modifier</span>
                         </Button>
                       </Link>
                       {isActive && (
@@ -253,7 +253,7 @@ export default function ProductsPage() {
                           data-testid={`button-boost-${product.id}`}
                         >
                           <Zap className="w-3.5 h-3.5 sm:mr-1.5 fill-current" />
-                          <span className="hidden sm:inline">Booster</span>
+                          <span>Booster</span>
                         </Button>
                       )}
                     </div>

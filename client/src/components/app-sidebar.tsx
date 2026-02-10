@@ -135,9 +135,9 @@ export function AppSidebar() {
                         : location.startsWith(item.url)
                     }
                   >
-                    <Link href={item.url} onClick={closeSidebar} data-testid={`link-nav-${item.url.replace("/", "") || "dashboard"}`}>
+                    <a href={item.url} onClick={closeSidebar} data-testid={`link-nav-${item.url.replace("/", "") || "dashboard"}`} className="flex items-center gap-2 w-full">
                       <item.icon className="w-4 h-4" />
-                      <span className="flex-1">{item.title}</span>
+                      <span className="flex-1 text-left">{item.title}</span>
                       {"badge" in item && (item as any).badge > 0 && (
                         <Badge variant="default" className="text-[10px]" data-testid="badge-cart-count">
                           {(item as any).badge}
@@ -148,7 +148,7 @@ export function AppSidebar() {
                           {formatPrice(walletBalance)}
                         </span>
                       )}
-                    </Link>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -163,10 +163,10 @@ export function AppSidebar() {
               <SidebarMenu className="gap-2.5">
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <Link href="/products/new" onClick={closeSidebar} data-testid="link-add-product">
+                    <a href="/products/new" onClick={closeSidebar} data-testid="link-add-product" className="flex items-center gap-2 w-full">
                       <Plus className="w-4 h-4" />
                       <span>Ajouter un produit</span>
-                    </Link>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -182,10 +182,10 @@ export function AppSidebar() {
             <SidebarMenu className="gap-2.5">
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location === "/marketplace"}>
-                  <Link href="/marketplace" onClick={closeSidebar} data-testid="link-nav-marketplace">
+                  <a href="/marketplace" onClick={closeSidebar} data-testid="link-nav-marketplace" className="flex items-center gap-2 w-full">
                     <Globe className="w-4 h-4" />
                     <span>Marketplace</span>
-                  </Link>
+                  </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
