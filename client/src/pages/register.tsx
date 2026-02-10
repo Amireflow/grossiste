@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, UserPlus, ChevronLeft, Store, CheckCircle2, Eye, EyeOff, Building2, ArrowRight, ShieldCheck, Truck, TrendingUp } from "lucide-react";
+import { Loader2, UserPlus, ChevronLeft, ChevronRight, Store, CheckCircle2, Eye, EyeOff, Building2, ShieldCheck, Truck, TrendingUp } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { COUNTRIES } from "@/lib/constants";
+import { COUNTRIES, COUNTRY_PHONE_CODES } from "@/lib/constants";
 
 export default function RegisterPage() {
     const [, setLocation] = useLocation();
@@ -26,7 +26,7 @@ export default function RegisterPage() {
         businessName: "",
         phone: "",
         city: "",
-        country: "Bénin",
+        country: "Sénégal",
         address: "",
     });
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -95,7 +95,7 @@ export default function RegisterPage() {
             await apiRequest("POST", "/api/profile", {
                 role: formData.role,
                 businessName: formData.businessName,
-                phone: formData.phone,
+                phone: `${COUNTRY_PHONE_CODES[formData.country] || ""}${formData.phone.replace(/\s+/g, "")}`,
                 city: formData.city,
                 country: formData.country,
                 address: formData.address,
@@ -337,36 +337,11 @@ export default function RegisterPage() {
                                         {fieldErrors.businessName && <p className="text-[11px] sm:text-xs text-destructive">{fieldErrors.businessName}</p>}
                                     </div>
 
-                                    <div className="space-y-1.5 sm:space-y-2">
-                                        <Label htmlFor="phone" className="text-xs sm:text-sm">Téléphone</Label>
-                                        <Input
-                                            id="phone"
-                                            name="phone"
-                                            placeholder="+229 ..."
-                                            value={formData.phone}
-                                            onChange={handleChange}
-                                            className={`h-10 sm:h-11 text-sm rounded-lg ${fieldErrors.phone ? "border-destructive" : ""}`}
-                                        />
-                                        {fieldErrors.phone && <p className="text-[11px] sm:text-xs text-destructive">{fieldErrors.phone}</p>}
-                                    </div>
-
                                     <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                                        <div className="space-y-1.5 sm:space-y-2">
-                                            <Label htmlFor="city" className="text-xs sm:text-sm">Ville</Label>
-                                            <Input
-                                                id="city"
-                                                name="city"
-                                                placeholder="Cotonou"
-                                                value={formData.city}
-                                                onChange={handleChange}
-                                                className={`h-10 sm:h-11 text-sm ${fieldErrors.city ? "border-destructive" : ""}`}
-                                            />
-                                            {fieldErrors.city && <p className="text-[11px] sm:text-xs text-destructive">{fieldErrors.city}</p>}
-                                        </div>
                                         <div className="space-y-1.5 sm:space-y-2">
                                             <Label htmlFor="country" className="text-xs sm:text-sm">Pays</Label>
                                             <Select value={formData.country} onValueChange={(val) => handleSelectChange("country", val)}>
-                                                <SelectTrigger className="h-10 sm:h-11 text-sm">
+                                                <SelectTrigger className="h-10 sm:h-11 text-sm bg-background">
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -376,6 +351,36 @@ export default function RegisterPage() {
                                                 </SelectContent>
                                             </Select>
                                         </div>
+                                        <div className="space-y-1.5 sm:space-y-2">
+                                            <Label htmlFor="city" className="text-xs sm:text-sm">Ville</Label>
+                                            <Input
+                                                id="city"
+                                                name="city"
+                                                placeholder="Dakar"
+                                                value={formData.city}
+                                                onChange={handleChange}
+                                                className={`h-10 sm:h-11 text-sm ${fieldErrors.city ? "border-destructive" : ""}`}
+                                            />
+                                            {fieldErrors.city && <p className="text-[11px] sm:text-xs text-destructive">{fieldErrors.city}</p>}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5 sm:space-y-2">
+                                        <Label htmlFor="phone" className="text-xs sm:text-sm">Téléphone</Label>
+                                        <div className="relative flex items-center">
+                                            <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center px-3 bg-muted/50 border-r rounded-l-lg text-sm text-muted-foreground w-16">
+                                                {COUNTRY_PHONE_CODES[formData.country] || "+..."}
+                                            </div>
+                                            <Input
+                                                id="phone"
+                                                name="phone"
+                                                placeholder="77 000 00 00"
+                                                value={formData.phone}
+                                                onChange={handleChange}
+                                                className={`pl-20 h-10 sm:h-11 text-sm rounded-lg ${fieldErrors.phone ? "border-destructive" : ""}`}
+                                            />
+                                        </div>
+                                        {fieldErrors.phone && <p className="text-[11px] sm:text-xs text-destructive">{fieldErrors.phone}</p>}
                                     </div>
                                 </div>
 
@@ -450,7 +455,7 @@ export default function RegisterPage() {
                                             onClick={handleNext}
                                             className="w-full h-10 sm:h-12 text-sm sm:text-base shadow-sm rounded-lg"
                                         >
-                                            Suivant <ArrowRight className="ml-2 w-4 h-4" />
+                                            Suivant <ChevronRight className="ml-2 w-4 h-4" />
                                         </Button>
                                     ) : (
                                         <Button

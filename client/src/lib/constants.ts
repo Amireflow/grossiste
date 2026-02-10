@@ -10,6 +10,19 @@ export const COUNTRIES = [
   "Mali", "Niger", "Sénégal", "Togo", "Ghana", "Nigeria",
 ];
 
+export const COUNTRY_PHONE_CODES: Record<string, string> = {
+  "Bénin": "+229",
+  "Burkina Faso": "+226",
+  "Côte d'Ivoire": "+225",
+  "Guinée": "+224",
+  "Mali": "+223",
+  "Niger": "+227",
+  "Sénégal": "+221",
+  "Togo": "+228",
+  "Ghana": "+233",
+  "Nigeria": "+234",
+};
+
 export const ORDER_STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending: { label: "En attente", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
   confirmed: { label: "Confirmée", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },

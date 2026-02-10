@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, LogIn, ChevronLeft, Eye, EyeOff, Store, ArrowRight, ShieldCheck, Truck, TrendingUp } from "lucide-react";
+import { Loader2, LogIn, ChevronLeft, ChevronRight, Eye, EyeOff, Store, ShieldCheck, Truck, TrendingUp } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 export default function LoginPage() {
@@ -152,7 +152,12 @@ export default function LoginPage() {
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
                                             <Label htmlFor="password">Mot de passe</Label>
-                                            <button type="button" className="px-0 font-normal h-auto text-xs text-muted-foreground hover:text-primary transition-colors" tabIndex={-1}>
+                                            <button
+                                                type="button"
+                                                className="px-0 font-normal h-auto text-xs text-muted-foreground hover:text-primary transition-colors"
+                                                tabIndex={-1}
+                                                onClick={() => setLocation("/forgot-password")}
+                                            >
                                                 Mot de passe oublié ?
                                             </button>
                                         </div>
@@ -220,7 +225,7 @@ export default function LoginPage() {
                                     className="font-semibold text-primary hover:underline inline-flex items-center gap-1"
                                 >
                                     Créer un compte
-                                    <ArrowRight className="w-3 h-3" />
+                                    <ChevronRight className="w-4 h-4" />
                                 </button>
                             </div>
                         </div>

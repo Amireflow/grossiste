@@ -17,6 +17,8 @@ import { UserNav } from "@/components/user-nav";
 import MarketplacePage from "@/pages/marketplace";
 import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
 import ShopPage from "@/pages/shop";
 import ProductDetailPage from "@/pages/product-detail";
 import OrderDetailsPage from "@/pages/order-details";
@@ -162,6 +164,17 @@ function AppContent() {
 
   if (location === "/register") {
     return user ? <Redirect to="/" /> : <RegisterPage />;
+  }
+
+  if (location === "/forgot-password") {
+    return user ? <Redirect to="/" /> : <ForgotPasswordPage />;
+  }
+
+  if (location === "/reset-password") {
+    // We allow user to access reset password page even if logged in (e.g. they clicked the link while logged in)
+    // But typically the link logs them in a specific recovery mode. 
+    // Supabase handles session establishment from the link hash.
+    return <ResetPasswordPage />;
   }
 
   if (isLoading) {
