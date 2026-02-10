@@ -4,7 +4,6 @@ import connectPg from "connect-pg-simple";
 import { supabaseAdmin } from "./supabaseClient";
 import { db } from "../db";
 import { users } from "@shared/models/auth";
-import { users } from "@shared/models/auth";
 import { userProfiles } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
@@ -31,7 +30,13 @@ export function getSession() {
     });
 
     return session({
-        secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
+        secret: (() => {
+            const secret = process.env.SESSION_SECRET;
+            if (!secret && process.env.NODE_ENV === "production") {
+                throw new Error("SESSION_SECRET must be set in production");
+            }
+            return secret || "dev-secret-change-in-production";
+        })(),
         store: sessionStore,
         resave: false,
         saveUninitialized: false,
@@ -205,15 +210,6 @@ export function registerAuthRoutes(app: Express) {
     });
 
     // Logout
-    app.get("/api/logout", (req: Request, res: Response) => {
-        req.session.destroy((err) => {
-            if (err) {
-                console.error("Logout error:", err);
-            }
-            res.redirect("/");
-        });
-    });
-
     app.post("/api/auth/logout", (req: Request, res: Response) => {
         req.session.destroy((err) => {
             if (err) {
@@ -246,16 +242,12 @@ export const requireAdmin: RequestHandler = async (req: Request, res: Response, 
     }
 
     try {
-        console.log("Checking admin access for user:", sessionUser.claims.sub);
         const [profile] = await db
             .select()
             .from(userProfiles)
             .where(eq(userProfiles.userId, sessionUser.claims.sub));
 
-        console.log("Found profile:", profile ? `Role: ${profile.role}` : "No profile found");
-
         if (!profile || profile.role !== "admin") {
-            console.log("Access denied: User is not admin");
             return res.status(403).json({ message: "Admin access required" });
         }
 

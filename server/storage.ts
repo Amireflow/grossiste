@@ -11,7 +11,7 @@ import {
   type User,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, ilike, or, gte, lte } from "drizzle-orm";
+import { eq, and, desc, sql, ilike, or, gte, lte, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 export interface IStorage {
@@ -32,6 +32,7 @@ export interface IStorage {
   updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined>;
 
   getCartItems(userId: string): Promise<(CartItem & { product: Product })[]>;
+  getCartItemById(id: string): Promise<CartItem | undefined>;
   addToCart(data: InsertCartItem): Promise<CartItem>;
   updateCartItem(id: string, quantity: number): Promise<CartItem | undefined>;
   removeCartItem(id: string): Promise<void>;
@@ -43,12 +44,26 @@ export interface IStorage {
   createOrderItem(data: InsertOrderItem): Promise<OrderItem>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
   getOrder(id: string): Promise<(Order & { items: (OrderItem & { product?: { name: string; imageUrl: string | null } })[] }) | undefined>;
+  checkoutTransaction(
+    userId: string,
+    cartItemsData: (CartItem & { product: Product })[],
+    delivery: {
+      currency: string;
+      contactName: string;
+      deliveryPhone: string;
+      deliveryAddress: string;
+      deliveryCity: string;
+      paymentMethod: string;
+      notes: string;
+    }
+  ): Promise<Order[]>;
 
   getStats(userId: string, role: string): Promise<{ totalOrders: number; pendingOrders: number; totalProducts: number; totalRevenue: string }>;
   getSuppliers(): Promise<{ id: string; businessName: string; city: string | null; country: string | null; description: string | null; productCount: number; profileImageUrl: string | null }[]>;
 
   getBoostsBySupplier(supplierId: string): Promise<(ProductBoost & { productName: string })[]>;
   getActiveBoostForProduct(productId: string): Promise<ProductBoost | undefined>;
+  getBoostById(id: string): Promise<ProductBoost | undefined>;
   createBoost(data: InsertProductBoost): Promise<ProductBoost>;
   updateBoost(id: string, data: Partial<{ status: string; endDate: Date }>): Promise<ProductBoost | undefined>;
   getActiveBoostProductIds(): Promise<Set<string>>;
@@ -205,6 +220,11 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  async getCartItemById(id: string): Promise<CartItem | undefined> {
+    const [item] = await db.select().from(cartItems).where(eq(cartItems.id, id));
+    return item || undefined;
+  }
+
   async addToCart(data: InsertCartItem): Promise<CartItem> {
     const existing = await db.select().from(cartItems)
       .where(and(eq(cartItems.userId, data.userId), eq(cartItems.productId, data.productId)));
@@ -239,22 +259,27 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.buyerId, buyerId))
       .orderBy(desc(orders.createdAt));
 
-    const result = [];
-    for (const order of allOrders) {
-      const rawItems = await db.select({
-        orderItem: orderItems,
-        product: { name: products.name, imageUrl: products.imageUrl },
-      }).from(orderItems)
-        .leftJoin(products, eq(orderItems.productId, products.id))
-        .where(eq(orderItems.orderId, order.id));
+    if (allOrders.length === 0) return [];
 
-      const items = rawItems.map((r) => ({
-        ...r.orderItem,
-        product: r.product || undefined,
-      }));
-      result.push({ ...order, items });
+    const orderIds = allOrders.map(o => o.id);
+    const allItems = await db.select({
+      orderItem: orderItems,
+      product: { name: products.name, imageUrl: products.imageUrl },
+    }).from(orderItems)
+      .leftJoin(products, eq(orderItems.productId, products.id))
+      .where(inArray(orderItems.orderId, orderIds));
+
+    const itemsByOrderId = new Map<string, (OrderItem & { product?: { name: string; imageUrl: string | null } })[]>();
+    for (const r of allItems) {
+      const arr = itemsByOrderId.get(r.orderItem.orderId) || [];
+      arr.push({ ...r.orderItem, product: r.product || undefined });
+      itemsByOrderId.set(r.orderItem.orderId, arr);
     }
-    return result;
+
+    return allOrders.map(order => ({
+      ...order,
+      items: itemsByOrderId.get(order.id) || [],
+    }));
   }
 
   async getOrdersBySupplier(supplierId: string): Promise<(Order & { items: (OrderItem & { product?: { name: string; imageUrl: string | null } })[] })[]> {
@@ -262,22 +287,27 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.supplierId, supplierId))
       .orderBy(desc(orders.createdAt));
 
-    const result = [];
-    for (const order of allOrders) {
-      const rawItems = await db.select({
-        orderItem: orderItems,
-        product: { name: products.name, imageUrl: products.imageUrl },
-      }).from(orderItems)
-        .leftJoin(products, eq(orderItems.productId, products.id))
-        .where(eq(orderItems.orderId, order.id));
+    if (allOrders.length === 0) return [];
 
-      const items = rawItems.map((r) => ({
-        ...r.orderItem,
-        product: r.product || undefined,
-      }));
-      result.push({ ...order, items });
+    const orderIds = allOrders.map(o => o.id);
+    const allItems = await db.select({
+      orderItem: orderItems,
+      product: { name: products.name, imageUrl: products.imageUrl },
+    }).from(orderItems)
+      .leftJoin(products, eq(orderItems.productId, products.id))
+      .where(inArray(orderItems.orderId, orderIds));
+
+    const itemsByOrderId = new Map<string, (OrderItem & { product?: { name: string; imageUrl: string | null } })[]>();
+    for (const r of allItems) {
+      const arr = itemsByOrderId.get(r.orderItem.orderId) || [];
+      arr.push({ ...r.orderItem, product: r.product || undefined });
+      itemsByOrderId.set(r.orderItem.orderId, arr);
     }
-    return result;
+
+    return allOrders.map(order => ({
+      ...order,
+      items: itemsByOrderId.get(order.id) || [],
+    }));
   }
 
   async createOrder(data: InsertOrder): Promise<Order> {
@@ -290,12 +320,100 @@ export class DatabaseStorage implements IStorage {
     return item;
   }
 
-  async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
+  async updateOrderStatus(id: string, newStatus: string): Promise<Order | undefined> {
+    const [currentOrder] = await db.select().from(orders).where(eq(orders.id, id));
+    if (!currentOrder) return undefined;
+
+    const current = currentOrder.status || "pending";
+    const allowedTransitions: Record<string, string[]> = {
+      pending: ["confirmed", "cancelled"],
+      confirmed: ["processing", "cancelled"],
+      processing: ["shipped", "cancelled"],
+      shipped: ["delivered"],
+      delivered: [],
+      cancelled: []
+    };
+
+    const allowed = allowedTransitions[current];
+    if (!allowed || !allowed.includes(newStatus)) {
+      throw new Error(`Invalid status transition from ${current} to ${newStatus}`);
+    }
+
     const [order] = await db.update(orders)
-      .set({ status: status as any, updatedAt: new Date() })
+      .set({ status: newStatus as any, updatedAt: new Date() })
       .where(eq(orders.id, id))
       .returning();
     return order || undefined;
+  }
+
+  async checkoutTransaction(
+    userId: string,
+    cartItemsData: (CartItem & { product: Product })[],
+    delivery: {
+      currency: string;
+      contactName: string;
+      deliveryPhone: string;
+      deliveryAddress: string;
+      deliveryCity: string;
+      paymentMethod: string;
+      notes: string;
+    }
+  ): Promise<Order[]> {
+    return await db.transaction(async (tx) => {
+      const ordersBySupplier: Record<string, typeof cartItemsData> = {};
+      for (const item of cartItemsData) {
+        const sid = item.product.supplierId;
+        if (!ordersBySupplier[sid]) ordersBySupplier[sid] = [];
+        ordersBySupplier[sid].push(item);
+      }
+
+      const createdOrders: Order[] = [];
+      for (const [supplierId, items] of Object.entries(ordersBySupplier)) {
+        const totalAmount = items.reduce(
+          (sum, item) => sum + parseFloat(item.product.price) * item.quantity,
+          0
+        );
+
+        const [order] = await tx.insert(orders).values({
+          buyerId: userId,
+          supplierId,
+          totalAmount: totalAmount.toFixed(2),
+          currency: delivery.currency,
+          contactName: delivery.contactName,
+          deliveryPhone: delivery.deliveryPhone,
+          deliveryAddress: delivery.deliveryAddress,
+          deliveryCity: delivery.deliveryCity,
+          paymentMethod: delivery.paymentMethod,
+          notes: delivery.notes,
+          status: "pending",
+        } as InsertOrder).returning();
+
+        for (const item of items) {
+          await tx.insert(orderItems).values({
+            orderId: order.id,
+            productId: item.productId,
+            productName: item.product.name,
+            quantity: item.quantity,
+            unitPrice: item.product.price,
+            totalPrice: (parseFloat(item.product.price) * item.quantity).toFixed(2),
+          });
+
+          // Decrement stock atomically
+          if (item.product.stock !== null) {
+            await tx.update(products)
+              .set({ stock: sql`${products.stock} - ${item.quantity}` })
+              .where(eq(products.id, item.productId));
+          }
+        }
+
+        createdOrders.push(order);
+      }
+
+      // Clear cart within the transaction
+      await tx.delete(cartItems).where(eq(cartItems.userId, userId));
+
+      return createdOrders;
+    });
   }
 
   async getOrder(id: string): Promise<(Order & { items: (OrderItem & { product?: { name: string; imageUrl: string | null } })[] }) | undefined> {
@@ -395,6 +513,11 @@ export class DatabaseStorage implements IStorage {
         lte(productBoosts.startDate, now),
         gte(productBoosts.endDate, now)
       ));
+    return boost || undefined;
+  }
+
+  async getBoostById(id: string): Promise<ProductBoost | undefined> {
+    const [boost] = await db.select().from(productBoosts).where(eq(productBoosts.id, id));
     return boost || undefined;
   }
 

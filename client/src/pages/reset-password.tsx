@@ -21,6 +21,7 @@ export default function ResetPasswordPage() {
     // Check if we have a session (Supabase automatically handles the hash fragment token exchange)
     useEffect(() => {
         const checkSession = async () => {
+            if (!supabase) return;
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
                 // Ideally, we'd check for hash params error, but for simplicity:
@@ -48,6 +49,11 @@ export default function ResetPasswordPage() {
         setError(null);
 
         try {
+            if (!supabase) {
+                setError("Service de réinitialisation non disponible.");
+                setIsLoading(false);
+                return;
+            }
             const { error } = await supabase.auth.updateUser({
                 password: password
             });

@@ -59,7 +59,8 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        const jsonStr = JSON.stringify(capturedJsonResponse);
+        logLine += ` :: ${jsonStr.length > 80 ? jsonStr.substring(0, 80) + '…' : jsonStr}`;
       }
 
       log(logLine);
@@ -72,8 +73,10 @@ app.use((req, res, next) => {
 (async () => {
   await registerRoutes(httpServer, app);
 
-  const { seedDatabase } = await import("./seed");
-  await seedDatabase().catch((err) => console.error("Seed error:", err));
+  if (process.env.NODE_ENV !== "production") {
+    const { seedDatabase } = await import("./seed");
+    await seedDatabase().catch((err) => console.error("Seed error:", err));
+  }
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

@@ -72,6 +72,8 @@ export default function OrderDetailsPage() {
         }
     };
 
+    const currentStatus = (order.status || "pending") as string;
+
     return (
         <div className="min-h-screen bg-muted/20 pb-10 p-3 md:p-4">
             <div className="max-w-4xl mx-auto space-y-4">
@@ -104,11 +106,11 @@ export default function OrderDetailsPage() {
                                 <CardTitle className="text-lg mb-1">Commande #{order.id.substring(0, 8).toUpperCase()}</CardTitle>
                                 <div className="text-xs text-muted-foreground flex items-center gap-2">
                                     <Calendar className="w-3.5 h-3.5" />
-                                    {format(new Date(order.createdAt), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+                                    {format(order.createdAt ? new Date(order.createdAt) : new Date(), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
                                 </div>
                             </div>
-                            <Badge className={`${getStatusColor(order.status)} border-none px-2 py-0.5 text-xs`}>
-                                {getStatusLabel(order.status)}
+                            <Badge className={`${getStatusColor(currentStatus)} border-none px-2 py-0.5 text-xs`}>
+                                {getStatusLabel(currentStatus)}
                             </Badge>
                         </div>
                     </CardHeader>
@@ -117,18 +119,18 @@ export default function OrderDetailsPage() {
                         {/* Steps / Timeline (Simplified) */}
                         <div className="relative pb-2 print:hidden">
                             <div className="flex justify-between text-xs font-medium text-muted-foreground mb-1.5">
-                                <span className={order.status !== "cancelled" ? "text-primary" : ""}>Commandé</span>
-                                <span className={["confirmed", "processing", "shipped", "delivered"].includes(order.status) ? "text-primary" : ""}>Traitement</span>
-                                <span className={["shipped", "delivered"].includes(order.status) ? "text-primary" : ""}>Expédition</span>
-                                <span className={order.status === "delivered" ? "text-primary" : ""}>Livraison</span>
+                                <span className={currentStatus !== "cancelled" ? "text-primary" : ""}>Commandé</span>
+                                <span className={["confirmed", "processing", "shipped", "delivered"].includes(currentStatus) ? "text-primary" : ""}>Traitement</span>
+                                <span className={["shipped", "delivered"].includes(currentStatus) ? "text-primary" : ""}>Expédition</span>
+                                <span className={currentStatus === "delivered" ? "text-primary" : ""}>Livraison</span>
                             </div>
                             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                                 <div
                                     className={`h-full bg-primary transition-all duration-500`}
                                     style={{
-                                        width: order.status === "delivered" ? "100%" :
-                                            order.status === "shipped" ? "75%" :
-                                                order.status === "processing" || order.status === "confirmed" ? "50%" :
+                                        width: currentStatus === "delivered" ? "100%" :
+                                            currentStatus === "shipped" ? "75%" :
+                                                currentStatus === "processing" || currentStatus === "confirmed" ? "50%" :
                                                     "25%"
                                     }}
                                 />
@@ -219,7 +221,7 @@ export default function OrderDetailsPage() {
                             <div className="w-full md:w-5/12 space-y-2">
                                 <div className="flex justify-between text-xs">
                                     <span className="text-muted-foreground">Sous-total</span>
-                                    <span>{formatPrice(order.totalAmount, order.currency)}</span>
+                                    <span>{formatPrice(order.totalAmount, order.currency || "XOF")}</span>
                                 </div>
                                 <div className="flex justify-between text-xs">
                                     <span className="text-muted-foreground">Livraison</span>
@@ -229,7 +231,7 @@ export default function OrderDetailsPage() {
                                 <div className="flex justify-between items-center">
                                     <span className="font-bold text-sm">Total</span>
                                     <span className="font-bold text-lg text-primary">
-                                        {formatPrice(order.totalAmount, order.currency)}
+                                        {formatPrice(order.totalAmount, order.currency || "XOF")}
                                     </span>
                                 </div>
                             </div>

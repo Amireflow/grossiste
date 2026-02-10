@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Store } from "lucide-react";
 import { UserNav } from "@/components/user-nav";
+import { AdminGuard } from "@/components/admin-guard";
 
 
 import MarketplacePage from "@/pages/marketplace";
@@ -123,11 +124,11 @@ function AuthenticatedRouter() {
               <Route path="/profile" component={ProfilePage} />
 
               {/* Admin Routes */}
-              <Route path="/admin" component={AdminDashboard} />
-              <Route path="/admin/users" component={AdminUsers} />
-              <Route path="/admin/products" component={AdminProducts} />
-              <Route path="/admin/orders" component={AdminOrders} />
-              <Route path="/admin/settings" component={AdminSettings} />
+              <Route path="/admin">{() => <AdminGuard><AdminDashboard /></AdminGuard>}</Route>
+              <Route path="/admin/users">{() => <AdminGuard><AdminUsers /></AdminGuard>}</Route>
+              <Route path="/admin/products">{() => <AdminGuard><AdminProducts /></AdminGuard>}</Route>
+              <Route path="/admin/orders">{() => <AdminGuard><AdminOrders /></AdminGuard>}</Route>
+              <Route path="/admin/settings">{() => <AdminGuard><AdminSettings /></AdminGuard>}</Route>
 
               <Route component={NotFound} />
             </Switch>

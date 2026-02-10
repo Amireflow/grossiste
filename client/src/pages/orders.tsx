@@ -84,7 +84,8 @@ export default function OrdersPage() {
       ) : orders && orders.length > 0 ? (
         <div className="space-y-3">
           {orders.map((order, index) => {
-            const status = ORDER_STATUS_LABELS[order.status || "pending"];
+            const currentStatus = (order.status || "pending") as string;
+            const statusLabel = ORDER_STATUS_LABELS[currentStatus];
             const isExpanded = expandedOrder === order.id;
             const itemCount = order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
@@ -102,15 +103,15 @@ export default function OrdersPage() {
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center shrink-0">
-                        {STATUS_ICONS[order.status || "pending"]}
+                        {STATUS_ICONS[currentStatus]}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-medium text-sm">
                             #{order.id.slice(0, 8)}
                           </p>
-                          <Badge variant="secondary" className={`text-[10px] ${status.color}`}>
-                            {status.label}
+                          <Badge variant="secondary" className={`text-[10px] ${statusLabel.color}`}>
+                            {statusLabel.label}
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">
@@ -206,7 +207,7 @@ export default function OrdersPage() {
                         )}
                       </div>
 
-                      {isSupplier && order.status !== "delivered" && order.status !== "cancelled" && (
+                      {isSupplier && currentStatus !== "delivered" && currentStatus !== "cancelled" && (
                         <div className="px-4 pb-4">
                           <Separator className="mb-3" />
                           <div className="flex items-center gap-2 mt-4 sm:mt-0">
@@ -215,9 +216,9 @@ export default function OrdersPage() {
                                 Voir détails
                               </Button>
                             </Link>
-                            {profile?.role === "supplier" && order.status !== "cancelled" && order.status !== "delivered" && (
+                            {profile?.role === "supplier" && currentStatus !== "cancelled" && currentStatus !== "delivered" && (
                               <Select
-                                defaultValue={order.status || "pending"}
+                                defaultValue={currentStatus}
                                 onValueChange={(value) =>
                                   updateStatus.mutate({ orderId: order.id, status: value })
                                 }

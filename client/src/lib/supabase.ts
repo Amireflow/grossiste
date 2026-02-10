@@ -4,7 +4,10 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
 if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn("Supabase credentials not configured. Auth features will not work.");
+    console.warn("Supabase credentials not configured. Some features may not work.");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Only create a functional client if credentials are available
+export const supabase = supabaseUrl && supabaseAnonKey
+    ? createClient(supabaseUrl, supabaseAnonKey)
+    : null;
