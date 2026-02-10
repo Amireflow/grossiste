@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Store, Package, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Store, Package, ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { COUNTRIES } from "@/lib/constants";
@@ -133,7 +133,7 @@ export default function OnboardingPage() {
             </div>
             <Button className="w-full mt-6" size="lg" onClick={() => setStep("details")} data-testid="button-continue-role">
               Continuer
-              <ArrowRight className="w-4 h-4 ml-1" />
+              <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
         ) : (
@@ -267,12 +267,12 @@ export default function OnboardingPage() {
                     />
                     <div className="flex gap-3 pt-2">
                       <Button type="button" variant="outline" onClick={() => setStep("role")} data-testid="button-back">
-                        <ArrowLeft className="w-4 h-4 mr-1" />
+                        <ChevronLeft className="w-4 h-4 mr-1" />
                         Retour
                       </Button>
                       <Button type="submit" className="flex-1" disabled={createProfile.isPending} data-testid="button-submit-profile">
                         {createProfile.isPending ? "Creation..." : "Creer mon profil"}
-                        <ArrowRight className="w-4 h-4 ml-1" />
+                        <ChevronRight className="w-4 h-4 ml-1" />
                       </Button>
                     </div>
                   </form>

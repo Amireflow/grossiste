@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation, Redirect } from "wouter";
+import { Switch, Route, useLocation, useRoute, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,9 +10,14 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Store } from "lucide-react";
+import { UserNav } from "@/components/user-nav";
 
-import LandingPage from "@/pages/landing";
+
 import MarketplacePage from "@/pages/marketplace";
+import LoginPage from "@/pages/login";
+import RegisterPage from "@/pages/register";
+import ShopPage from "@/pages/shop";
+import OrderDetailsPage from "@/pages/order-details";
 
 import OnboardingPage from "@/pages/onboarding";
 import DashboardPage from "@/pages/dashboard";
@@ -22,6 +27,7 @@ import ProductsPage from "@/pages/products";
 import ProductFormPage from "@/pages/product-form";
 import BoostsPage from "@/pages/boosts";
 import WalletPage from "@/pages/wallet";
+import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 
 import type { UserProfile } from "@shared/schema";
@@ -74,7 +80,7 @@ function AuthenticatedRouter() {
       <div className="flex h-screen w-full">
         <AppSidebar />
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="flex items-center justify-between gap-4 px-4 h-12 border-b shrink-0 sticky top-0 z-40 bg-background">
+          <header className="flex items-center justify-between gap-4 px-6 h-20 shrink-0 sticky top-0 z-40 bg-background">
             <div className="flex items-center gap-3">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               {pageTitle && (
@@ -83,18 +89,24 @@ function AuthenticatedRouter() {
                 </span>
               )}
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <UserNav />
+            </div>
           </header>
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto bg-muted/20">
             <Switch>
               <Route path="/" component={DashboardPage} />
               <Route path="/cart" component={CartPage} />
               <Route path="/orders" component={OrdersPage} />
+              <Route path="/orders/:id" component={OrderDetailsPage} />
               <Route path="/products" component={ProductsPage} />
               <Route path="/products/new" component={ProductFormPage} />
               <Route path="/products/:id/edit" component={ProductFormPage} />
               <Route path="/boosts" component={BoostsPage} />
               <Route path="/wallet" component={WalletPage} />
+              <Route path="/profile" component={ProfilePage} />
+
               <Route component={NotFound} />
             </Switch>
           </main>
@@ -108,8 +120,23 @@ function AppContent() {
   const [location] = useLocation();
   const { user, isLoading } = useAuth();
 
+  const [isShopPage] = useRoute("/shop/:id");
+
+  // Public routes that don't require auth check
   if (location === "/marketplace" || location === "/catalog") {
     return <MarketplacePage />;
+  }
+
+  if (isShopPage) {
+    return <ShopPage />;
+  }
+
+  if (location === "/login") {
+    return user ? <Redirect to="/" /> : <LoginPage />;
+  }
+
+  if (location === "/register") {
+    return user ? <Redirect to="/" /> : <RegisterPage />;
   }
 
   if (isLoading) {
@@ -126,7 +153,7 @@ function AppContent() {
   }
 
   if (!user) {
-    return <LandingPage />;
+    return <MarketplacePage />;
   }
 
   return <AuthenticatedRouter />;

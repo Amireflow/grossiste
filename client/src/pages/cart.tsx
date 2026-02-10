@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, MapPin, Truck, ArrowLeft, User, Phone } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, ChevronRight, Package, MapPin, Truck, ChevronLeft, User, Phone } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -124,7 +124,7 @@ export default function CartPage() {
         </div>
         <Link href="/marketplace">
           <Button variant="outline" size="sm" data-testid="button-continue-shopping">
-            <ArrowLeft className="w-3.5 h-3.5 mr-1" />
+            <ChevronLeft className="w-3.5 h-3.5 mr-1" />
             Continuer mes achats
           </Button>
         </Link>
@@ -148,55 +148,55 @@ export default function CartPage() {
           ))}
         </div>
       ) : cartItems && cartItems.length > 0 ? (
-        <div className="grid lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2 space-y-3">
+        <div className="grid lg:grid-cols-2 gap-5">
+          <div className="space-y-3">
             {cartItems.map((item, index) => {
               const lineTotal = parseFloat(item.product.price) * item.quantity;
               return (
                 <Card key={item.id} className={`animate-fade-in-up stagger-${Math.min(index + 1, 6)}`} data-testid={`cart-item-${item.id}`}>
-                  <CardContent className="p-3 sm:p-4">
-                    <div className="flex gap-3 sm:gap-4">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden bg-muted shrink-0">
+                  <CardContent className="p-2 md:p-3">
+                    <div className="flex gap-3">
+                      <div className="w-14 h-14 rounded-md overflow-hidden bg-muted shrink-0">
                         {item.product.imageUrl ? (
                           <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-muted">
-                            <Package className="w-6 h-6 text-muted-foreground/50" />
+                            <Package className="w-5 h-5 text-muted-foreground/50" />
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="font-medium text-sm line-clamp-2">{item.product.name}</h3>
+                          <h3 className="font-medium text-xs line-clamp-2">{item.product.name}</h3>
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="shrink-0 -mt-1 -mr-1"
+                            className="shrink-0 h-6 w-6 -mt-1 -mr-1"
                             onClick={() => removeItem.mutate(item.id)}
                             data-testid={`button-cart-remove-${item.id}`}
                           >
-                            <Trash2 className="w-4 h-4 text-muted-foreground" />
+                            <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
                           </Button>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
                           {formatPrice(item.product.price, item.product.currency)} / {item.product.unit}
                         </p>
-                        <div className="flex items-center justify-between gap-3 mt-2.5">
-                          <div className="flex items-center border rounded-md">
+                        <div className="flex items-center justify-between gap-2 mt-2">
+                          <div className="flex items-center border rounded-md h-7">
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="no-default-hover-elevate"
+                              className="h-7 w-7 rounded-none px-0"
                               onClick={() => updateQuantity.mutate({ itemId: item.id, quantity: Math.max(1, item.quantity - 1) })}
                               data-testid={`button-cart-minus-${item.id}`}
                             >
                               <Minus className="w-3 h-3" />
                             </Button>
-                            <span className="text-sm w-8 text-center tabular-nums">{item.quantity}</span>
+                            <span className="text-xs w-6 text-center tabular-nums">{item.quantity}</span>
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="no-default-hover-elevate"
+                              className="h-7 w-7 rounded-none px-0"
                               onClick={() => updateQuantity.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
                               data-testid={`button-cart-plus-${item.id}`}
                             >
@@ -320,7 +320,7 @@ export default function CartPage() {
                   data-testid="button-checkout"
                 >
                   {checkout.isPending ? "Traitement..." : "Confirmer la commande"}
-                  <ArrowRight className="w-4 h-4 ml-1" />
+                  <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
                 <p className="text-[11px] text-muted-foreground text-center">
                   Le paiement sera convenu avec le fournisseur
@@ -341,7 +341,7 @@ export default function CartPage() {
           <Link href="/marketplace">
             <Button data-testid="button-start-shopping">
               Parcourir le marketplace
-              <ArrowRight className="w-4 h-4 ml-1" />
+              <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </Link>
         </div>

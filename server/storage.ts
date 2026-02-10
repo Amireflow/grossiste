@@ -38,6 +38,7 @@ export interface IStorage {
   createOrder(data: InsertOrder): Promise<Order>;
   createOrderItem(data: InsertOrderItem): Promise<OrderItem>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  getOrder(id: string): Promise<(Order & { items: (OrderItem & { product?: { name: string; imageUrl: string | null } })[] }) | undefined>;
 
   getStats(userId: string, role: string): Promise<{ totalOrders: number; pendingOrders: number; totalProducts: number; totalRevenue: string }>;
   getSuppliers(): Promise<{ id: string; businessName: string; city: string | null; country: string | null; description: string | null; productCount: number }[]>;
@@ -263,6 +264,25 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.id, id))
       .returning();
     return order || undefined;
+  }
+
+  async getOrder(id: string): Promise<(Order & { items: (OrderItem & { product?: { name: string; imageUrl: string | null } })[] }) | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    if (!order) return undefined;
+
+    const rawItems = await db.select({
+      orderItem: orderItems,
+      product: { name: products.name, imageUrl: products.imageUrl },
+    }).from(orderItems)
+      .leftJoin(products, eq(orderItems.productId, products.id))
+      .where(eq(orderItems.orderId, order.id));
+
+    const items = rawItems.map((r) => ({
+      ...r.orderItem,
+      product: r.product || undefined,
+    }));
+
+    return { ...order, items };
   }
 
   async getStats(userId: string, role: string): Promise<{ totalOrders: number; pendingOrders: number; totalProducts: number; totalRevenue: string }> {

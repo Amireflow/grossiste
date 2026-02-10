@@ -276,7 +276,6 @@ function ProductCard({ product, onAddToCart, isAdding }: { product: Product; onA
               </Button>
             </div>
             <Button
-              size="sm"
               className="flex-1 text-xs"
               onClick={handleAdd}
               disabled={isAdding}

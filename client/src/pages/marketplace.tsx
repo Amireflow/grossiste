@@ -7,19 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ThemeToggle } from "@/components/theme-toggle";
+
 import {
-  Search, Package, Store, ArrowRight, X, MapPin, ShoppingCart,
-  ChevronRight, Shield, Truck, Users, TrendingUp,
+  Search, Package, Store, ChevronRight, X, MapPin, ShoppingCart,
+  Users,
   ArrowUpDown, Plus, Minus, CheckCircle, Zap, Star,
-  ChevronLeft, Sparkles, Eye, Grid3X3,
+  ChevronLeft, Eye, Grid3X3, Shield, Truck, TrendingUp, Sparkles,
 } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
+import { MarketplaceNavbar } from "@/components/marketplace-navbar";
+import { MarketplaceHero } from "@/components/marketplace-hero";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import type { Product, Category, UserProfile } from "@shared/schema";
+import type { Product, Category, UserProfile, CartItem } from "@shared/schema";
 import { Link, useSearch } from "wouter";
+
 
 import catAlimentation from "@assets/cat-alimentation.png";
 import catBoissons from "@assets/cat-boissons.png";
@@ -33,6 +36,8 @@ import catTelephonie from "@assets/cat-telephonie.png";
 import catCondiments from "@assets/cat-condiments.png";
 import catConfiserie from "@assets/cat-confiserie.png";
 import catMenage from "@assets/cat-menage.png";
+
+
 
 const CATEGORY_IMAGES: Record<string, string> = {
   "alimentation": catAlimentation,
@@ -91,6 +96,15 @@ export default function MarketplacePage() {
     enabled: !!user,
   });
 
+  const isShopOwner = !!user && profile?.role === "shop_owner";
+
+  const { data: cartItems } = useQuery<CartItem[]>({
+    queryKey: ["/api/cart"],
+    enabled: !!user && isShopOwner,
+  });
+
+  const cartItemCount = cartItems?.reduce((acc, item) => acc + item.quantity, 0) || 0;
+
   const marketplaceUrl = useMemo(() => {
     const params = new URLSearchParams();
     if (selectedCategory !== "all") params.set("category", selectedCategory);
@@ -121,7 +135,7 @@ export default function MarketplacePage() {
     },
   });
 
-  const isShopOwner = !!user && profile?.role === "shop_owner";
+
 
   const sortedProducts = useMemo(() => {
     if (!products) return [];
@@ -189,103 +203,10 @@ export default function MarketplacePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-4 h-14">
-            <Link href="/">
-              <div className="flex items-center gap-2.5 cursor-pointer" data-testid="link-marketplace-logo">
-                <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-                  <Store className="w-4 h-4 text-primary-foreground" />
-                </div>
-                <span className="font-serif text-xl font-bold tracking-tight">SokoB2B</span>
-              </div>
-            </Link>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              {user ? (
-                <div className="flex items-center gap-2">
-                  {isShopOwner && (
-                    <Link href="/cart">
-                      <Button variant="outline" size="icon" data-testid="button-marketplace-cart">
-                        <ShoppingCart className="w-4 h-4" />
-                      </Button>
-                    </Link>
-                  )}
-                  <Link href="/">
-                    <Button variant="outline" size="sm" data-testid="button-back-dashboard">
-                      Mon espace
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <>
-                  <a href="/api/login">
-                    <Button variant="outline" size="sm" data-testid="button-marketplace-login">
-                      Connexion
-                    </Button>
-                  </a>
-                  <a href="/api/login" className="hidden sm:block">
-                    <Button size="sm" data-testid="button-marketplace-signup">
-                      Commencer
-                      <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                    </Button>
-                  </a>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <div className="pt-14">
-        <div className="bg-primary/[0.04] dark:bg-primary/[0.06] border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-            <div className="max-w-2xl">
-              <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight mb-2" data-testid="text-marketplace-title">
-                Trouvez vos produits de gros
-              </h1>
-              <p className="text-muted-foreground text-sm sm:text-base mb-6">
-                Comparez les prix, commandez directement aupres des fournisseurs verifies
-              </p>
-              <div className="relative max-w-xl">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher un produit, une marque..."
-                  className="pl-10 pr-10 bg-background border-border/60 h-11"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  data-testid="input-marketplace-search"
-                />
-                {search && (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 no-default-hover-elevate"
-                    onClick={() => setSearch("")}
-                    data-testid="button-clear-marketplace-search"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </Button>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-5 mt-6 text-xs text-muted-foreground flex-wrap">
-              <span className="flex items-center gap-1.5" data-testid="text-stat-products">
-                <Package className="w-3.5 h-3.5 text-primary" />
-                <span className="font-semibold text-foreground">{products?.length || 0}</span> produits
-              </span>
-              <span className="flex items-center gap-1.5" data-testid="text-stat-suppliers">
-                <Users className="w-3.5 h-3.5 text-primary" />
-                <span className="font-semibold text-foreground">{supplierCount}</span> fournisseurs
-              </span>
-              <span className="flex items-center gap-1.5" data-testid="text-stat-categories">
-                <Grid3X3 className="w-3.5 h-3.5 text-primary" />
-                <span className="font-semibold text-foreground">{categories?.length || 0}</span> categories
-              </span>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-muted/20">
+      <MarketplaceNavbar />
+      <div className="pt-20">
+        <MarketplaceHero onSearch={(q) => setSearch(q)} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
@@ -316,7 +237,7 @@ export default function MarketplacePage() {
                       <button
                         key={cat.id}
                         onClick={() => setSelectedCategory(isSelected ? "all" : cat.id)}
-                        className={`relative shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] md:w-[calc(25%-9px)] rounded-md overflow-hidden cursor-pointer transition-all group ${isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
+                        className={`relative shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] md:w-[calc(25%-9px)] rounded-xl overflow-hidden cursor-pointer transition-all group ${isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
                         data-testid={`button-category-${cat.slug}`}
                       >
                         <div className="aspect-[4/3] w-full">
@@ -348,9 +269,9 @@ export default function MarketplacePage() {
           )}
 
           {suppliers && suppliers.length > 0 && (
-            <div className="mb-6">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fournisseurs</p>
+            <div className="mb-8">
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fournisseurs recommandés</p>
                 <div className="flex items-center gap-1">
                   <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(supplierScrollRef, "left")} data-testid="button-scroll-suppliers-left">
                     <ChevronLeft className="w-3.5 h-3.5" />
@@ -360,40 +281,47 @@ export default function MarketplacePage() {
                   </Button>
                 </div>
               </div>
-              <div ref={supplierScrollRef} className="flex items-start gap-2.5 overflow-x-auto pb-2 scrollbar-thin scroll-smooth">
+              <div ref={supplierScrollRef} className="flex items-stretch gap-3 overflow-x-auto pb-4 px-1 scrollbar-thin scroll-smooth -mx-1">
+                {/* "All" Card */}
                 <button
                   onClick={() => setSelectedSupplier("all")}
-                  className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
+                  className={`group shrink-0 w-32 rounded-xl border flex flex-col items-center justify-center gap-3 transition-all cursor-pointer ${selectedSupplier === "all" ? "bg-primary text-primary-foreground border-primary shadow-md" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
                   data-testid="button-supplier-all"
                 >
-                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 transition-all ${selectedSupplier === "all" ? "border-primary ring-2 ring-primary/20" : "border-transparent"}`}>
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <Users className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
-                    </div>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${selectedSupplier === "all" ? "bg-white/20" : "bg-muted"}`}>
+                    <Users className="w-6 h-6" />
                   </div>
-                  <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[64px] sm:max-w-[72px] line-clamp-2 ${selectedSupplier === "all" ? "font-bold text-primary" : "text-muted-foreground font-medium"}`}>
-                    Tous
-                  </span>
+                  <span className="font-semibold text-sm">Tous</span>
                 </button>
                 {suppliers.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => setSelectedSupplier(s.id)}
-                    className="shrink-0 flex flex-col items-center gap-1.5 cursor-pointer"
-                    data-testid={`option-supplier-${s.id}`}
-                  >
-                    <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 transition-all ${selectedSupplier === s.id ? "border-primary ring-2 ring-primary/20" : "border-transparent"}`}>
-                      <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-base sm:text-lg font-bold text-primary">
+                  <Link key={s.id} href={`/shop/${s.id}`}>
+                    <div
+                      className={`group shrink-0 w-36 rounded-xl border p-3 flex flex-col items-center justify-between gap-2.5 transition-all cursor-pointer text-left ${selectedSupplier === s.id ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
+                    >
+                      <div className="flex flex-col items-center gap-2 text-center w-full">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border flex items-center justify-center text-primary font-bold text-lg shadow-sm group-hover:scale-105 transition-transform">
                           {s.businessName.substring(0, 2).toUpperCase()}
-                        </span>
+                        </div>
+                        <div className="min-w-0 w-full">
+                          <span className={`block font-semibold text-xs leading-tight truncate mb-0.5 ${selectedSupplier === s.id ? "text-primary" : "text-foreground"}`}>
+                            {s.businessName}
+                          </span>
+                          {s.city && (
+                            <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
+                              <MapPin className="w-2.5 h-2.5" />
+                              <span className="truncate">{s.city}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="w-full pt-2 border-t mt-0.5">
+                        <Badge variant="secondary" className="w-full justify-center text-[9px] h-5 px-1 font-normal bg-muted group-hover:bg-primary/10 transition-colors">
+                          Voir la boutique
+                        </Badge>
                       </div>
                     </div>
-                    <span className={`text-[10px] sm:text-xs leading-tight text-center max-w-[64px] sm:max-w-[72px] line-clamp-2 ${selectedSupplier === s.id ? "font-bold text-primary" : "text-muted-foreground font-medium"}`}>
-                      {s.businessName}
-                      <span className="text-muted-foreground/70 ml-0.5 font-normal">({s.productCount})</span>
-                    </span>
-                  </button>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -535,7 +463,7 @@ export default function MarketplacePage() {
             </div>
           )}
 
-          <div className="mt-16 py-10 border-t">
+          <div className="mt-16 py-10">
             <div className="grid sm:grid-cols-3 gap-8">
               <div className="flex flex-col items-center text-center">
                 <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center mb-3">
@@ -574,7 +502,7 @@ export default function MarketplacePage() {
                   <a href="/api/login">
                     <Button size="lg" data-testid="button-marketplace-cta">
                       Creer mon compte
-                      <ArrowRight className="w-4 h-4 ml-1" />
+                      <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </a>
                   <Link href="/">
@@ -587,9 +515,9 @@ export default function MarketplacePage() {
             </Card>
           )}
         </div>
-      </div>
+      </div >
 
-      <footer className="border-t">
+      <footer className="">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
@@ -604,11 +532,11 @@ export default function MarketplacePage() {
           </div>
         </div>
       </footer>
-    </div>
+    </div >
   );
 }
 
-function MarketplaceProductCard({
+export function MarketplaceProductCard({
   product,
   isShopOwner,
   isLoggedIn,
@@ -636,15 +564,16 @@ function MarketplaceProductCard({
 
   return (
     <Card
-      className={`overflow-visible group transition-all ${
-        product.isSponsored && product.boostLevel === "premium"
-          ? "ring-1 ring-amber-400/50 dark:ring-amber-600/50"
-          : ""
-      }`}
+      className={`overflow-visible group transition-all duration-300 hover:shadow-lg ${product.isSponsored
+        ? product.boostLevel === "premium"
+          ? "ring-2 ring-amber-400 shadow-amber-100/50 dark:shadow-amber-900/20 shadow-md scale-[1.02]"
+          : "ring-1 ring-blue-400/70 shadow-blue-100/50 dark:shadow-blue-900/20 shadow-sm"
+        : "hover:border-primary/50"
+        }`}
       data-testid={`card-marketplace-product-${product.id}`}
     >
       <CardContent className="p-0">
-        <div className="relative w-full aspect-[4/3] rounded-t-md overflow-hidden bg-muted">
+        <div className="relative w-full aspect-[4/3] rounded-t-xl overflow-hidden bg-muted">
           {product.imageUrl ? (
             <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
           ) : (
@@ -666,9 +595,15 @@ function MarketplaceProductCard({
           )}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
             {product.isSponsored && (
-              <Badge className="text-[10px] bg-amber-500 text-white border-0 gap-1" data-testid={`badge-sponsored-${product.id}`}>
-                {product.boostLevel === "premium" ? <Star className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
-                Sponsorise
+              <Badge
+                className={`text-[10px] text-white border-0 gap-1 shadow-sm ${product.boostLevel === "premium"
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                  : "bg-blue-500"
+                  }`}
+                data-testid={`badge-sponsored-${product.id}`}
+              >
+                {product.boostLevel === "premium" ? <Star className="w-3 h-3 fill-current" /> : <Zap className="w-3 h-3 fill-current" />}
+                {product.boostLevel === "premium" ? "Premium" : "Sponsorisé"}
               </Badge>
             )}
             {categoryName && (
@@ -723,11 +658,11 @@ function MarketplaceProductCard({
               </Button>
             ) : (
               <div className="flex items-center gap-1.5">
-                <div className="flex items-center border rounded-md shrink-0">
+                <div className="flex items-center bg-muted/40 rounded-lg shrink-0">
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="no-default-hover-elevate"
+                    className="no-default-hover-elevate h-7 w-7"
                     onClick={() => setQty(Math.max(product.minOrder || 1, qty - 1))}
                     data-testid={`button-qty-minus-${product.id}`}
                   >
@@ -737,7 +672,7 @@ function MarketplaceProductCard({
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="no-default-hover-elevate"
+                    className="no-default-hover-elevate h-7 w-7"
                     onClick={() => setQty(qty + 1)}
                     data-testid={`button-qty-plus-${product.id}`}
                   >
@@ -745,8 +680,7 @@ function MarketplaceProductCard({
                   </Button>
                 </div>
                 <Button
-                  size="sm"
-                  className="flex-1 text-xs"
+                  className="flex-1 text-xs h-7"
                   onClick={handleAdd}
                   disabled={isAdding}
                   data-testid={`button-add-cart-${product.id}`}
@@ -766,13 +700,13 @@ function MarketplaceProductCard({
               </div>
             )
           ) : isLoggedIn ? (
-            <Button variant="outline" size="sm" className="w-full text-xs" disabled data-testid={`button-supplier-view-${product.id}`}>
+            <Button variant="outline" size="sm" className="w-full text-xs h-7" disabled data-testid={`button-supplier-view-${product.id}`}>
               <Eye className="w-3.5 h-3.5 mr-1" />
               Voir le produit
             </Button>
           ) : (
             <a href="/api/login">
-              <Button variant="outline" size="sm" className="w-full text-xs" data-testid={`button-login-to-order-${product.id}`}>
+              <Button variant="outline" size="sm" className="w-full text-xs h-7" data-testid={`button-login-to-order-${product.id}`}>
                 Connexion pour commander
               </Button>
             </a>

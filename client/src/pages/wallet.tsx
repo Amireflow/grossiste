@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
-import { Wallet, ArrowLeft, Plus, ArrowDownLeft, ArrowUpRight, Zap, Clock } from "lucide-react";
+import { Wallet, ChevronLeft, Plus, ArrowDownLeft, ArrowUpRight, Zap, Clock } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -43,7 +43,7 @@ export default function WalletPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/wallet"] });
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       toast({
-        title: "Recharge effectu\u00e9e",
+        title: "Recharge effectuée",
         description: `${formatPrice(parseFloat(data.balance))} disponible dans votre portefeuille`,
       });
       setCustomAmount("");
@@ -64,12 +64,12 @@ export default function WalletPage() {
       <div className="flex items-center gap-2 mb-1">
         <Link href="/products">
           <Button variant="ghost" size="icon" data-testid="button-back-from-wallet">
-            <ArrowLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4" />
           </Button>
         </Link>
         <div>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-wallet-title">Mon Portefeuille</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">G\u00e9rez votre solde et rechargez pour booster vos produits</p>
+          <p className="text-muted-foreground text-sm mt-0.5">Gérez votre solde et rechargez pour booster vos produits</p>
         </div>
       </div>
 
@@ -106,37 +106,50 @@ export default function WalletPage() {
                 Recharger mon portefeuille
               </h2>
 
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
                 {TOPUP_PRESETS.map((amount) => (
-                  <Button
+                  <div
                     key={amount}
-                    variant={selectedPreset === amount ? "default" : "outline"}
-                    size="sm"
                     onClick={() => { setSelectedPreset(amount); setCustomAmount(""); }}
-                    data-testid={`button-preset-${amount}`}
+                    className={`
+                      cursor-pointer rounded-xl border p-3 flex flex-col items-center justify-center gap-1 transition-all
+                      ${selectedPreset === amount
+                        ? "border-primary bg-primary/5 ring-2 ring-primary shadow-sm"
+                        : "bg-card hover:border-primary/50 hover:shadow-sm"
+                      }
+                    `}
+                    data-testid={`option-preset-${amount}`}
                   >
-                    {amount >= 1000 ? `${(amount / 1000).toFixed(0)}k` : amount}
-                  </Button>
+                    <span className={`font-bold text-lg ${selectedPreset === amount ? "text-primary" : ""}`}>
+                      {formatPrice(amount).replace(" FCFA", "")}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-medium">FCFA</span>
+                  </div>
                 ))}
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">Ou montant libre :</span>
-                <Input
-                  type="number"
-                  placeholder="Ex: 15000"
-                  value={customAmount}
-                  onChange={(e) => { setCustomAmount(e.target.value); setSelectedPreset(null); }}
-                  min={1000}
-                  max={1000000}
-                  data-testid="input-custom-amount"
-                />
-                <span className="text-sm text-muted-foreground whitespace-nowrap">FCFA</span>
+              <div className="pt-2">
+                <label className="text-sm font-medium mb-2 block text-muted-foreground">Ou saisissez un montant libre</label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    placeholder="Ex: 15000"
+                    value={customAmount}
+                    onChange={(e) => { setCustomAmount(e.target.value); setSelectedPreset(null); }}
+                    min={1000}
+                    max={1000000}
+                    className="pl-4 pr-16 h-12 text-lg font-medium shadow-sm transition-all focus:ring-2 focus:ring-primary/20"
+                    data-testid="input-custom-amount"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                    FCFA
+                  </div>
+                </div>
               </div>
 
               {topUpAmount > 0 && topUpAmount >= 1000 && (
                 <div className="rounded-md bg-muted/50 p-3 flex items-center justify-between gap-3">
-                  <span className="text-sm">Montant \u00e0 recharger</span>
+                  <span className="text-sm">Montant à recharger</span>
                   <span className="font-bold" data-testid="text-topup-amount">
                     {formatPrice(topUpAmount)}
                   </span>
@@ -154,7 +167,7 @@ export default function WalletPage() {
               </Button>
 
               <p className="text-[11px] text-muted-foreground text-center">
-                Montant minimum : 1 000 FCFA. Le solde est utilis\u00e9 pour payer les boosts de produits.
+                Montant minimum : 1 000 FCFA. Le solde est utilisé pour payer les boosts de produits.
               </p>
             </CardContent>
           </Card>

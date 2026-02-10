@@ -1,0 +1,3 @@
+client/src/pages/marketplace.tsx(98,24): error TS2448: Block-scoped variable 'isShopOwner' used before its declaration.
+client/src/pages/marketplace.tsx(98,24): error TS2454: Variable 'isShopOwner' is used before being assigned.
+server/replit_integrations/auth/replitAuth.ts(78,20): error TS2345: Argument of type '{}' is not assignable to parameter of type 'false | User | null | undefined'.

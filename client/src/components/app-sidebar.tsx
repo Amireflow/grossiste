@@ -87,7 +87,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4 pb-2">
+      <SidebarHeader className="p-6 pb-2">
         <Link href="/">
           <div className="flex items-center gap-2.5 cursor-pointer" data-testid="link-logo">
             <div className="w-9 h-9 rounded-md bg-primary flex items-center justify-center">
@@ -101,30 +101,13 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-      {profile && (
-        <div className="px-4 pb-2">
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-md bg-sidebar-accent">
-            <Avatar className="w-7 h-7">
-              <AvatarImage src={user?.profileImageUrl || undefined} />
-              <AvatarFallback className="text-[10px] bg-primary/15 text-primary">{initials}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium truncate" data-testid="text-sidebar-user">
-                {user?.firstName || user?.email || "Utilisateur"}
-              </p>
-              <p className="text-[10px] text-muted-foreground truncate">
-                {isSupplier ? "Fournisseur" : "Commercant"}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-2.5">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
@@ -160,7 +143,7 @@ export function AppSidebar() {
           <SidebarGroup>
             <SidebarGroupLabel>Actions rapides</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-2.5">
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link href="/products/new" data-testid="link-add-product">
@@ -179,7 +162,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Decouvrir</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-2.5">
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location === "/marketplace"}>
                   <Link href="/marketplace" data-testid="link-nav-marketplace">
@@ -193,27 +176,10 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium truncate" data-testid="text-user-name">
-              {profile?.businessName || user?.firstName || ""}
-            </p>
-            <p className="text-[10px] text-muted-foreground truncate" data-testid="text-business-name">
-              {profile?.city || ""}
-            </p>
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start"
-          onClick={() => logout()}
-          data-testid="button-logout"
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Deconnexion
-        </Button>
+      <SidebarFooter className="p-4">
+        <p className="text-[10px] text-muted-foreground text-center">
+          &copy; 2026 SokoB2B
+        </p>
       </SidebarFooter>
     </Sidebar>
   );

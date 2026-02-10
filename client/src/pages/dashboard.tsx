@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import {
-  Package, ShoppingCart, ClipboardList, TrendingUp, ArrowRight,
+  Package, ShoppingCart, ClipboardList, TrendingUp, ChevronRight,
   AlertCircle, Truck, CheckCircle2, BarChart3, Zap, Store,
 } from "lucide-react";
 import { formatPrice, ORDER_STATUS_LABELS } from "@/lib/constants";
@@ -46,14 +46,14 @@ export default function DashboardPage() {
             <Link href="/marketplace">
               <Button size="sm" data-testid="button-explore-catalog">
                 Parcourir le marketplace
-                <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                <ChevronRight className="w-3.5 h-3.5 ml-1" />
               </Button>
             </Link>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {statsLoading ? (
           <>
             {[1, 2, 3, 4].map((i) => (
@@ -116,7 +116,7 @@ export default function DashboardPage() {
             <Link href="/orders">
               <Button variant="ghost" size="sm" data-testid="link-view-all-orders">
                 Voir tout
-                <ArrowRight className="w-3 h-3 ml-1" />
+                <ChevronRight className="w-3 h-3 ml-1" />
               </Button>
             </Link>
           </CardHeader>
@@ -154,9 +154,9 @@ export default function DashboardPage() {
                             <p className="text-xs text-muted-foreground">
                               {order.createdAt
                                 ? new Date(order.createdAt).toLocaleDateString("fr-FR", {
-                                    day: "numeric",
-                                    month: "short",
-                                  })
+                                  day: "numeric",
+                                  month: "short",
+                                })
                                 : ""}
                             </p>
                           </div>
@@ -297,7 +297,7 @@ function QuickAction({
           <p className="text-sm font-medium">{title}</p>
           <p className="text-xs text-muted-foreground truncate">{description}</p>
         </div>
-        <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
       </div>
     </Link>
   );

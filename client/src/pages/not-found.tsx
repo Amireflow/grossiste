@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { Link } from "wouter";
 
 export default function NotFound() {
@@ -13,7 +13,7 @@ export default function NotFound() {
         </p>
         <Link href="/">
           <Button data-testid="button-go-home">
-            <ArrowLeft className="w-4 h-4 mr-1" />
+            <ChevronLeft className="w-4 h-4 mr-1" />
             Retour à l'accueil
           </Button>
         </Link>

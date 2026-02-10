@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
-import { Zap, Star, Clock, Package, ArrowLeft, Pause, Play, XCircle } from "lucide-react";
+import { Zap, Star, Clock, Package, ChevronLeft, Pause, Play, XCircle } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +22,7 @@ const BOOST_LEVEL_LABELS: Record<string, string> = {
 const BOOST_STATUS_LABELS: Record<string, { label: string; color: string }> = {
   active: { label: "Actif", color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" },
   paused: { label: "En pause", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
-  expired: { label: "Termin\u00e9", color: "bg-muted text-muted-foreground" },
+  expired: { label: "Terminé", color: "bg-muted text-muted-foreground" },
 };
 
 export default function BoostsPage() {
@@ -39,7 +39,7 @@ export default function BoostsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/boosts"] });
-      toast({ title: "Boost mis \u00e0 jour" });
+      toast({ title: "Boost mis à jour" });
     },
     onError: () => {
       toast({ title: "Erreur", description: "Impossible de modifier le boost", variant: "destructive" });
@@ -64,13 +64,13 @@ export default function BoostsPage() {
           <div className="flex items-center gap-2 mb-1">
             <Link href="/products">
               <Button variant="ghost" size="icon" data-testid="button-back-products">
-                <ArrowLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4" />
               </Button>
             </Link>
             <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-boosts-title">Mes Boosts</h1>
           </div>
           <p className="text-muted-foreground text-sm ml-11">
-            G\u00e9rez vos annonces sponsoris\u00e9es et boosts de produits
+            Gérez vos annonces sponsorisées et boosts de produits
           </p>
         </div>
       </div>
@@ -105,7 +105,7 @@ export default function BoostsPage() {
             </div>
             <div>
               <p className="text-2xl font-bold" data-testid="text-expired-boosts-count">{expiredBoosts.length}</p>
-              <p className="text-xs text-muted-foreground">Termin\u00e9s</p>
+              <p className="text-xs text-muted-foreground">Terminés</p>
             </div>
           </CardContent>
         </Card>
@@ -171,7 +171,7 @@ export default function BoostsPage() {
           {expiredBoosts.length > 0 && (
             <div>
               <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-expired">
-                Termin\u00e9s
+                Terminés
               </h2>
               <div className="space-y-3">
                 {expiredBoosts.map((boost) => (
@@ -188,7 +188,7 @@ export default function BoostsPage() {
           </div>
           <h3 className="font-medium text-lg mb-2">Aucun boost</h3>
           <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-5">
-            Boostez vos produits pour les faire appara\u00eetre en t\u00eate du marketplace et attirer plus de clients.
+            Boostez vos produits pour les faire apparaître en tête du marketplace et attirer plus de clients.
           </p>
           <Link href="/products">
             <Button data-testid="button-go-products">
@@ -284,13 +284,13 @@ function BoostCard({
                 data-testid={`button-stop-boost-${boost.id}`}
               >
                 <XCircle className="w-3 h-3 mr-1" />
-                Arr\u00eater
+                Arrêter
               </Button>
             )}
           </div>
         </div>
         <div className="flex items-center gap-4 mt-3 text-[11px] text-muted-foreground ml-14 flex-wrap">
-          <span>D\u00e9but: {new Date(boost.startDate).toLocaleDateString("fr-FR")}</span>
+          <span>Début: {new Date(boost.startDate).toLocaleDateString("fr-FR")}</span>
           <span>Fin: {new Date(boost.endDate).toLocaleDateString("fr-FR")}</span>
         </div>
       </CardContent>

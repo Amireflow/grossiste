@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, Save } from "lucide-react";
+import { ChevronLeft, Save, XCircle } from "lucide-react";
 import { Link, useLocation, useParams } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -56,15 +56,15 @@ export default function ProductFormPage() {
     },
     values: existingProduct
       ? {
-          name: existingProduct.name,
-          description: existingProduct.description || "",
-          categoryId: existingProduct.categoryId,
-          price: existingProduct.price,
-          unit: existingProduct.unit,
-          minOrder: existingProduct.minOrder || 1,
-          stock: existingProduct.stock || 0,
-          imageUrl: existingProduct.imageUrl || "",
-        }
+        name: existingProduct.name,
+        description: existingProduct.description || "",
+        categoryId: existingProduct.categoryId,
+        price: existingProduct.price,
+        unit: existingProduct.unit,
+        minOrder: existingProduct.minOrder || 1,
+        stock: existingProduct.stock || 0,
+        imageUrl: existingProduct.imageUrl || "",
+      }
       : undefined,
   });
 
@@ -108,7 +108,7 @@ export default function ProductFormPage() {
       <div className="flex items-center gap-3">
         <Link href="/products">
           <Button variant="ghost" size="icon" data-testid="button-back-products">
-            <ArrowLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4" />
           </Button>
         </Link>
         <div>
@@ -254,9 +254,53 @@ export default function ProductFormPage() {
                 name="imageUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>URL de l'image (optionnel)</FormLabel>
+                    <FormLabel>Image du produit</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://..." {...field} data-testid="input-product-image" />
+                      <div className="space-y-4">
+                        <div className="grid w-full max-w-sm items-center gap-1.5">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+
+                              const formData = new FormData();
+                              formData.append("image", file);
+
+                              try {
+                                const res = await fetch("/api/upload", {
+                                  method: "POST",
+                                  body: formData,
+                                });
+
+                                if (!res.ok) throw new Error("Upload failed");
+
+                                const data = await res.json();
+                                field.onChange(data.url);
+                                toast({ title: "Image téléchargée" });
+                              } catch (error) {
+                                toast({ title: "Erreur", description: "Échec du téléchargement de l'image", variant: "destructive" });
+                              }
+                            }}
+                            data-testid="input-product-image-upload"
+                          />
+                        </div>
+                        {field.value && (
+                          <div className="relative w-32 h-32 rounded-lg overflow-hidden border">
+                            <img src={field.value} alt="Aperçu" className="w-full h-full object-cover" />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-1 right-1 h-6 w-6"
+                              onClick={() => field.onChange("")}
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

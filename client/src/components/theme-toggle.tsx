@@ -8,7 +8,8 @@ export function ThemeToggle() {
   return (
     <Button
       size="icon"
-      variant="ghost"
+      variant="secondary"
+      className="rounded-full shadow-none bg-muted hover:bg-muted/80"
       onClick={toggleTheme}
       data-testid="button-theme-toggle"
     >

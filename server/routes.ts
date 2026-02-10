@@ -1,9 +1,39 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes, isAuthenticated } from "./auth";
 import { z } from "zod";
 import { insertUserProfileSchema, insertProductSchema } from "@shared/schema";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+// Configure multer for file uploads
+const storageConfig = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = path.join(process.cwd(), "uploads");
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storageConfig,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only images are allowed"));
+    }
+  }
+});
 
 const profileCreateSchema = z.object({
   role: z.enum(["shop_owner", "supplier"]),
@@ -67,6 +97,14 @@ export async function registerRoutes(
 ): Promise<Server> {
   await setupAuth(app);
   registerAuthRoutes(app);
+
+  app.post("/api/upload", isAuthenticated, upload.single("image"), (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({ url: fileUrl });
+  });
 
   app.get("/api/profile", isAuthenticated, async (req: any, res) => {
     try {
@@ -263,6 +301,26 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/orders/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const order = await storage.getOrder(req.params.id);
+
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Check authorization
+      if (order.buyerId !== userId && order.supplierId !== userId) {
+        return res.status(403).json({ message: "Not authorized to view this order" });
+      }
+
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get order details" });
+    }
+  });
+
   app.post("/api/orders/checkout", isAuthenticated, async (req: any, res) => {
     try {
       const parsed = checkoutSchema.safeParse(req.body);
@@ -358,6 +416,16 @@ export async function registerRoutes(
       res.json(suppliers);
     } catch (error) {
       res.status(500).json({ message: "Failed to get suppliers" });
+    }
+  });
+
+  app.get("/api/suppliers/:id", async (req, res) => {
+    try {
+      const profile = await storage.getProfileByUserId(req.params.id);
+      if (!profile) return res.status(404).json({ message: "Supplier not found" });
+      res.json(profile);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get supplier" });
     }
   });
 

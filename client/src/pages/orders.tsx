@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ClipboardList, Package, ChevronDown, ChevronUp, MapPin, StickyNote,
-  Truck, CheckCircle2, Clock, XCircle, ArrowRight, RefreshCw,
+  Truck, CheckCircle2, Clock, XCircle, ChevronRight, RefreshCw,
   User, Phone,
 } from "lucide-react";
 import { formatPrice, ORDER_STATUS_LABELS } from "@/lib/constants";
@@ -116,10 +116,10 @@ export default function OrdersPage() {
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {order.createdAt
                             ? new Date(order.createdAt).toLocaleDateString("fr-FR", {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              })
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })
                             : ""}
                           {" - "}
                           {itemCount} article{itemCount !== 1 ? "s" : ""}
@@ -139,7 +139,7 @@ export default function OrdersPage() {
                   </div>
 
                   {isExpanded && (
-                    <div className="border-t animate-fade-in">
+                    <div className="bg-muted/20 animate-fade-in">
                       <div className="p-4 space-y-3">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Articles</p>
                         {order.items?.map((item) => (
@@ -209,24 +209,31 @@ export default function OrdersPage() {
                       {isSupplier && order.status !== "delivered" && order.status !== "cancelled" && (
                         <div className="px-4 pb-4">
                           <Separator className="mb-3" />
-                          <div className="flex items-center gap-3 flex-wrap">
-                            <span className="text-xs text-muted-foreground">Modifier le statut :</span>
-                            <Select
-                              value={order.status || "pending"}
-                              onValueChange={(val) => updateStatus.mutate({ orderId: order.id, status: val })}
-                            >
-                              <SelectTrigger className="w-[180px]" data-testid={`select-status-${order.id}`}>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">En attente</SelectItem>
-                                <SelectItem value="confirmed">Confirmee</SelectItem>
-                                <SelectItem value="processing">En cours</SelectItem>
-                                <SelectItem value="shipped">Expediee</SelectItem>
-                                <SelectItem value="delivered">Livree</SelectItem>
-                                <SelectItem value="cancelled">Annulee</SelectItem>
-                              </SelectContent>
-                            </Select>
+                          <div className="flex items-center gap-2 mt-4 sm:mt-0">
+                            <Link href={`/orders/${order.id}`}>
+                              <Button variant="outline" size="sm">
+                                Voir détails
+                              </Button>
+                            </Link>
+                            {profile?.role === "supplier" && order.status !== "cancelled" && order.status !== "delivered" && (
+                              <Select
+                                defaultValue={order.status || "pending"}
+                                onValueChange={(value) =>
+                                  updateStatus.mutate({ orderId: order.id, status: value })
+                                }
+                              >    <SelectTrigger className="w-[180px]" data-testid={`select-status-${order.id}`}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">En attente</SelectItem>
+                                  <SelectItem value="confirmed">Confirmee</SelectItem>
+                                  <SelectItem value="processing">En cours</SelectItem>
+                                  <SelectItem value="shipped">Expediee</SelectItem>
+                                  <SelectItem value="delivered">Livree</SelectItem>
+                                  <SelectItem value="cancelled">Annulee</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
                           </div>
                         </div>
                       )}
@@ -252,7 +259,7 @@ export default function OrdersPage() {
             <Link href="/marketplace">
               <Button data-testid="button-go-catalog">
                 Voir le marketplace
-                <ArrowRight className="w-4 h-4 ml-1" />
+                <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
           )}

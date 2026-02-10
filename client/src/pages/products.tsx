@@ -50,7 +50,7 @@ export default function ProductsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-products"] });
-      toast({ title: "Produit mis \u00e0 jour" });
+      toast({ title: "Produit mis à jour" });
     },
     onError: () => {
       toast({ title: "Erreur", description: "Impossible de modifier le produit", variant: "destructive" });
@@ -66,7 +66,7 @@ export default function ProductsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/boosts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/my-products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/wallet"] });
-      toast({ title: "Boost activ\u00e9", description: "Votre produit est maintenant sponsoris\u00e9 dans le marketplace" });
+      toast({ title: "Boost activé", description: "Votre produit est maintenant sponsorisé dans le marketplace" });
       setBoostDialogProduct(null);
     },
     onError: (error: any) => {
@@ -86,10 +86,10 @@ export default function ProductsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/boosts"] });
-      toast({ title: "Boost arr\u00eat\u00e9" });
+      toast({ title: "Boost arrêté" });
     },
     onError: () => {
-      toast({ title: "Erreur", description: "Impossible d'arr\u00eater le boost", variant: "destructive" });
+      toast({ title: "Erreur", description: "Impossible d'arrêter le boost", variant: "destructive" });
     },
   });
 
@@ -118,14 +118,14 @@ export default function ProductsPage() {
         <div>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-products-title">Mes produits</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            {totalCount > 0 ? `${activeCount} actif${activeCount !== 1 ? "s" : ""} sur ${totalCount}` : "G\u00e9rez votre catalogue"}
+            {totalCount > 0 ? `${activeCount} actif${activeCount !== 1 ? "s" : ""} sur ${totalCount}` : "Gérez votre catalogue"}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Link href="/boosts">
             <Button variant="outline" data-testid="button-manage-boosts">
               <Zap className="w-4 h-4 mr-1" />
-              G\u00e9rer les boosts
+              Gérer les boosts
             </Button>
           </Link>
           <Link href="/products/new">
@@ -170,15 +170,17 @@ export default function ProductsPage() {
                       <div className="absolute inset-0 bg-background/40 flex items-center justify-center">
                         <Badge variant="secondary" className="text-[10px]">
                           <EyeOff className="w-3 h-3 mr-1" />
-                          Masqu\u00e9
+                          Masqué
+                          Masqué
                         </Badge>
                       </div>
                     )}
                     {activeBoost && (
                       <div className="absolute top-2 left-2">
                         <Badge className="text-[10px] bg-amber-500 text-white border-0 gap-1" data-testid={`badge-boost-${product.id}`}>
-                          {activeBoost.boostLevel === "premium" ? <Star className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
-                          {activeBoost.boostLevel === "premium" ? "Premium" : "Sponsoris\u00e9"}
+                          <span className="text-yellow-600 font-medium text-[10px] uppercase tracking-wider bg-yellow-100/50 px-1.5 py-0.5 rounded border border-yellow-200/50">
+                            {activeBoost.boostLevel === "premium" ? "Premium" : "Sponsorisé"}
+                          </span>
                         </Badge>
                       </div>
                     )}
@@ -281,38 +283,38 @@ export default function ProductsPage() {
           <DialogHeader>
             <DialogTitle data-testid="text-boost-dialog-title">Booster un produit</DialogTitle>
             <DialogDescription>
-              Sponsorisez "{boostDialogProduct?.name}" pour qu'il apparaisse en priorit\u00e9 dans le marketplace.
+              Sponsorisez "{boostDialogProduct?.name}" pour qu'il apparaisse en priorité dans le marketplace.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
               <Card
-                className={`cursor-pointer overflow-visible hover-elevate ${boostLevel === "standard" ? "border-primary" : ""}`}
+                className={`cursor-pointer overflow-visible transition-all hover:shadow-md ${boostLevel === "standard" ? "border-primary bg-primary/5 ring-2 ring-primary" : "hover:border-primary/50"}`}
                 onClick={() => setBoostLevel("standard")}
                 data-testid="card-boost-standard"
               >
                 <CardContent className="p-4 text-center">
-                  <Zap className="w-6 h-6 text-amber-500 mx-auto mb-2" />
-                  <h4 className="font-medium text-sm mb-1">Standard</h4>
-                  <p className="text-[11px] text-muted-foreground">Appara\u00eet en t\u00eate des r\u00e9sultats</p>
+                  <Zap className={`w-6 h-6 mx-auto mb-2 ${boostLevel === "standard" ? "text-primary filter drop-shadow-sm" : "text-muted-foreground"}`} />
+                  <h4 className={`font-medium text-sm mb-1 ${boostLevel === "standard" ? "text-primary" : ""}`}>Standard</h4>
+                  <p className="text-[11px] text-muted-foreground">Apparaît en tête des résultats</p>
                 </CardContent>
               </Card>
               <Card
-                className={`cursor-pointer overflow-visible hover-elevate ${boostLevel === "premium" ? "border-primary" : ""}`}
+                className={`cursor-pointer overflow-visible transition-all hover:shadow-md ${boostLevel === "premium" ? "border-primary bg-primary/5 ring-2 ring-primary" : "hover:border-primary/50"}`}
                 onClick={() => setBoostLevel("premium")}
                 data-testid="card-boost-premium"
               >
                 <CardContent className="p-4 text-center">
-                  <Rocket className="w-6 h-6 text-amber-500 mx-auto mb-2" />
-                  <h4 className="font-medium text-sm mb-1">Premium</h4>
-                  <p className="text-[11px] text-muted-foreground">Priorit\u00e9 maximale + badge dor\u00e9</p>
+                  <Rocket className={`w-6 h-6 mx-auto mb-2 ${boostLevel === "premium" ? "text-primary filter drop-shadow-sm" : "text-muted-foreground"}`} />
+                  <h4 className={`font-medium text-sm mb-1 ${boostLevel === "premium" ? "text-primary" : ""}`}>Premium</h4>
+                  <p className="text-[11px] text-muted-foreground">Priorité maximale + badge doré</p>
                 </CardContent>
               </Card>
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Dur\u00e9e</label>
+              <label className="text-sm font-medium mb-1.5 block">Durée</label>
               <Select value={boostDuration} onValueChange={setBoostDuration}>
                 <SelectTrigger data-testid="select-boost-duration">
                   <SelectValue />
@@ -327,7 +329,7 @@ export default function ProductsPage() {
 
             <div className="space-y-2">
               <div className="rounded-md bg-muted/50 p-3 flex items-center justify-between gap-3">
-                <span className="text-sm">Co\u00fbt du boost</span>
+                <span className="text-sm">Coût du boost</span>
                 <span className="font-bold text-foreground" data-testid="text-boost-price">
                   {formatPrice(BOOST_PRICES[boostLevel]?.[boostDuration] || 0)}
                 </span>
