@@ -54,7 +54,7 @@ const CATEGORY_IMAGES: Record<string, string> = {
   "menage-cuisine": catMenage,
 };
 
-type MarketplaceProduct = Product & { supplierName: string; supplierCity: string | null; isSponsored?: boolean; boostLevel?: string | null };
+type MarketplaceProduct = Product & { supplierName: string; supplierCity: string | null; supplierImage?: string | null; isSponsored?: boolean; boostLevel?: string | null };
 
 interface Supplier {
   id: string;
@@ -63,6 +63,7 @@ interface Supplier {
   country: string | null;
   description: string | null;
   productCount: number;
+  profileImageUrl?: string | null;
 }
 
 type SortOption = "newest" | "price_asc" | "price_desc" | "name_asc";
@@ -227,28 +228,32 @@ export default function MarketplacePage() {
                 {/* "All" Card */}
                 <button
                   onClick={() => setSelectedSupplier("all")}
-                  className={`group shrink-0 w-20 aspect-square rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${selectedSupplier === "all" ? "bg-primary text-primary-foreground border-primary shadow-md" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
+                  className={`group shrink-0 w-28 sm:w-32 aspect-square rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${selectedSupplier === "all" ? "bg-primary text-primary-foreground border-primary shadow-md" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
                   data-testid="button-supplier-all"
                 >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${selectedSupplier === "all" ? "bg-white/20" : "bg-muted"}`}>
-                    <Users className="w-4 h-4" />
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${selectedSupplier === "all" ? "bg-white/20" : "bg-muted"}`}>
+                    <Users className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
-                  <span className="font-semibold text-[10px]">Tous</span>
+                  <span className="font-semibold text-xs sm:text-sm">Tous</span>
                 </button>
                 {suppliers.map((s) => (
                   <Link key={s.id} href={`/shop/${s.id}`}>
                     <div
-                      className={`group shrink-0 w-20 aspect-square rounded-2xl border p-2 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${selectedSupplier === s.id ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
+                      className={`group shrink-0 w-28 sm:w-32 aspect-square rounded-2xl border p-2 flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${selectedSupplier === s.id ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
                     >
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border flex items-center justify-center text-primary font-bold text-xs shadow-sm group-hover:scale-105 transition-transform">
-                        {s.businessName.substring(0, 2).toUpperCase()}
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border flex items-center justify-center text-primary font-bold text-sm sm:text-base shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                        {s.profileImageUrl ? (
+                          <img src={s.profileImageUrl} alt={s.businessName} className="w-full h-full object-cover" />
+                        ) : (
+                          s.businessName.substring(0, 2).toUpperCase()
+                        )}
                       </div>
-                      <span className={`block font-semibold text-[9px] leading-tight truncate w-full text-center ${selectedSupplier === s.id ? "text-primary" : "text-foreground"}`}>
+                      <span className={`block font-semibold text-xs sm:text-sm leading-tight truncate w-full text-center ${selectedSupplier === s.id ? "text-primary" : "text-foreground"}`}>
                         {s.businessName}
                       </span>
                       {s.city && (
-                        <div className="flex items-center gap-0.5 text-[8px] text-muted-foreground">
-                          <MapPin className="w-2 h-2 shrink-0" />
+                        <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground">
+                          <MapPin className="w-3 h-3 shrink-0" />
                           <span className="truncate">{s.city}</span>
                         </div>
                       )}
@@ -608,7 +613,7 @@ export function MarketplaceProductCard({
 
         <div className="p-4">
           <Link href={`/product/${product.id}`}>
-            <h3 className="font-semibold text-base mb-2 line-clamp-2 leading-snug min-h-[3rem] cursor-pointer hover:text-primary transition-colors" title={product.name} data-testid={`text-marketplace-product-name-${product.id}`}>
+            <h3 className="font-semibold text-base mb-1 line-clamp-2 leading-snug min-h-[3rem] cursor-pointer hover:text-primary transition-colors" title={product.name} data-testid={`text-marketplace-product-name-${product.id}`}>
               {product.name}
             </h3>
           </Link>
@@ -618,7 +623,11 @@ export function MarketplaceProductCard({
           )}
 
           <div className="flex items-center gap-2 mb-3 text-muted-foreground">
-            <Store className="w-3.5 h-3.5 shrink-0" />
+            {product.supplierImage ? (
+              <img src={product.supplierImage} alt={product.supplierName} className="w-4 h-4 rounded-full object-cover shrink-0" />
+            ) : (
+              <Store className="w-3.5 h-3.5 shrink-0" />
+            )}
             <span className="text-xs truncate font-medium" data-testid={`text-supplier-${product.id}`}>
               {product.supplierName}
             </span>
@@ -640,7 +649,7 @@ export function MarketplaceProductCard({
           {product.minOrder && product.minOrder > 1 && (
             <p className="text-[10px] text-muted-foreground mb-2 flex items-center gap-1">
               <Package className="w-3 h-3" />
-              Min. {product.minOrder} {product.unit}
+              Minimum {product.minOrder} {product.unit}
             </p>
           )}
 

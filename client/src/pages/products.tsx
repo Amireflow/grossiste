@@ -121,7 +121,7 @@ export default function ProductsPage() {
             {totalCount > 0 ? `${activeCount} actif${activeCount !== 1 ? "s" : ""} sur ${totalCount}` : "Gérez votre catalogue"}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="w-full sm:w-auto flex items-center justify-between gap-2 sm:gap-4 flex-wrap">
           <Link href="/boosts">
             <Button variant="outline" data-testid="button-manage-boosts">
               <Zap className="w-4 h-4 mr-1" />
@@ -212,45 +212,48 @@ export default function ProductsPage() {
 
                   {activeBoost ? (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-muted-foreground bg-primary/5 p-1.5 rounded-md">
                         <Clock className="w-3 h-3" />
-                        Boost jusqu'au {new Date(activeBoost.endDate).toLocaleDateString("fr-FR")}
+                        Fin le {new Date(activeBoost.endDate).toLocaleDateString("fr-FR")}
                       </div>
                       <div className="flex items-center gap-2">
                         <Link href={`/products/${product.id}/edit`} className="flex-1">
-                          <Button variant="outline" size="sm" className="w-full" data-testid={`button-edit-${product.id}`}>
-                            <Pencil className="w-3 h-3 mr-1" />
-                            Modifier
+                          <Button variant="outline" size="sm" className="w-full h-8 sm:h-9 text-xs" data-testid={`button-edit-${product.id}`}>
+                            <Pencil className="w-3.5 h-3.5 sm:mr-1.5" />
+                            <span className="hidden sm:inline">Modifier</span>
                           </Button>
                         </Link>
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
+                          className="flex-1 h-8 sm:h-9 text-xs text-destructive hover:text-destructive"
                           onClick={() => stopBoost.mutate(activeBoost.id)}
                           disabled={stopBoost.isPending}
                           data-testid={`button-stop-boost-${product.id}`}
                         >
-                          Arr\u00eater
+                          <span className="hidden sm:inline mr-1.5">Arrêter</span>
+                          <span className="sm:hidden">Stop</span>
                         </Button>
                       </div>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <Link href={`/products/${product.id}/edit`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full" data-testid={`button-edit-${product.id}`}>
-                          <Pencil className="w-3 h-3 mr-1" />
-                          Modifier
+                        <Button variant="outline" size="sm" className="w-full h-8 sm:h-9 text-xs" data-testid={`button-edit-${product.id}`}>
+                          <Pencil className="w-3.5 h-3.5 sm:mr-1.5" />
+                          <span className="hidden sm:inline">Modifier</span>
                         </Button>
                       </Link>
                       {isActive && (
                         <Button
                           variant="outline"
                           size="sm"
+                          className="flex-1 h-8 sm:h-9 text-xs border-primary/20 hover:bg-primary/5 hover:text-primary text-foreground"
                           onClick={() => { setBoostDialogProduct(product); setBoostLevel("standard"); setBoostDuration("7"); }}
                           data-testid={`button-boost-${product.id}`}
                         >
-                          <Zap className="w-3 h-3 mr-1" />
-                          Booster
+                          <Zap className="w-3.5 h-3.5 sm:mr-1.5 fill-current" />
+                          <span className="hidden sm:inline">Booster</span>
                         </Button>
                       )}
                     </div>
@@ -288,27 +291,27 @@ export default function ProductsPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <Card
-                className={`cursor-pointer overflow-visible transition-all hover:shadow-md ${boostLevel === "standard" ? "border-primary bg-primary/5 ring-2 ring-primary" : "hover:border-primary/50"}`}
+                className={`cursor-pointer overflow-visible transition-all hover:shadow-md ${boostLevel === "standard" ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-primary/50"}`}
                 onClick={() => setBoostLevel("standard")}
                 data-testid="card-boost-standard"
               >
-                <CardContent className="p-4 text-center">
-                  <Zap className={`w-6 h-6 mx-auto mb-2 ${boostLevel === "standard" ? "text-primary filter drop-shadow-sm" : "text-muted-foreground"}`} />
-                  <h4 className={`font-medium text-sm mb-1 ${boostLevel === "standard" ? "text-primary" : ""}`}>Standard</h4>
-                  <p className="text-[11px] text-muted-foreground">Apparaît en tête des résultats</p>
+                <CardContent className="p-3 text-center">
+                  <Zap className={`w-5 h-5 mx-auto mb-1.5 ${boostLevel === "standard" ? "text-primary filter drop-shadow-sm" : "text-muted-foreground"}`} />
+                  <h4 className={`font-medium text-sm mb-0.5 ${boostLevel === "standard" ? "text-primary" : ""}`}>Standard</h4>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Apparaît en tête des résultats</p>
                 </CardContent>
               </Card>
               <Card
-                className={`cursor-pointer overflow-visible transition-all hover:shadow-md ${boostLevel === "premium" ? "border-primary bg-primary/5 ring-2 ring-primary" : "hover:border-primary/50"}`}
+                className={`cursor-pointer overflow-visible transition-all hover:shadow-md ${boostLevel === "premium" ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-primary/50"}`}
                 onClick={() => setBoostLevel("premium")}
                 data-testid="card-boost-premium"
               >
-                <CardContent className="p-4 text-center">
-                  <Rocket className={`w-6 h-6 mx-auto mb-2 ${boostLevel === "premium" ? "text-primary filter drop-shadow-sm" : "text-muted-foreground"}`} />
-                  <h4 className={`font-medium text-sm mb-1 ${boostLevel === "premium" ? "text-primary" : ""}`}>Premium</h4>
-                  <p className="text-[11px] text-muted-foreground">Priorité maximale + badge doré</p>
+                <CardContent className="p-3 text-center">
+                  <Rocket className={`w-5 h-5 mx-auto mb-1.5 ${boostLevel === "premium" ? "text-primary filter drop-shadow-sm" : "text-muted-foreground"}`} />
+                  <h4 className={`font-medium text-sm mb-0.5 ${boostLevel === "premium" ? "text-primary" : ""}`}>Premium</h4>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Priorité maximale + badge doré</p>
                 </CardContent>
               </Card>
             </div>

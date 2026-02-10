@@ -6,25 +6,15 @@ import { z } from "zod";
 import { insertUserProfileSchema, insertProductSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
+import { createClient } from "@supabase/supabase-js";
 
-// Configure multer for file uploads
-const storageConfig = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(process.cwd(), "uploads");
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Initialize Supabase
+const supabaseUrl = process.env.SUPABASE_URL || "";
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const upload = multer({
-  storage: storageConfig,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) {
@@ -97,15 +87,44 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Debug middleware
+  app.use("/api/profile", (req, res, next) => {
+    console.log("Global Middleware Hit for /api/profile:", req.method, req.path);
+    next();
+  });
+
   await setupAuth(app);
   registerAuthRoutes(app);
 
-  app.post("/api/upload", isAuthenticated, upload.single("image"), (req, res) => {
+  app.post("/api/upload", isAuthenticated, upload.single("image"), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
-    const fileUrl = `/uploads/${req.file.filename}`;
-    res.json({ url: fileUrl });
+
+    try {
+      const fileExt = path.extname(req.file.originalname);
+      const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from('uploads')
+        .upload(fileName, req.file.buffer, {
+          contentType: req.file.mimetype,
+          upsert: false
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('uploads')
+        .getPublicUrl(fileName);
+
+      res.json({ url: publicUrl });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(500).json({ message: "Failed to upload image" });
+    }
   });
 
   app.get("/api/profile", isAuthenticated, async (req: any, res) => {
@@ -137,6 +156,58 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error creating profile:", error);
       res.status(500).json({ message: "Failed to create profile" });
+    }
+  });
+
+  app.patch("/api/profile", isAuthenticated, async (req: any, res) => {
+    console.log("PATCH /api/profile started", req.body);
+    try {
+      console.log("INSIDE PATCH HANDLER - DEBUG MODE");
+      // TEMPORARY DEBUG: Return immediately to verify route handler
+      // return res.json({ debug: "ok", received: req.body });
+
+      // Manually define update schema to be more flexible
+      const updateSchema = z.object({
+        businessName: z.string().min(2).optional(),
+        phone: z.string().min(8).optional(),
+        address: z.string().optional(),
+        city: z.string().min(2).optional(),
+        country: z.string().min(2).optional(),
+        currency: z.enum(["XOF", "XAF", "NGN", "GHS"]).optional(),
+        description: z.string().optional(),
+        imageUrl: z.string().optional(),
+      });
+
+      const parsed = updateSchema.safeParse(req.body);
+      if (!parsed.success) {
+        console.log("Profile update validation error:", parsed.error.flatten());
+        return res.status(400).json({ message: "Invalid data", errors: parsed.error.flatten() });
+      }
+
+      const userId = req.user.claims.sub;
+      const { imageUrl, ...profileData } = parsed.data;
+
+      // Update user profile image if provided
+      if (imageUrl !== undefined) {
+        await storage.updateUser(userId, { profileImageUrl: imageUrl });
+      }
+
+      // Update profile data if any
+      if (Object.keys(profileData).length > 0) {
+        const profile = await storage.updateProfile(userId, profileData);
+        if (!profile) {
+          return res.status(404).json({ message: "Profile not found" });
+        }
+        console.log("Returning profile:", JSON.stringify(profile));
+        res.json(profile);
+      } else {
+        const profile = await storage.getProfileByUserId(userId);
+        console.log("Returning profile (no update):", JSON.stringify(profile));
+        res.json(profile);
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
     }
   });
 

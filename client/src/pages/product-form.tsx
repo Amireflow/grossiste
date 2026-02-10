@@ -105,7 +105,7 @@ export default function ProductFormPage() {
     const formData = new FormData();
     formData.append("image", file);
     try {
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/upload", { method: "POST", body: formData, credentials: "include" });
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
       return data.url;
@@ -484,15 +484,21 @@ export default function ProductFormPage() {
           </Card>
 
           {/* Actions */}
-          <div className="flex gap-3 sticky bottom-4 bg-background/80 backdrop-blur-sm p-3 rounded-xl border shadow-lg">
+          <div className="flex gap-3 sticky bottom-4 z-10 bg-background/80 backdrop-blur-md p-2 sm:p-3 rounded-full border shadow-lg max-w-xl mx-auto">
             <Link href="/products">
-              <Button type="button" variant="outline" data-testid="button-cancel">
+              <Button type="button" variant="secondary" className="rounded-full h-9 sm:h-10 px-4 sm:px-6 text-sm" data-testid="button-cancel">
                 Annuler
               </Button>
             </Link>
-            <Button type="submit" className="flex-1" disabled={saveMutation.isPending} data-testid="button-save-product">
-              <Save className="w-4 h-4 mr-1.5" />
-              {saveMutation.isPending ? "Enregistrement..." : "Enregistrer le produit"}
+            <Button type="submit" className="flex-1 rounded-full h-9 sm:h-10 text-sm shadow-sm" disabled={saveMutation.isPending} data-testid="button-save-product">
+              {saveMutation.isPending ? (
+                <>Enregistrement...</>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Enregistrer
+                </>
+              )}
             </Button>
           </div>
         </form>

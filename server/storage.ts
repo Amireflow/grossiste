@@ -8,6 +8,7 @@ import {
   type CartItem, type InsertCartItem,
   type ProductBoost, type InsertProductBoost,
   type WalletTransaction, type InsertWalletTransaction,
+  type User,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, ilike, or, gte, lte } from "drizzle-orm";
@@ -15,6 +16,8 @@ import { eq, and, desc, sql, ilike, or, gte, lte } from "drizzle-orm";
 export interface IStorage {
   getProfileByUserId(userId: string): Promise<UserProfile | undefined>;
   createProfile(data: InsertUserProfile): Promise<UserProfile>;
+  updateProfile(userId: string, data: Partial<InsertUserProfile>): Promise<UserProfile | undefined>;
+  updateUser(id: string, data: Partial<User>): Promise<User | undefined>;
 
   getCategories(): Promise<Category[]>;
   createCategory(data: InsertCategory): Promise<Category>;
@@ -23,7 +26,7 @@ export interface IStorage {
   getProducts(categoryId?: string): Promise<Product[]>;
   getProductById(id: string): Promise<Product | undefined>;
   getProductsBySupplier(supplierId: string): Promise<Product[]>;
-  getMarketplaceProducts(categoryId?: string, search?: string, supplierId?: string): Promise<(Product & { supplierName: string; supplierCity: string | null; isSponsored: boolean; boostLevel: string | null })[]>;
+  getMarketplaceProducts(categoryId?: string, search?: string, supplierId?: string): Promise<(Product & { supplierName: string; supplierCity: string | null; supplierImage: string | null; isSponsored: boolean; boostLevel: string | null })[]>;
   createProduct(data: InsertProduct): Promise<Product>;
   updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined>;
 
@@ -41,7 +44,7 @@ export interface IStorage {
   getOrder(id: string): Promise<(Order & { items: (OrderItem & { product?: { name: string; imageUrl: string | null } })[] }) | undefined>;
 
   getStats(userId: string, role: string): Promise<{ totalOrders: number; pendingOrders: number; totalProducts: number; totalRevenue: string }>;
-  getSuppliers(): Promise<{ id: string; businessName: string; city: string | null; country: string | null; description: string | null; productCount: number }[]>;
+  getSuppliers(): Promise<{ id: string; businessName: string; city: string | null; country: string | null; description: string | null; productCount: number; profileImageUrl: string | null }[]>;
 
   getBoostsBySupplier(supplierId: string): Promise<(ProductBoost & { productName: string })[]>;
   getActiveBoostForProduct(productId: string): Promise<ProductBoost | undefined>;
@@ -64,6 +67,16 @@ export class DatabaseStorage implements IStorage {
   async createProfile(data: InsertUserProfile): Promise<UserProfile> {
     const [profile] = await db.insert(userProfiles).values(data).returning();
     return profile;
+  }
+
+  async updateProfile(userId: string, data: Partial<InsertUserProfile>): Promise<UserProfile | undefined> {
+    const [profile] = await db.update(userProfiles).set(data).where(eq(userProfiles.userId, userId)).returning();
+    return profile || undefined;
+  }
+
+  async updateUser(id: string, data: Partial<User>): Promise<User | undefined> {
+    const [user] = await db.update(users).set(data).where(eq(users.id, id)).returning();
+    return user || undefined;
   }
 
   async getCategories(): Promise<Category[]> {
@@ -102,7 +115,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(products.createdAt));
   }
 
-  async getMarketplaceProducts(categoryId?: string, search?: string, supplierId?: string): Promise<(Product & { supplierName: string; supplierCity: string | null; isSponsored: boolean; boostLevel: string | null })[]> {
+  async getMarketplaceProducts(categoryId?: string, search?: string, supplierId?: string): Promise<(Product & { supplierName: string; supplierCity: string | null; supplierImage: string | null; isSponsored: boolean; boostLevel: string | null })[]> {
     const conditions = [eq(products.isActive, true)];
     if (categoryId) {
       conditions.push(eq(products.categoryId, categoryId));
@@ -124,6 +137,7 @@ export class DatabaseStorage implements IStorage {
       product: products,
       supplierName: userProfiles.businessName,
       supplierCity: userProfiles.city,
+      supplierImage: users.profileImageUrl, // Add supplier image
       boostLevel: productBoosts.boostLevel,
       boostStatus: productBoosts.status,
       boostEnd: productBoosts.endDate,
@@ -131,6 +145,7 @@ export class DatabaseStorage implements IStorage {
     })
       .from(products)
       .innerJoin(userProfiles, eq(products.supplierId, userProfiles.userId))
+      .innerJoin(users, eq(products.supplierId, users.id)) // Join users table
       .leftJoin(productBoosts, and(
         eq(productBoosts.productId, products.id),
         eq(productBoosts.status, "active"),
@@ -147,6 +162,7 @@ export class DatabaseStorage implements IStorage {
       ...row.product,
       supplierName: row.supplierName,
       supplierCity: row.supplierCity,
+      supplierImage: row.supplierImage, // Return supplier image
       isSponsored: !!row.boostLevel && !!row.boostStatus,
       boostLevel: row.boostLevel || null,
     }));
@@ -322,7 +338,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getSuppliers(): Promise<{ id: string; businessName: string; city: string | null; country: string | null; description: string | null; productCount: number }[]> {
+  async getSuppliers(): Promise<{ id: string; businessName: string; city: string | null; country: string | null; description: string | null; productCount: number; profileImageUrl: string | null }[]> {
     const rows = await db.select({
       id: userProfiles.userId,
       businessName: userProfiles.businessName,
@@ -330,11 +346,13 @@ export class DatabaseStorage implements IStorage {
       country: userProfiles.country,
       description: userProfiles.description,
       productCount: sql<number>`count(${products.id})::int`,
+      profileImageUrl: users.profileImageUrl, // Add profile image
     })
       .from(userProfiles)
+      .innerJoin(users, eq(userProfiles.userId, users.id)) // Join users table
       .leftJoin(products, and(eq(products.supplierId, userProfiles.userId), eq(products.isActive, true)))
       .where(eq(userProfiles.role, "supplier"))
-      .groupBy(userProfiles.userId, userProfiles.businessName, userProfiles.city, userProfiles.country, userProfiles.description);
+      .groupBy(userProfiles.userId, userProfiles.businessName, userProfiles.city, userProfiles.country, userProfiles.description, users.profileImageUrl);
 
     return rows;
   }
