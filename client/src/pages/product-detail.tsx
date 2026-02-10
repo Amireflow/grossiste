@@ -1,4 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+    type CarouselApi,
+} from "@/components/ui/carousel";
 import { useRoute, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,7 +40,15 @@ export default function ProductDetailPage() {
     const { toast } = useToast();
     const [qty, setQty] = useState(1);
     const [justAdded, setJustAdded] = useState(false);
+
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [api, setApi] = useState<CarouselApi>();
+
+    // Sync thumbnail click to carousel scroll
+    useEffect(() => {
+        if (!api) return;
+        api.scrollTo(selectedImageIndex);
+    }, [selectedImageIndex, api]);
 
     const { data: product, isLoading } = useQuery<ProductDetail>({
         queryKey: [`/api/products/${productId}`],
@@ -142,53 +158,89 @@ export default function ProductDetailPage() {
                 <div className="grid md:grid-cols-2 gap-6">
                     {/* Product Image Gallery */}
                     <div className="space-y-3">
-                        <div className="relative aspect-square rounded-xl overflow-hidden bg-muted">
-                            {allImages.length > 0 ? (
-                                <img
-                                    src={allImages[selectedImageIndex] || allImages[0]}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover transition-all duration-300"
-                                />
-                            ) : product.imageUrl ? (
-                                <img
-                                    src={product.imageUrl}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                    <Package className="w-16 h-16 text-muted-foreground/30" />
-                                </div>
+                        <Carousel
+                            setApi={(api) => {
+                                // Sync carousel change to state
+                                api?.on("select", () => {
+                                    setSelectedImageIndex(api.selectedScrollSnap());
+                                });
+                                // Sync state change to carousel is handled by useEffect below
+                            }}
+                            className="w-full relative aspect-square rounded-xl overflow-hidden bg-muted"
+                        >
+                            <CarouselContent>
+                                {allImages.length > 0 ? (
+                                    allImages.map((src, index) => (
+                                        <CarouselItem key={index}>
+                                            <div className="w-full h-full aspect-square relative">
+                                                <img
+                                                    src={src}
+                                                    alt={`${product.name} - Vue ${index + 1}`}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                        </CarouselItem>
+                                    ))
+                                ) : (
+                                    <CarouselItem>
+                                        <div className="w-full h-full aspect-square flex items-center justify-center bg-muted">
+                                            {product.imageUrl ? (
+                                                <img
+                                                    src={product.imageUrl}
+                                                    alt={product.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <Package className="w-16 h-16 text-muted-foreground/30" />
+                                            )}
+                                        </div>
+                                    </CarouselItem>
+                                )}
+                            </CarouselContent>
+
+                            {/* Navigation Arrows */}
+                            {allImages.length > 1 && (
+                                <>
+                                    <CarouselPrevious className="left-2" />
+                                    <CarouselNext className="right-2" />
+                                </>
                             )}
+
                             {isOutOfStock && (
-                                <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                                <div className="absolute inset-0 bg-background/80 z-10 pointer-events-none flex items-center justify-center">
                                     <Badge variant="secondary" className="bg-red-100 text-red-800 text-sm px-4 py-1">
                                         Rupture de stock
                                     </Badge>
                                 </div>
                             )}
                             {product.stock && product.stock > 0 && product.stock <= 10 && (
-                                <div className="absolute top-3 right-3">
+                                <div className="absolute top-3 right-3 z-10 pointer-events-none">
                                     <Badge variant="secondary" className="bg-amber-100 text-amber-800">
                                         {product.stock} restant{product.stock > 1 ? "s" : ""}
                                     </Badge>
                                 </div>
                             )}
-                        </div>
+                        </Carousel>
 
                         {/* Thumbnails */}
                         {allImages.length > 1 && (
-                            <div className="flex gap-2 overflow-x-auto pb-1">
+                            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                                 {allImages.map((url, index) => (
                                     <button
                                         key={index}
-                                        onClick={() => setSelectedImageIndex(index)}
+                                        onClick={() => {
+                                            // Handle click via a ref or by forcing the carousel api if we had access here
+                                            // Since we don't have the API reference in this scope easily without another state,
+                                            // we will use the `selectedImageIndex` to trigger a useEffect that calls `api.scrollTo`.
+                                            // See useEffect implementation below.
+                                            setSelectedImageIndex(index);
+                                        }}
                                         className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${index === selectedImageIndex
-                                                ? "border-primary ring-1 ring-primary/20"
-                                                : "border-border hover:border-primary/50 opacity-70 hover:opacity-100"
+                                            ? "border-primary ring-1 ring-primary/20"
+                                            : "border-border hover:border-primary/50 opacity-70 hover:opacity-100"
                                             }`}
                                     >
-                                        <img src={url} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
+                                        <img src={url} alt={`Aperçu ${index + 1}`} className="w-full h-full object-cover" />
                                     </button>
                                 ))}
                             </div>
