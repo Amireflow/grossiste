@@ -1,6 +1,6 @@
 import {
   users, userProfiles, categories, products, orders, orderItems, cartItems, productBoosts, walletTransactions,
-  subscriptionPlans, userSubscriptions, platformSettings,
+  subscriptionPlans, userSubscriptions,
   type UserProfile, type InsertUserProfile,
   type Category, type InsertCategory,
   type Product, type InsertProduct,
@@ -11,9 +11,11 @@ import {
   type WalletTransaction, type InsertWalletTransaction,
   type SubscriptionPlan, type UserSubscription, type InsertUserSubscription,
   type User,
+  type Notification, type InsertNotification,
+  notifications
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, ilike, or, gte, lte, inArray } from "drizzle-orm";
+import { eq, and, desc, sql, ilike, or, gte, lte, inArray, asc } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 export interface IStorage {
@@ -25,8 +27,6 @@ export interface IStorage {
   getCategories(): Promise<Category[]>;
   createCategory(data: InsertCategory): Promise<Category>;
   getCategoryBySlug(slug: string): Promise<Category | undefined>;
-  updateCategory(id: string, data: Partial<InsertCategory>): Promise<Category | undefined>;
-  deleteCategory(id: string): Promise<void>;
 
   getProducts(categoryId?: string): Promise<Product[]>;
   getProductById(id: string): Promise<Product | undefined>;
@@ -98,12 +98,29 @@ export interface IStorage {
   updateUserRole(userId: string, role: string): Promise<UserProfile>;
   getRevenueStats(): Promise<{ date: string; revenue: number }[]>;
   getUserStats(): Promise<{ role: string; count: number }[]>;
-  getSettings(): Promise<Record<string, string>>;
-  saveSettings(settings: Record<string, string>): Promise<void>;
+  getDashboardActivity(): Promise<{
+    recentOrders: (Order & { buyerName: string; supplierName: string })[];
+    recentUsers: User[];
+  }>;
+  getPendingProducts(): Promise<(Product & { supplierName: string; supplierCity: string | null; supplierImage: string | null })[]>;
+  moderateProduct(id: string, status: "active" | "rejected", reason?: string): Promise<Product | undefined>;
 
+  // Notifications
+  getNotifications(userId: string): Promise<Notification[]>;
+  createNotification(data: InsertNotification): Promise<Notification>;
+  markNotificationAsRead(id: string): Promise<Notification | undefined>;
+  markAllNotificationsAsRead(userId: string): Promise<void>;
 
+  // Admin Finance & Subs
   getAllSubscriptions(): Promise<(UserSubscription & { user: User; plan: SubscriptionPlan })[]>;
   getAllTransactions(): Promise<(WalletTransaction & { user: User })[]>;
+  adminTopUpWallet(userId: string, amount: number, description: string): Promise<WalletTransaction>;
+  adminAssignSubscription(userId: string, planId: string, durationDays?: number): Promise<UserSubscription>;
+
+  // Analytics
+  getSalesHistory(days: number): Promise<{ date: string; revenue: number }[]>;
+  getProductRevenueStats(): Promise<{ productId: string; name: string; revenue: number }[]>;
+  getInactiveProducts(days: number): Promise<{ productId: string; name: string; lastOrderDate: Date | null; daysInactive: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -139,15 +156,6 @@ export class DatabaseStorage implements IStorage {
   async getCategoryBySlug(slug: string): Promise<Category | undefined> {
     const [cat] = await db.select().from(categories).where(eq(categories.slug, slug));
     return cat || undefined;
-  }
-
-  async updateCategory(id: string, data: Partial<InsertCategory>): Promise<Category | undefined> {
-    const [category] = await db.update(categories).set(data).where(eq(categories.id, id)).returning();
-    return category || undefined;
-  }
-
-  async deleteCategory(id: string): Promise<void> {
-    await db.delete(categories).where(eq(categories.id, id));
   }
 
   async getProducts(categoryId?: string): Promise<Product[]> {
@@ -760,6 +768,61 @@ export class DatabaseStorage implements IStorage {
     return product;
   }
 
+  async getPendingProducts(): Promise<(Product & { supplierName: string; supplierCity: string | null; supplierImage: string | null })[]> {
+    const rows = await db.select({
+      product: products,
+      supplierName: userProfiles.businessName,
+      supplierCity: userProfiles.city,
+      supplierImage: users.profileImageUrl,
+    })
+      .from(products)
+      .innerJoin(userProfiles, eq(products.supplierId, userProfiles.userId))
+      .innerJoin(users, eq(products.supplierId, users.id))
+      .where(eq(products.status, "pending"))
+      .orderBy(desc(products.createdAt));
+
+    return rows.map(row => ({
+      ...row.product,
+      supplierName: row.supplierName,
+      supplierCity: row.supplierCity,
+      supplierImage: row.supplierImage,
+    }));
+  }
+
+  async moderateProduct(id: string, status: "active" | "rejected", reason?: string): Promise<Product | undefined> {
+    const [product] = await db
+      .update(products)
+      .set({
+        status,
+        isActive: status === "active", // Sync isActive with status
+        rejectionReason: reason || null
+      })
+      .where(eq(products.id, id))
+      .returning();
+
+    if (product) {
+      if (status === "active") {
+        await this.createNotification({
+          userId: product.supplierId,
+          type: "product_moderation",
+          title: "Produit validé",
+          message: `Votre produit "${product.name}" a été validé et est maintenant actif sur le marketplace.`,
+          metadata: JSON.stringify({ productId: product.id }),
+        });
+      } else if (status === "rejected") {
+        await this.createNotification({
+          userId: product.supplierId,
+          type: "product_moderation",
+          title: "Produit refusé",
+          message: `Votre produit "${product.name}" a été refusé. Motif : ${reason}`,
+          metadata: JSON.stringify({ productId: product.id }),
+        });
+      }
+    }
+
+    return product || undefined;
+  }
+
   async updateUserRole(userId: string, role: "shop_owner" | "supplier" | "admin"): Promise<UserProfile> {
     const [profile] = await db
       .update(userProfiles)
@@ -833,25 +896,134 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getSettings(): Promise<Record<string, string>> {
-    const rows = await db.select().from(platformSettings);
-    const result: Record<string, string> = {};
-    for (const row of rows) {
-      result[row.key] = row.value;
-    }
-    return result;
+  async getNotifications(userId: string): Promise<Notification[]> {
+    return db.select().from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
   }
 
-  async saveSettings(settings: Record<string, string>): Promise<void> {
-    for (const [key, value] of Object.entries(settings)) {
-      await db
-        .insert(platformSettings)
-        .values({ key, value, updatedAt: new Date() })
-        .onConflictDoUpdate({
-          target: platformSettings.key,
-          set: { value, updatedAt: new Date() },
-        });
+  async createNotification(data: InsertNotification): Promise<Notification> {
+    const [notification] = await db.insert(notifications).values(data).returning();
+    return notification;
+  }
+
+  async markNotificationAsRead(id: string): Promise<Notification | undefined> {
+    const [notification] = await db.update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, id))
+      .returning();
+    return notification || undefined;
+  }
+
+  async markAllNotificationsAsRead(userId: string): Promise<void> {
+    await db.update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.userId, userId));
+  }
+
+  async getSalesHistory(days: number): Promise<{ date: string; revenue: number }[]> {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+
+    const result = await db
+      .select({
+        date: sql<string>`to_char(${orders.createdAt}, 'YYYY-MM-DD')`,
+        total: sql<string>`sum(${orders.totalAmount}::numeric)`,
+      })
+      .from(orders)
+      .where(gte(orders.createdAt, cutoff))
+      .groupBy(sql`to_char(${orders.createdAt}, 'YYYY-MM-DD')`)
+      .orderBy(sql`to_char(${orders.createdAt}, 'YYYY-MM-DD')`);
+
+    // Fill in missing dates
+    const stats: { date: string; revenue: number }[] = [];
+    for (let i = 0; i < days; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const existing = result.find(r => r.date === dateStr);
+      stats.push({
+        date: dateStr,
+        revenue: existing ? Number(existing.total) : 0
+      });
     }
+    return stats.reverse();
+  }
+
+  async getProductRevenueStats(): Promise<{ productId: string; name: string; revenue: number }[]> {
+    const rows = await db.select({
+      productId: products.id,
+      name: products.name,
+      revenue: sql<string>`coalesce(sum(${orderItems.totalPrice}::numeric), 0)`
+    })
+      .from(orderItems)
+      .innerJoin(products, eq(orderItems.productId, products.id))
+      .groupBy(products.id, products.name)
+      .orderBy(sql`sum(${orderItems.totalPrice}::numeric) DESC`);
+
+    return rows.map(r => ({ ...r, revenue: Number(r.revenue) }));
+  }
+
+  async getInactiveProducts(days: number): Promise<{ productId: string; name: string; lastOrderDate: Date | null; daysInactive: number }[]> {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+
+    // Get all products and their max order date
+    const rows = await db.select({
+      productId: products.id,
+      name: products.name,
+      lastOrderDate: sql<Date>`max(${orders.createdAt})`
+    })
+      .from(products)
+      .leftJoin(orderItems, eq(products.id, orderItems.productId))
+      .leftJoin(orders, eq(orderItems.orderId, orders.id))
+      .where(eq(products.isActive, true)) // Only check active products
+      .groupBy(products.id, products.name)
+      .having(or(
+        lte(sql`max(${orders.createdAt})`, cutoff),
+        sql`max(${orders.createdAt}) IS NULL`
+      ))
+      .orderBy(asc(sql`max(${orders.createdAt}) NULLS FIRST`));
+
+    const now = new Date();
+    return rows.map(r => {
+      const lastDate = r.lastOrderDate ? new Date(r.lastOrderDate) : null;
+      let daysInactive = -1;
+      if (lastDate) {
+        const diffTime = Math.abs(now.getTime() - lastDate.getTime());
+        daysInactive = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      } else {
+        daysInactive = 999; // Never sold
+      }
+      return {
+        ...r,
+        lastOrderDate: lastDate,
+        daysInactive
+      };
+    });
+  }
+
+  async getDashboardActivity(): Promise<{
+    recentOrders: (Order & { buyerName: string; supplierName: string })[];
+    recentUsers: (User & { profile: UserProfile | null })[];
+  }> {
+    const recentOrders = await this.getAllOrders(); // Reuse existing method but slice result
+    // Note: getAllOrders already sorts by desc createdAt
+
+    // Fetch users with profiles
+    const rows = await db.select({
+      user: users,
+      profile: userProfiles
+    })
+      .from(users)
+      .leftJoin(userProfiles, eq(users.id, userProfiles.userId))
+      .orderBy(desc(users.createdAt))
+      .limit(5);
+
+    return {
+      recentOrders: recentOrders.slice(0, 5),
+      recentUsers: rows.map(r => ({ ...r.user, profile: r.profile }))
+    };
   }
 
   async getAllSubscriptions(): Promise<(UserSubscription & { user: User; plan: SubscriptionPlan })[]> {
@@ -865,7 +1037,11 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(subscriptionPlans, eq(userSubscriptions.planId, subscriptionPlans.id))
       .orderBy(desc(userSubscriptions.createdAt));
 
-    return rows.map(r => ({ ...r.subscription, user: r.user, plan: r.plan }));
+    return rows.map(r => ({
+      ...r.subscription,
+      user: r.user,
+      plan: r.plan
+    }));
   }
 
   async getAllTransactions(): Promise<(WalletTransaction & { user: User })[]> {
@@ -877,7 +1053,48 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(walletTransactions.userId, users.id))
       .orderBy(desc(walletTransactions.createdAt));
 
-    return rows.map(r => ({ ...r.transaction, user: r.user }));
+    return rows.map(r => ({
+      ...r.transaction,
+      user: r.user
+    }));
+  }
+
+  async adminTopUpWallet(userId: string, amount: number, description: string): Promise<WalletTransaction> {
+    // Reuse topUpWallet but explicitly for admin actions (logic is same for now)
+    return this.topUpWallet(userId, amount, description);
+  }
+
+  async adminAssignSubscription(userId: string, planId: string, durationDays?: number): Promise<UserSubscription> {
+    // 1. Get plan details
+    const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, planId));
+    if (!plan) throw new Error("Plan not found");
+
+    const duration = durationDays || plan.duration;
+    const startDate = new Date();
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + duration);
+
+    // 2. Deactivate existing active subscriptions?
+    // For now, let's assume we just add a new one. The logic for "active" usually grabs the one with latest end date or actively checks status.
+    // Let's set status of overlaps to 'expired'?
+    await db.update(userSubscriptions)
+      .set({ status: 'cancelled' })
+      .where(and(
+        eq(userSubscriptions.userId, userId),
+        eq(userSubscriptions.status, 'active')
+      ));
+
+    // 3. Create new subscription
+    const [sub] = await db.insert(userSubscriptions).values({
+      userId,
+      planId,
+      startDate,
+      endDate,
+      status: 'active',
+      autoRenew: false
+    } as InsertUserSubscription).returning();
+
+    return sub;
   }
 }
 

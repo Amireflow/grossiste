@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { downloadCSV } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -15,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Package, MoreVertical, Store, ExternalLink, FileDown } from "lucide-react";
+import { Search, Package, MoreVertical, Store, ExternalLink } from "lucide-react";
 import type { Product } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/constants";
@@ -26,30 +25,11 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 type AdminProduct = Product & { supplierName: string; categoryName: string };
 
 export default function AdminProducts() {
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("all");
-    const [productToUpdate, setProductToUpdate] = useState<AdminProduct | null>(null);
 
     const { toast } = useToast();
     const queryClient = useQueryClient();
@@ -80,30 +60,12 @@ export default function AdminProducts() {
 
     const filteredProducts = products?.filter((product) => {
         const term = search.toLowerCase();
-        const matchesSearch = (
+        return (
             product.name.toLowerCase().includes(term) ||
             product.supplierName.toLowerCase().includes(term) ||
             product.categoryName.toLowerCase().includes(term)
         );
-        const matchesStatus = statusFilter === "all" ||
-            (statusFilter === "active" && product.isActive) ||
-            (statusFilter === "inactive" && !product.isActive);
-        return matchesSearch && matchesStatus;
     });
-
-    const handleExport = () => {
-        if (!filteredProducts) return;
-        const data = filteredProducts.map(product => ({
-            ID: product.id,
-            Nom: product.name,
-            Prix: product.price,
-            Catégorie: product.categoryName,
-            Fournisseur: product.supplierName,
-            Statut: product.isActive ? "Actif" : "Inactif",
-            "Créé le": product.createdAt ? new Date(product.createdAt).toLocaleDateString() : ""
-        }));
-        downloadCSV(data, "produits.csv");
-    };
 
     return (
         <div className="flex-1 w-full bg-muted/20 p-6 sm:p-10">
@@ -127,20 +89,6 @@ export default function AdminProducts() {
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[180px] bg-background">
-                        <SelectValue placeholder="Filtrer par statut" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Tous les statuts</SelectItem>
-                        <SelectItem value="active">Actifs</SelectItem>
-                        <SelectItem value="inactive">Inactifs</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Button variant="outline" onClick={handleExport}>
-                    <FileDown className="mr-2 h-4 w-4" />
-                    Exporter
-                </Button>
             </div>
 
             <div className="rounded-md border bg-background">
@@ -224,7 +172,14 @@ export default function AdminProducts() {
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className={product.isActive ? "text-destructive" : "text-green-600"}
-                                                    onClick={() => setProductToUpdate(product)}
+                                                    onClick={() => {
+                                                        if (confirm(`Êtes-vous sûr de vouloir ${product.isActive ? 'désactiver' : 'activer'} ce produit ?`)) {
+                                                            updateStatusMutation.mutate({
+                                                                id: product.id,
+                                                                isActive: !product.isActive
+                                                            });
+                                                        }
+                                                    }}
                                                 >
                                                     {product.isActive ? "Désactiver" : "Activer"}
                                                 </DropdownMenuItem>
@@ -237,37 +192,6 @@ export default function AdminProducts() {
                     </TableBody>
                 </Table>
             </div>
-
-
-            <AlertDialog open={!!productToUpdate} onOpenChange={(open) => !open && setProductToUpdate(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmation</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {productToUpdate?.isActive
-                                ? "Êtes-vous sûr de vouloir désactiver ce produit ?"
-                                : "Êtes-vous sûr de vouloir activer ce produit ?"}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction
-                            className={productToUpdate?.isActive ? "bg-destructive hover:bg-destructive/90" : "bg-green-600 hover:bg-green-700"}
-                            onClick={() => {
-                                if (productToUpdate) {
-                                    updateStatusMutation.mutate({
-                                        id: productToUpdate.id,
-                                        isActive: !productToUpdate.isActive
-                                    });
-                                    setProductToUpdate(null);
-                                }
-                            }}
-                        >
-                            {productToUpdate?.isActive ? "Désactiver" : "Activer"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </div >
+        </div>
     );
 }

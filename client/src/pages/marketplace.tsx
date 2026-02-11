@@ -54,7 +54,7 @@ const CATEGORY_IMAGES: Record<string, string> = {
   "menage-cuisine": catMenage,
 };
 
-type MarketplaceProduct = Product & { supplierName: string; supplierCity: string | null; isSponsored?: boolean; boostLevel?: string | null };
+type MarketplaceProduct = Product & { supplierName: string; supplierCity: string | null; supplierImage?: string | null; isSponsored?: boolean; boostLevel?: string | null };
 
 interface Supplier {
   id: string;
@@ -63,7 +63,7 @@ interface Supplier {
   country: string | null;
   description: string | null;
   productCount: number;
-  profileImageUrl: string | null;
+  profileImageUrl?: string | null;
 }
 
 type SortOption = "newest" | "price_asc" | "price_desc" | "name_asc";
@@ -228,32 +228,32 @@ export default function MarketplacePage() {
                 {/* "All" Card */}
                 <button
                   onClick={() => setSelectedSupplier("all")}
-                  className={`group shrink-0 w-20 sm:w-24 md:w-32 aspect-square rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${selectedSupplier === "all" ? "bg-primary text-primary-foreground border-primary shadow-md" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
+                  className={`group shrink-0 w-28 sm:w-32 aspect-square rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${selectedSupplier === "all" ? "bg-primary text-primary-foreground border-primary shadow-md" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
                   data-testid="button-supplier-all"
                 >
-                  <div className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${selectedSupplier === "all" ? "bg-white/20" : "bg-muted"}`}>
-                    <Users className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${selectedSupplier === "all" ? "bg-white/20" : "bg-muted"}`}>
+                    <Users className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
-                  <span className="font-semibold text-[10px] sm:text-xs md:text-sm">Tous</span>
+                  <span className="font-semibold text-xs sm:text-sm">Tous</span>
                 </button>
                 {suppliers.map((s) => (
                   <Link key={s.id} href={`/shop/${s.id}`}>
                     <div
-                      className={`group shrink-0 w-20 sm:w-24 md:w-32 aspect-square rounded-2xl border p-2 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${selectedSupplier === s.id ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
+                      className={`group shrink-0 w-28 sm:w-32 aspect-square rounded-2xl border p-2 flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${selectedSupplier === s.id ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm" : "bg-card hover:border-primary/50 hover:shadow-sm"}`}
                     >
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border flex items-center justify-center text-primary font-bold text-[10px] sm:text-xs md:text-sm shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border flex items-center justify-center text-primary font-bold text-sm sm:text-base shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
                         {s.profileImageUrl ? (
                           <img src={s.profileImageUrl} alt={s.businessName} className="w-full h-full object-cover" />
                         ) : (
                           s.businessName.substring(0, 2).toUpperCase()
                         )}
                       </div>
-                      <span className={`block font-semibold text-[9px] sm:text-[10px] md:text-xs leading-tight truncate w-full text-center ${selectedSupplier === s.id ? "text-primary" : "text-foreground"}`}>
+                      <span className={`block font-semibold text-xs sm:text-sm leading-tight truncate w-full text-center ${selectedSupplier === s.id ? "text-primary" : "text-foreground"}`}>
                         {s.businessName}
                       </span>
                       {s.city && (
-                        <div className="flex items-center gap-0.5 text-[8px] sm:text-[9px] md:text-[10px] text-muted-foreground">
-                          <MapPin className="w-2 h-2 sm:w-2.5 sm:h-2.5 shrink-0" />
+                        <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground">
+                          <MapPin className="w-3 h-3 shrink-0" />
                           <span className="truncate">{s.city}</span>
                         </div>
                       )}
@@ -373,7 +373,7 @@ export default function MarketplacePage() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <Card key={i}>
                   <CardContent className="p-0">
@@ -396,7 +396,7 @@ export default function MarketplacePage() {
                     <Sparkles className="w-4 h-4 text-amber-500" />
                     <p className="text-sm font-semibold">Produits mis en avant</p>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
                     {sponsoredProducts.map((product) => (
                       <MarketplaceProductCard
                         key={product.id}
@@ -419,7 +419,7 @@ export default function MarketplacePage() {
                     <p className="text-sm font-semibold">Tous les produits</p>
                   </div>
                 )}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
                   {(sponsoredProducts.length > 0 && selectedCategory === "all" && !search && !supplierFilter ? regularProducts : sortedProducts).map((product) => (
                     <MarketplaceProductCard
                       key={product.id}
@@ -568,127 +568,142 @@ export function MarketplaceProductCard({
       data-testid={`card-marketplace-product-${product.id}`}
     >
       <CardContent className="p-0">
-        <div className="relative w-full aspect-[4/3] rounded-t-xl overflow-hidden bg-muted">
-          {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-muted">
-              <Package className="w-10 h-10 text-muted-foreground/30" />
-            </div>
-          )}
-          {isOutOfStock && (
-            <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-              <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">Rupture de stock</Badge>
-            </div>
-          )}
-          {product.stock && product.stock > 0 && product.stock <= 10 && !isOutOfStock && (
-            <div className="absolute top-2 right-2">
-              <Badge variant="secondary" className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                {product.stock} restant{product.stock > 1 ? "s" : ""}
-              </Badge>
-            </div>
-          )}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {product.isSponsored && (
-              <Badge
-                className={`text-[10px] text-white border-0 gap-1 shadow-sm ${product.boostLevel === "premium"
-                  ? "bg-gradient-to-r from-amber-500 to-orange-500"
-                  : "bg-blue-500"
-                  }`}
-                data-testid={`badge-sponsored-${product.id}`}
-              >
-                {product.boostLevel === "premium" ? <Star className="w-3 h-3 fill-current" /> : <Zap className="w-3 h-3 fill-current" />}
-                {product.boostLevel === "premium" ? "Premium" : "Sponsorisé"}
-              </Badge>
-            )}
-            {categoryName && (
-              <Badge variant="secondary" className="text-[10px] bg-black/60 text-white border-0">
-                {categoryName}
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        <div className="p-3 sm:p-4">
-          <h3 className="font-semibold text-sm mb-1 line-clamp-2 leading-snug min-h-[2.5rem]" title={product.name} data-testid={`text-marketplace-product-name-${product.id}`}>
-            {product.name}
-          </h3>
-
-          {product.description && (
-            <p className="text-[11px] text-muted-foreground line-clamp-1 mb-1.5">{product.description}</p>
-          )}
-
-          <div className="mb-2">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Store className="w-3 h-3 shrink-0" />
-              <span className="text-[11px] truncate" data-testid={`text-supplier-${product.id}`}>
-                {product.supplierName}
-              </span>
-            </div>
-            {product.supplierCity && (
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <MapPin className="w-2.5 h-2.5 shrink-0" />
-                <span className="text-[10px] truncate">{product.supplierCity}</span>
+        <Link href={`/product/${product.id}`}>
+          <div className="relative w-full aspect-[4/3] rounded-t-xl overflow-hidden bg-muted cursor-pointer">
+            {product.imageUrl ? (
+              <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-muted">
+                <Package className="w-10 h-10 text-muted-foreground/30" />
               </div>
             )}
+            {isOutOfStock && (
+              <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 font-medium">Rupture de stock</Badge>
+              </div>
+            )}
+            {product.stock && product.stock > 0 && product.stock <= 10 && !isOutOfStock && (
+              <div className="absolute top-2 right-2">
+                <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 font-medium shadow-sm">
+                  {product.stock} restant{product.stock > 1 ? "s" : ""}
+                </Badge>
+              </div>
+            )}
+            <div className="absolute top-2 left-2 flex flex-col gap-1.5">
+              {product.isSponsored && (
+                <Badge
+                  className={`text-xs text-white border-0 gap-1.5 shadow-sm px-2 py-0.5 ${product.boostLevel === "premium"
+                    ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                    : "bg-blue-500"
+                    }`}
+                  data-testid={`badge-sponsored-${product.id}`}
+                >
+                  {product.boostLevel === "premium" ? <Star className="w-3.5 h-3.5 fill-current" /> : <Zap className="w-3.5 h-3.5 fill-current" />}
+                  {product.boostLevel === "premium" ? "Premium" : "Sponsorisé"}
+                </Badge>
+              )}
+              {categoryName && (
+                <Badge variant="secondary" className="text-xs bg-black/60 text-white border-0 backdrop-blur-md shadow-sm">
+                  {categoryName}
+                </Badge>
+              )}
+            </div>
+          </div>
+        </Link>
+
+        <div className="p-4">
+          <Link href={`/product/${product.id}`}>
+            <h3 className="font-semibold text-base mb-1 line-clamp-2 leading-snug min-h-[3rem] cursor-pointer hover:text-primary transition-colors" title={product.name} data-testid={`text-marketplace-product-name-${product.id}`}>
+              {product.name}
+            </h3>
+          </Link>
+
+          {product.description && (
+            <p className="text-xs text-muted-foreground line-clamp-1 mb-2.5">{product.description}</p>
+          )}
+
+          <div className="flex items-center gap-2 mb-3 text-muted-foreground">
+            {product.supplierImage ? (
+              <img src={product.supplierImage} alt={product.supplierName} className="w-4 h-4 rounded-full object-cover shrink-0" />
+            ) : (
+              <Store className="w-3.5 h-3.5 shrink-0" />
+            )}
+            <span className="text-xs truncate font-medium" data-testid={`text-supplier-${product.id}`}>
+              {product.supplierName}
+            </span>
+            {product.supplierCity && (
+              <>
+                <span className="text-[10px] text-muted-foreground/60">●</span>
+                <span className="text-xs truncate">{product.supplierCity}</span>
+              </>
+            )}
           </div>
 
-          <div className="flex items-baseline gap-1.5 mb-3 flex-wrap">
-            <span className="font-bold text-primary text-base tabular-nums" data-testid={`text-marketplace-price-${product.id}`}>
+          <div className="flex items-baseline gap-1.5 mb-4 flex-wrap">
+            <span className="font-bold text-primary text-xl tabular-nums" data-testid={`text-marketplace-price-${product.id}`}>
               {formatPrice(product.price, product.currency || "XOF")}
             </span>
-            <span className="text-[11px] text-muted-foreground">/ {product.unit}</span>
+            <span className="text-xs text-muted-foreground font-medium">/ {product.unit}</span>
           </div>
 
           {product.minOrder && product.minOrder > 1 && (
             <p className="text-[10px] text-muted-foreground mb-2 flex items-center gap-1">
               <Package className="w-3 h-3" />
-              Min. {product.minOrder} {product.unit}
+              Minimum {product.minOrder} {product.unit}
             </p>
           )}
 
           {isShopOwner ? (
             isOutOfStock ? (
-              <Button variant="secondary" size="sm" className="w-full" disabled data-testid={`button-unavailable-${product.id}`}>
+              <Button variant="secondary" size="sm" className="w-full h-9" disabled data-testid={`button-unavailable-${product.id}`}>
                 Indisponible
               </Button>
             ) : (
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center bg-muted/40 rounded-lg w-fit">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center bg-muted/40 rounded-lg shrink-0 border border-input">
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="no-default-hover-elevate h-7 w-7"
-                    onClick={() => setQty(Math.max(product.minOrder || 1, qty - 1))}
+                    className="no-default-hover-elevate h-9 w-9 hover:bg-background"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setQty(Math.max(product.minOrder || 1, qty - 1));
+                    }}
                     data-testid={`button-qty-minus-${product.id}`}
                   >
-                    <Minus className="w-3 h-3" />
+                    <Minus className="w-4 h-4" />
                   </Button>
-                  <span className="text-xs w-6 text-center tabular-nums" data-testid={`text-qty-${product.id}`}>{qty}</span>
+                  <span className="text-sm w-8 text-center tabular-nums font-medium" data-testid={`text-qty-${product.id}`}>{qty}</span>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="no-default-hover-elevate h-7 w-7"
-                    onClick={() => setQty(qty + 1)}
+                    className="no-default-hover-elevate h-9 w-9 hover:bg-background"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setQty(qty + 1);
+                    }}
                     data-testid={`button-qty-plus-${product.id}`}
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-4 h-4" />
                   </Button>
                 </div>
                 <Button
-                  className="w-full text-xs h-7"
-                  onClick={handleAdd}
+                  className="flex-1 text-sm h-9 font-medium shadow-sm transition-all active:scale-95"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleAdd();
+                  }}
                   disabled={isAdding}
                   data-testid={`button-add-cart-${product.id}`}
                 >
                   {justAdded ? (
                     <>
-                      <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                      <CheckCircle className="w-4 h-4 mr-1.5" />
                       Ajouté
                     </>
                   ) : (
                     <>
-                      <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                      <ShoppingCart className="w-4 h-4 mr-1.5" />
                       Ajouter
                     </>
                   )}
@@ -696,19 +711,21 @@ export function MarketplaceProductCard({
               </div>
             )
           ) : isLoggedIn ? (
-            <Button variant="outline" size="sm" className="w-full text-xs h-7" disabled data-testid={`button-supplier-view-${product.id}`}>
-              <Eye className="w-3.5 h-3.5 mr-1" />
-              Voir le produit
-            </Button>
+            <Link href={`/product/${product.id}`}>
+              <Button variant="outline" size="sm" className="w-full text-sm h-9 font-medium" data-testid={`button-supplier-view-${product.id}`}>
+                <Eye className="w-4 h-4 mr-2" />
+                Voir le produit
+              </Button>
+            </Link>
           ) : (
-            <a href="/api/login">
-              <Button variant="outline" size="sm" className="w-full text-xs h-7" data-testid={`button-login-to-order-${product.id}`}>
+            <Link href="/login">
+              <Button variant="outline" size="sm" className="w-full text-sm h-9" data-testid={`button-login-to-order-${product.id}`}>
                 Connexion pour commander
               </Button>
-            </a>
+            </Link>
           )}
         </div>
       </CardContent>
-    </Card>
+    </Card >
   );
 }

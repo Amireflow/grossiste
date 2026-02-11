@@ -13,6 +13,8 @@ import { registerOrderRoutes } from "./routes/orders";
 import { registerWalletAndBoostRoutes } from "./routes/wallet-boosts";
 import { registerSubscriptionRoutes } from "./routes/subscriptions";
 import { registerAdminRoutes } from "./routes/admin";
+import { registerNotificationRoutes } from "./routes/notifications";
+import { registerAnalyticsRoutes } from "./routes/analytics";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -102,6 +104,8 @@ export async function registerRoutes(
   registerWalletAndBoostRoutes(app);
   registerSubscriptionRoutes(app);
   registerAdminRoutes(app);
+  registerNotificationRoutes(app);
+  registerAnalyticsRoutes(app);
 
   return httpServer;
 }

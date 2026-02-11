@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Store } from "lucide-react";
 import { UserNav } from "@/components/user-nav";
+import { NotificationsDropdown } from "@/components/notifications-dropdown";
 import { AdminGuard } from "@/components/admin-guard";
 
 
@@ -27,11 +28,14 @@ import OrderDetailsPage from "@/pages/order-details";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
 import AdminProducts from "@/pages/admin/products";
+
 import AdminOrders from "@/pages/admin/orders";
 import AdminSettings from "@/pages/admin/settings";
 import AdminUserDetail from "@/pages/admin/user-detail";
-import AdminCategories from "@/pages/admin/categories";
+import AdminModeration from "@/pages/admin/moderation";
 import AdminSubscriptions from "@/pages/admin/subscriptions";
+import AdminFinance from "@/pages/admin/finance";
+import AdminAnalytics from "@/pages/admin/analytics";
 
 import OnboardingPage from "@/pages/onboarding";
 import DashboardPage from "@/pages/dashboard";
@@ -54,13 +58,13 @@ const PAGE_TITLES: Record<string, string> = {
   "/account-pro": "Mon Compte Pro",
   "/marketplace": "Marketplace",
   "/admin": "Administration",
+  "/admin/analytics": "Analytics Avancés",
   "/admin/users": "Gestion Utilisateurs",
   "/admin/products": "Gestion Produits",
   "/admin/orders": "Gestion Commandes",
-
   "/admin/settings": "Paramètres Plateforme",
-  "/admin/categories": "Gestion Catégories",
-  "/admin/subscriptions": "Abonnements & Revenus",
+  "/admin/subscriptions": "Gestion Abonnements",
+  "/admin/finance": "Gestion Finance",
 };
 
 function AuthenticatedRouter() {
@@ -111,6 +115,7 @@ function AuthenticatedRouter() {
             </div>
             <div className="flex items-center gap-3">
               <ThemeToggle />
+              <NotificationsDropdown />
               <UserNav />
             </div>
           </header>
@@ -129,12 +134,14 @@ function AuthenticatedRouter() {
 
               {/* Admin Routes */}
               <Route path="/admin">{() => <AdminGuard><AdminDashboard /></AdminGuard>}</Route>
-              <Route path="/admin/users/:id">{() => <AdminGuard><AdminUserDetail /></AdminGuard>}</Route>
               <Route path="/admin/users">{() => <AdminGuard><AdminUsers /></AdminGuard>}</Route>
+              <Route path="/admin/users/:id">{() => <AdminGuard><AdminUserDetail /></AdminGuard>}</Route>
+              <Route path="/admin/moderation">{() => <AdminGuard><AdminModeration /></AdminGuard>}</Route>
               <Route path="/admin/products">{() => <AdminGuard><AdminProducts /></AdminGuard>}</Route>
               <Route path="/admin/orders">{() => <AdminGuard><AdminOrders /></AdminGuard>}</Route>
-              <Route path="/admin/categories">{() => <AdminGuard><AdminCategories /></AdminGuard>}</Route>
               <Route path="/admin/subscriptions">{() => <AdminGuard><AdminSubscriptions /></AdminGuard>}</Route>
+              <Route path="/admin/finance">{() => <AdminGuard><AdminFinance /></AdminGuard>}</Route>
+              <Route path="/admin/analytics">{() => <AdminGuard><AdminAnalytics /></AdminGuard>}</Route>
               <Route path="/admin/settings">{() => <AdminGuard><AdminSettings /></AdminGuard>}</Route>
 
               <Route component={NotFound} />

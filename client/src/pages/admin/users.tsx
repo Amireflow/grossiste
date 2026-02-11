@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { downloadCSV } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -15,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Store, MoreVertical, Shield, FileDown } from "lucide-react";
+import { Search, Store, MoreVertical, Shield } from "lucide-react";
 import type { User, UserProfile } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -24,30 +23,11 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 type UserWithProfile = User & { profile: UserProfile | null };
 
 export default function AdminUsers() {
     const [search, setSearch] = useState("");
-    const [roleFilter, setRoleFilter] = useState("all");
-    const [userToUpdate, setUserToUpdate] = useState<UserWithProfile | null>(null);
 
     const { toast } = useToast();
     const queryClient = useQueryClient();
@@ -78,32 +58,13 @@ export default function AdminUsers() {
 
     const filteredUsers = users?.filter((user) => {
         const term = search.toLowerCase();
-        const matchesSearch = (
+        return (
             user.email?.toLowerCase().includes(term) ||
             user.firstName?.toLowerCase().includes(term) ||
             user.lastName?.toLowerCase().includes(term) ||
             user.profile?.businessName?.toLowerCase().includes(term)
         );
-        const matchesRole = roleFilter === "all" ||
-            (roleFilter === "shop_owner" && (!user.profile?.role || user.profile.role === "shop_owner")) ||
-            user.profile?.role === roleFilter;
-
-        return matchesSearch && matchesRole;
     });
-
-    const handleExport = () => {
-        if (!filteredUsers) return;
-        const data = filteredUsers.map(user => ({
-            ID: user.id,
-            Prénom: user.firstName,
-            Nom: user.lastName,
-            Email: user.email,
-            Rôle: user.profile?.role || "user",
-            Business: user.profile?.businessName || "",
-            "Date d'inscription": user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "",
-        }));
-        downloadCSV(data, "utilisateurs.csv");
-    };
 
     return (
         <div className="flex-1 w-full bg-muted/20 p-6 sm:p-10">
@@ -127,22 +88,6 @@ export default function AdminUsers() {
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                    <SelectTrigger className="w-[180px] bg-background">
-                        <SelectValue placeholder="Filtrer par rôle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Tous les rôles</SelectItem>
-                        <SelectItem value="shop_owner">Commerçants</SelectItem>
-                        <SelectItem value="supplier">Fournisseurs</SelectItem>
-                        <SelectItem value="admin">Administrateurs</SelectItem>
-                        <SelectItem value="banned">Bannis</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Button variant="outline" onClick={handleExport}>
-                    <FileDown className="mr-2 h-4 w-4" />
-                    Exporter
-                </Button>
             </div>
 
             <div className="rounded-md border bg-background">
@@ -214,7 +159,14 @@ export default function AdminUsers() {
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className={user.profile?.role === "banned" ? "text-green-600" : "text-destructive"}
-                                                    onClick={() => setUserToUpdate(user)}
+                                                    onClick={() => {
+                                                        if (confirm("Êtes-vous sûr de vouloir changer le statut de cet utilisateur ?")) {
+                                                            updateRoleMutation.mutate({
+                                                                id: user.id,
+                                                                role: user.profile?.role === "banned" ? "shop_owner" : "banned"
+                                                            });
+                                                        }
+                                                    }}
                                                 >
                                                     {user.profile?.role === "banned" ? "Restaurer" : "Bannir"}
                                                 </DropdownMenuItem>
@@ -227,37 +179,6 @@ export default function AdminUsers() {
                     </TableBody>
                 </Table>
             </div>
-
-
-            <AlertDialog open={!!userToUpdate} onOpenChange={(open) => !open && setUserToUpdate(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmation</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {userToUpdate?.profile?.role === "banned"
-                                ? "Êtes-vous sûr de vouloir restaurer cet utilisateur ?"
-                                : "Êtes-vous sûr de vouloir bannir cet utilisateur ?"}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction
-                            className={userToUpdate?.profile?.role === "banned" ? "bg-green-600 hover:bg-green-700" : "bg-destructive hover:bg-destructive/90"}
-                            onClick={() => {
-                                if (userToUpdate) {
-                                    updateRoleMutation.mutate({
-                                        id: userToUpdate.id,
-                                        role: userToUpdate.profile?.role === "banned" ? "shop_owner" : "banned"
-                                    });
-                                    setUserToUpdate(null);
-                                }
-                            }}
-                        >
-                            {userToUpdate?.profile?.role === "banned" ? "Restaurer" : "Bannir"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </div >
+        </div>
     );
 }

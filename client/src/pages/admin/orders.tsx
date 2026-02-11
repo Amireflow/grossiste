@@ -3,20 +3,12 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { downloadCSV } from "@/lib/utils";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import {
     Table,
     TableBody,
@@ -28,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, ShoppingCart, Eye, FileDown } from "lucide-react";
+import { Search, ShoppingCart, Eye } from "lucide-react";
 import type { Order } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/constants";
@@ -38,7 +30,6 @@ type AdminOrder = Order & { buyerName: string; supplierName: string; itemsCount:
 
 export default function AdminOrders() {
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("all");
 
     const { toast } = useToast();
     const queryClient = useQueryClient();
@@ -80,13 +71,11 @@ export default function AdminOrders() {
 
     const filteredOrders = orders?.filter((order) => {
         const term = search.toLowerCase();
-        const matchesSearch = (
+        return (
             order.id.toLowerCase().includes(term) ||
             order.buyerName.toLowerCase().includes(term) ||
             order.supplierName.toLowerCase().includes(term)
         );
-        const matchesStatus = statusFilter === "all" || order.status === statusFilter;
-        return matchesSearch && matchesStatus;
     });
 
     const getStatusColor = (status: string) => {
@@ -108,19 +97,6 @@ export default function AdminOrders() {
         shipped: "Expédiée",
         delivered: "Livrée",
         cancelled: "Annulée",
-    };
-
-    const handleExport = () => {
-        if (!filteredOrders) return;
-        const data = filteredOrders.map(order => ({
-            ID: order.id,
-            Client: order.buyerName,
-            Fournisseur: order.supplierName,
-            Date: order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "",
-            Montant: order.totalAmount,
-            Statut: traverseStatus[(order.status || "pending") as keyof typeof traverseStatus] || order.status
-        }));
-        downloadCSV(data, "commandes.csv");
     };
 
     return (
@@ -145,24 +121,6 @@ export default function AdminOrders() {
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[180px] bg-background">
-                        <SelectValue placeholder="Filtrer par statut" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Tous les statuts</SelectItem>
-                        <SelectItem value="pending">En attente</SelectItem>
-                        <SelectItem value="confirmed">Confirmée</SelectItem>
-                        <SelectItem value="processing">En cours</SelectItem>
-                        <SelectItem value="shipped">Expédiée</SelectItem>
-                        <SelectItem value="delivered">Livrée</SelectItem>
-                        <SelectItem value="cancelled">Annulée</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Button variant="outline" onClick={handleExport}>
-                    <FileDown className="mr-2 h-4 w-4" />
-                    Exporter
-                </Button>
             </div>
 
             <div className="rounded-md border bg-background">

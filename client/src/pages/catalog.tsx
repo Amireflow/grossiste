@@ -65,28 +65,26 @@ export default function CatalogPage() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-md group">
-          <div className="relative flex items-center bg-background border border-primary/20 rounded-full shadow-sm overflow-hidden focus-within:border-2 focus-within:border-primary transition-all h-10 sm:h-11">
-            <Search className="ml-3 sm:ml-4 w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
-            <Input
-              placeholder="Rechercher un produit..."
-              className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-3 sm:px-4 h-full text-sm sm:text-base bg-transparent placeholder:text-muted-foreground/70"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              data-testid="input-search-products"
-            />
-            {search && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="mr-1 h-8 w-8 rounded-full hover:bg-muted/50 shrink-0"
-                onClick={() => setSearch("")}
-                data-testid="button-clear-search"
-              >
-                <X className="w-3.5 h-3.5 text-muted-foreground" />
-              </Button>
-            )}
-          </div>
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher un produit..."
+            className="pl-9"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            data-testid="input-search-products"
+          />
+          {search && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="absolute right-1 top-1/2 -translate-y-1/2 no-default-hover-elevate"
+              onClick={() => setSearch("")}
+              data-testid="button-clear-search"
+            >
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          )}
         </div>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="w-full sm:w-[220px]" data-testid="select-category-filter">

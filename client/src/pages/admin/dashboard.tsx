@@ -1,29 +1,60 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Users, Package, ShoppingCart, TrendingUp, Store, Eye, ArrowRight } from "lucide-react";
-import { formatPrice } from "@/lib/constants";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
 import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
+    Users, Package, ShoppingCart, TrendingUp, Store,
+    CheckCircle2, Truck, AlertCircle, ChevronRight, ClipboardList
+} from "lucide-react";
+import { formatPrice, ORDER_STATUS_LABELS } from "@/lib/constants";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from "recharts";
-import type { User, UserProfile, Order } from "@shared/schema";
+import { Link } from "wouter";
 
-type AdminOrder = Order & { buyerName: string; supplierName: string; itemsCount: number };
-type UserWithProfile = User & { profile: UserProfile | null };
+// ... AdminDashboard component ... (keeping it for now, will replace next)
 
-const statusLabels: Record<string, string> = {
-    pending: "En attente",
-    confirmed: "Confirmée",
-    processing: "En cours",
-    shipped: "Expédiée",
-    delivered: "Livrée",
-    cancelled: "Annulée",
-};
+function KpiCard({
+    icon,
+    label,
+    value,
+    color,
+    bg,
+    subtext,
+    loading,
+}: {
+    icon: React.ReactNode;
+    label: string;
+    value: string | number | undefined;
+    color: string;
+    bg: string;
+    subtext?: string;
+    loading?: boolean;
+}) {
+    return (
+        <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardContent className="p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{label}</p>
+                    <div className={`w-8 h-8 rounded-md flex items-center justify-center ${bg} ${color}`}>
+                        {icon}
+                    </div>
+                </div>
+                {loading ? (
+                    <Skeleton className="h-7 w-20 mb-1" />
+                ) : (
+                    <p className="text-xl sm:text-2xl font-bold tracking-tight tabular-nums">{value}</p>
+                )}
+                {subtext && <p className="text-xs text-muted-foreground mt-1">{subtext}</p>}
+            </CardContent>
+        </Card>
+    );
+}
+
+
+
+// ... imports and helper components are already there ...
 
 export default function AdminDashboard() {
     const { data: stats, isLoading, isError, error } = useQuery<{
@@ -34,6 +65,22 @@ export default function AdminDashboard() {
     }>({
         queryKey: ["/api/admin/stats"],
     });
+
+    const { data: chartStats, isLoading: isLoadingCharts } = useQuery<{
+        revenueStats: { date: string; revenue: number }[];
+        userStats: { role: string; count: number }[];
+    }>({
+        queryKey: ["/api/admin/stats/charts"],
+    });
+
+    const { data: activity, isLoading: isLoadingActivity } = useQuery<{
+        recentOrders: { id: string; buyerName: string; totalAmount: string; status: string; createdAt: string }[];
+        recentUsers: { id: string; email: string; firstName: string; lastName: string; role: string; createdAt: string; profile?: { businessName: string; phone: string } }[];
+    }>({
+        queryKey: ["/api/admin/dashboard"],
+    });
+
+    const COLORS = ["#16a34a", "#ca8a04", "#2563eb", "#dc2626"];
 
     if (isError) {
         return (
@@ -46,120 +93,66 @@ export default function AdminDashboard() {
         );
     }
 
-    const { data: chartStats, isLoading: isLoadingCharts } = useQuery<{
-        revenueStats: { date: string; revenue: number }[];
-        userStats: { role: string; count: number }[];
-    }>({
-        queryKey: ["/api/admin/stats/charts"],
-    });
-
-    const { data: recentOrders } = useQuery<AdminOrder[]>({
-        queryKey: ["/api/admin/orders"],
-    });
-
-    const { data: recentUsers } = useQuery<UserWithProfile[]>({
-        queryKey: ["/api/admin/users"],
-    });
-
-    const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
-
-    const last5Orders = recentOrders?.slice(0, 5) || [];
-    const last5Users = recentUsers?.sort((a, b) =>
-        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-    ).slice(0, 5) || [];
-
     return (
-        <div className="flex-1 w-full bg-muted/20 p-6 sm:p-10">
-            <div className="flex items-center gap-3 mb-8">
-                <div className="p-3 bg-primary/10 rounded-xl">
-                    <Store className="w-8 h-8 text-primary" />
-                </div>
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-serif font-bold text-foreground">Administration</h1>
-                    <p className="text-muted-foreground">Vue d'ensemble de la plateforme</p>
+                    <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight">Administration</h1>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                        Vue d'ensemble et gestion de la plateforme
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    {/* Actions or filters could go here */}
                 </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Utilisateurs Total
-                        </CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <Skeleton className="h-8 w-20" />
-                        ) : (
-                            <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Commerçants et Fournisseurs
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Produits Actifs
-                        </CardTitle>
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <Skeleton className="h-8 w-20" />
-                        ) : (
-                            <div className="text-2xl font-bold">{stats?.totalProducts || 0}</div>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Sur la marketplace
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Commandes</CardTitle>
-                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <Skeleton className="h-8 w-20" />
-                        ) : (
-                            <div className="text-2xl font-bold">{stats?.totalOrders || 0}</div>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Depuis le lancement
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Volume d'affaires
-                        </CardTitle>
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <Skeleton className="h-8 w-28" />
-                        ) : (
-                            <div className="text-2xl font-bold">{formatPrice(parseFloat(stats?.totalRevenue || "0"))}</div>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Total ventes générées
-                        </p>
-                    </CardContent>
-                </Card>
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <KpiCard
+                    label="Utilisateurs"
+                    icon={<Users className="w-4 h-4" />}
+                    value={stats?.totalUsers}
+                    subtext="Commerçants & Fournisseurs"
+                    loading={isLoading}
+                    color="text-blue-600 dark:text-blue-400"
+                    bg="bg-blue-100 dark:bg-blue-900/40"
+                />
+                <KpiCard
+                    label="Produits Actifs"
+                    icon={<Package className="w-4 h-4" />}
+                    value={stats?.totalProducts}
+                    subtext="Sur la marketplace"
+                    loading={isLoading}
+                    color="text-amber-600 dark:text-amber-400"
+                    bg="bg-amber-100 dark:bg-amber-900/40"
+                />
+                <KpiCard
+                    label="Commandes"
+                    icon={<ShoppingCart className="w-4 h-4" />}
+                    value={stats?.totalOrders}
+                    subtext="Toutes périodes"
+                    loading={isLoading}
+                    color="text-purple-600 dark:text-purple-400"
+                    bg="bg-purple-100 dark:bg-purple-900/40"
+                />
+                <KpiCard
+                    label="Volume d'affaires"
+                    icon={<TrendingUp className="w-4 h-4" />}
+                    value={stats?.totalRevenue ? formatPrice(parseFloat(stats.totalRevenue)) : "0"}
+                    subtext="Revenus générés"
+                    loading={isLoading}
+                    color="text-emerald-600 dark:text-emerald-400"
+                    bg="bg-emerald-100 dark:bg-emerald-900/40"
+                />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mt-8">
-                <Card className="col-span-4">
+            {/* Charts Section */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                <Card className="col-span-4 shadow-sm hover:shadow-md transition-shadow duration-200">
                     <CardHeader>
-                        <CardTitle>Revenus (7 derniers jours)</CardTitle>
-                        <CardDescription>
-                            Évolution du chiffre d'affaires.
-                        </CardDescription>
+                        <CardTitle className="text-base font-semibold">Revenus (7 jours)</CardTitle>
+                        <CardDescription>Évolution du chiffre d'affaires quotidien</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
                         <div className="h-[300px] w-full">
@@ -188,16 +181,14 @@ export default function AdminDashboard() {
                                         />
                                         <Tooltip
                                             contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: 'var(--radius)', color: 'hsl(var(--popover-foreground))' }}
-                                            itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
                                             cursor={{ fill: 'transparent' }}
                                             formatter={(value: number) => [formatPrice(value), "Revenu"]}
-                                            labelFormatter={(label) => new Date(label).toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                                            labelFormatter={(label) => new Date(label).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
                                         />
                                         <Bar
                                             dataKey="revenue"
-                                            fill="currentColor"
+                                            fill="hsl(var(--primary))"
                                             radius={[4, 4, 0, 0]}
-                                            className="fill-primary"
                                         />
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -205,15 +196,13 @@ export default function AdminDashboard() {
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="col-span-3">
+                <Card className="col-span-3 shadow-sm hover:shadow-md transition-shadow duration-200">
                     <CardHeader>
-                        <CardTitle>Répartition Utilisateurs</CardTitle>
-                        <CardDescription>
-                            Par type de compte.
-                        </CardDescription>
+                        <CardTitle className="text-base font-semibold">Répartition Utilisateurs</CardTitle>
+                        <CardDescription>Par type de compte</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px] w-full">
+                        <div className="h-[300px] w-full relative">
                             {isLoadingCharts ? (
                                 <Skeleton className="h-full w-full" />
                             ) : (
@@ -225,115 +214,150 @@ export default function AdminDashboard() {
                                             nameKey="role"
                                             cx="50%"
                                             cy="50%"
+                                            innerRadius={60}
                                             outerRadius={80}
-                                            label={(entry) => entry.role}
+                                            paddingAngle={5}
                                         >
                                             {chartStats?.userStats.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: 'var(--radius)', color: 'hsl(var(--popover-foreground))' }}
-                                            itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                                        />
+                                        <Tooltip />
                                     </PieChart>
                                 </ResponsiveContainer>
                             )}
+                        </div>
+                        <div className="flex justify-center gap-4 mt-4 flex-wrap">
+                            {chartStats?.userStats.map((entry, index) => (
+                                <div key={index} className="flex items-center gap-2 text-sm">
+                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                                    <span className="text-muted-foreground capitalize">{entry.role === 'shop_owner' ? 'Commerçants' : entry.role === 'supplier' ? 'Fournisseurs' : entry.role}</span>
+                                </div>
+                            ))}
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Recent Orders & New Users */}
-            <div className="grid gap-4 md:grid-cols-2 mt-8">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                            <CardTitle className="text-lg">Commandes récentes</CardTitle>
-                            <CardDescription>Les 5 dernières commandes</CardDescription>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Recent Orders List */}
+                <Card className="lg:col-span-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <CardHeader className="flex flex-row items-center justify-between pb-4">
+                        <div className="space-y-1">
+                            <CardTitle className="text-base font-semibold">Dernières Commandes</CardTitle>
                         </div>
-                        <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/orders"><ArrowRight className="w-4 h-4" /></Link>
-                        </Button>
+                        <Link href="/admin/orders">
+                            <Button variant="ghost" size="sm" className="h-8 text-xs">
+                                Voir tout <ChevronRight className="w-3 h-3 ml-1" />
+                            </Button>
+                        </Link>
                     </CardHeader>
                     <CardContent>
-                        {last5Orders.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-4">Aucune commande</p>
+                        {isLoadingActivity ? (
+                            <div className="space-y-3">
+                                {[1, 2, 3].map(i => <Skeleton key={i} className="h-14 w-full" />)}
+                            </div>
                         ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Client</TableHead>
-                                        <TableHead>Montant</TableHead>
-                                        <TableHead>Statut</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {last5Orders.map((order) => (
-                                        <TableRow key={order.id}>
-                                            <TableCell className="text-sm">{order.buyerName}</TableCell>
-                                            <TableCell className="text-sm">{formatPrice(Number(order.totalAmount))}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline" className="text-xs">
-                                                    {statusLabels[order.status || "pending"] || order.status}
-                                                </Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                            <div className="space-y-1">
+                                {activity?.recentOrders.map((order) => {
+                                    const statusLabel = ORDER_STATUS_LABELS[order.status] || { label: order.status, color: "bg-gray-100 text-gray-800" };
+                                    return (
+                                        <Link key={order.id} href="/admin/orders">
+                                            <div className="flex items-center justify-between gap-4 p-3 rounded-md hover-elevate cursor-pointer">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className="w-9 h-9 rounded-md bg-muted/50 flex items-center justify-center shrink-0">
+                                                        {order.status === "delivered" ? (
+                                                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                                        ) : order.status === "shipped" ? (
+                                                            <Truck className="w-4 h-4 text-blue-500" />
+                                                        ) : (
+                                                            <Package className="w-4 h-4 text-muted-foreground" />
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-medium truncate">#{order.id.slice(0, 8)}</p>
+                                                        <p className="text-xs text-muted-foreground truncate">{order.buyerName}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3 shrink-0">
+                                                    <span className="text-sm font-medium hidden sm:block">
+                                                        {formatPrice(parseFloat(order.totalAmount))}
+                                                    </span>
+                                                    <Badge variant="secondary" className={`text-[10px] ${statusLabel.color}`}>
+                                                        {statusLabel.label}
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    );
+                                })}
+                                {activity?.recentOrders.length === 0 && (
+                                    <div className="text-center py-8 text-muted-foreground text-sm">Aucune commande récente</div>
+                                )}
+                            </div>
                         )}
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                            <CardTitle className="text-lg">Nouveaux inscrits</CardTitle>
-                            <CardDescription>Les 5 dernières inscriptions</CardDescription>
-                        </div>
-                        <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/users"><ArrowRight className="w-4 h-4" /></Link>
-                        </Button>
-                    </CardHeader>
-                    <CardContent>
-                        {last5Users.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-4">Aucun utilisateur</p>
-                        ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Nom</TableHead>
-                                        <TableHead>Rôle</TableHead>
-                                        <TableHead>Inscrit le</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {last5Users.map((user) => (
-                                        <TableRow key={user.id} className="cursor-pointer" onClick={() => window.location.href = `/admin/users/${user.id}`}>
-                                            <TableCell className="text-sm font-medium">
-                                                {user.profile?.businessName || `${user.firstName || ""} ${user.lastName || ""}`}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={
-                                                    user.profile?.role === "admin" ? "default" :
-                                                        user.profile?.role === "supplier" ? "secondary" : "outline"
-                                                } className="text-xs">
-                                                    {user.profile?.role === "admin" ? "Admin" :
-                                                        user.profile?.role === "supplier" ? "Fournisseur" : "Commerçant"}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-sm text-muted-foreground">
-                                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString("fr-FR") : "-"}
-                                            </TableCell>
-                                        </TableRow>
+
+                {/* Quick Actions & New Users */}
+                <div className="space-y-6">
+
+
+                    <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <CardHeader className="flex flex-row items-center justify-between pb-3">
+                            <CardTitle className="text-base font-semibold">Nouveaux Inscrits</CardTitle>
+                            <Link href="/admin/users">
+                                <Button variant="ghost" size="icon" className="h-6 w-6">
+                                    <ChevronRight className="w-4 h-4" />
+                                </Button>
+                            </Link>
+                        </CardHeader>
+                        <CardContent>
+                            {isLoadingActivity ? (
+                                <div className="space-y-3">
+                                    {[1, 2, 3].map(i => <Skeleton key={i} className="h-10 w-full" />)}
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {activity?.recentUsers.slice(0, 5).map((user) => (
+                                        <Link href={`/admin/users/${user.id}`} key={user.id}>
+                                            <div className="flex items-center justify-between gap-4 p-3 rounded-md hover-elevate cursor-pointer">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <Avatar className="h-9 w-9 border shrink-0">
+                                                        <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
+                                                            {user.firstName?.[0] || user.email[0]}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-medium truncate">
+                                                            {user.firstName} {user.lastName}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground truncate">
+                                                            {user.profile?.businessName || user.email}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3 shrink-0">
+                                                    <Badge variant="secondary" className="text-[10px] px-1.5 h-4 font-normal">
+                                                        {user.role === 'shop_owner' ? 'Commerçant' : user.role === 'supplier' ? 'Fournisseur' : user.role === 'admin' ? 'Admin' : user.role}
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                        </Link>
                                     ))}
-                                </TableBody>
-                            </Table>
-                        )}
-                    </CardContent>
-                </Card>
+                                    {activity?.recentUsers.length === 0 && (
+                                        <div className="text-center py-4 text-muted-foreground text-sm">Aucun nouvel inscrit</div>
+                                    )}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );
 }
+
+
+
 

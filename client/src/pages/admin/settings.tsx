@@ -1,62 +1,12 @@
 
-import { useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Settings, Save, Loader2 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Settings, Save, Mail, Building } from "lucide-react";
 
 export default function AdminSettings() {
-    const { toast } = useToast();
-    const queryClient = useQueryClient();
-
-    const { data: savedSettings, isLoading } = useQuery<Record<string, string>>({
-        queryKey: ["/api/admin/settings"],
-    });
-
-    const [settings, setSettings] = useState({
-        siteName: "SokoB2B",
-        contactEmail: "contact@sokob2b.com",
-        maintenanceMode: "false",
-        commissionRate: "5"
-    });
-
-    useEffect(() => {
-        if (savedSettings) {
-            setSettings(prev => ({
-                siteName: savedSettings.siteName || prev.siteName,
-                contactEmail: savedSettings.contactEmail || prev.contactEmail,
-                maintenanceMode: savedSettings.maintenanceMode || prev.maintenanceMode,
-                commissionRate: savedSettings.commissionRate || prev.commissionRate,
-            }));
-        }
-    }, [savedSettings]);
-
-    const saveSettingsMutation = useMutation({
-        mutationFn: async () => {
-            await apiRequest("POST", "/api/admin/settings", settings);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
-            toast({
-                title: "Succès",
-                description: "Les paramètres ont été enregistrés.",
-            });
-        },
-        onError: () => {
-            toast({
-                title: "Erreur",
-                description: "Impossible d'enregistrer les paramètres.",
-                variant: "destructive",
-            });
-        },
-    });
-
     return (
         <div className="flex-1 w-full bg-muted/20 p-6 sm:p-10">
             <div className="flex items-center gap-3 mb-8">
@@ -69,82 +19,52 @@ export default function AdminSettings() {
                 </div>
             </div>
 
-            {isLoading ? (
-                <div className="max-w-2xl space-y-8">
-                    <Skeleton className="h-48 w-full rounded-lg" />
-                    <Skeleton className="h-32 w-full rounded-lg" />
-                    <Skeleton className="h-32 w-full rounded-lg" />
-                </div>
-            ) : (
-                <div className="max-w-2xl space-y-8">
-                    <div className="bg-background rounded-lg border p-6">
-                        <h2 className="text-xl font-semibold mb-4">Général</h2>
-                        <div className="space-y-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="site-name">Nom de la plateforme</Label>
-                                <Input
-                                    id="site-name"
-                                    value={settings.siteName}
-                                    onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="contact-email">Email de contact</Label>
-                                <Input
-                                    id="contact-email"
-                                    value={settings.contactEmail}
-                                    onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })}
-                                />
+            <div className="grid gap-6 max-w-2xl">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <Building className="w-5 h-5 text-primary" />
+                            Informations Générales
+                        </CardTitle>
+                        <CardDescription>
+                            Détails visibles par les utilisateurs
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="platform-name">Nom de la plateforme</Label>
+                            <Input id="platform-name" defaultValue="SokoB2B" placeholder="Ex: SokoB2B" />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="contact-email">Email de support</Label>
+                            <div className="relative">
+                                <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input id="contact-email" type="email" defaultValue="support@soko.africa" className="pl-9" />
                             </div>
                         </div>
-                    </div>
 
-                    <div className="bg-background rounded-lg border p-6">
-                        <h2 className="text-xl font-semibold mb-4">Maintenance</h2>
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                                <Label className="text-base">Mode maintenance</Label>
-                                <p className="text-sm text-muted-foreground">
-                                    Rendre le site inaccessible aux utilisateurs (sauf admins)
-                                </p>
-                            </div>
-                            <Switch
-                                checked={settings.maintenanceMode === "true"}
-                                onCheckedChange={(checked) => setSettings({ ...settings, maintenanceMode: String(checked) })}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="bg-background rounded-lg border p-6">
-                        <h2 className="text-xl font-semibold mb-4">Commissions</h2>
-                        <div className="space-y-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="commission-rate">Taux de commission (%)</Label>
-                                <Input
-                                    id="commission-rate"
-                                    type="number"
-                                    value={settings.commissionRate}
-                                    onChange={(e) => setSettings({ ...settings, commissionRate: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end">
-                        <Button
-                            onClick={() => saveSettingsMutation.mutate()}
-                            disabled={saveSettingsMutation.isPending}
-                        >
-                            {saveSettingsMutation.isPending ? (
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : (
+                        <div className="pt-4">
+                            <Button>
                                 <Save className="w-4 h-4 mr-2" />
-                            )}
-                            Enregistrer les modifications
-                        </Button>
-                    </div>
-                </div>
-            )}
+                                Enregistrer les modifications
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg text-primary">Commissions & Frais</CardTitle>
+                        <CardDescription>Configuration des frais de transaction (Bientôt disponible)</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-sm text-muted-foreground italic">
+                            Cette fonctionnalité sera disponible prochainement dans la mise à jour des paramètres plateforme.
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }

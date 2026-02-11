@@ -149,16 +149,14 @@ export default function ShopPage() {
                         </div>
 
                         {/* Barre de recherche interne */}
-                        <div className="mt-3 relative max-w-md">
-                            <div className="relative flex items-center bg-background border border-primary/20 rounded-full shadow-sm overflow-hidden focus-within:border-2 focus-within:border-primary transition-all h-9 sm:h-10">
-                                <Search className="ml-3 w-4 h-4 text-primary shrink-0" />
-                                <Input
-                                    className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-3 h-full text-sm bg-transparent placeholder:text-muted-foreground/70"
-                                    placeholder={`Rechercher chez ${supplier.businessName}...`}
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                />
-                            </div>
+                        <div className="mt-3 relative">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
+                            <Input
+                                className="pl-8 h-9 text-sm bg-muted/50 border-none shadow-inner"
+                                placeholder={`Rechercher chez ${supplier.businessName}...`}
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
                         </div>
                     </div>
                 </div>

@@ -38,6 +38,8 @@ export const categories = pgTable("categories", {
   description: text("description"),
 });
 
+export const productStatusEnum = pgEnum("product_status", ["pending", "active", "rejected"]);
+
 export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   supplierId: varchar("supplier_id").notNull().references(() => users.id),
@@ -51,6 +53,8 @@ export const products = pgTable("products", {
   stock: integer("stock").default(0),
   imageUrl: text("image_url"),
   images: text("images"), // JSON array of image URLs
+  status: productStatusEnum("status").default("pending"),
+  rejectionReason: text("rejection_reason"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -126,6 +130,19 @@ export const userSubscriptions = pgTable("user_subscriptions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const notificationTypeEnum = pgEnum("notification_type", ["system", "order", "product_moderation", "subscription"]);
+
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: notificationTypeEnum("type").notNull().default("system"),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  metadata: text("metadata"), // JSON string
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const walletTransactions = pgTable("wallet_transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
@@ -136,12 +153,6 @@ export const walletTransactions = pgTable("wallet_transactions", {
   boostId: varchar("boost_id"),
   subscriptionId: varchar("subscription_id"),
   createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const platformSettings = pgTable("platform_settings", {
-  key: varchar("key").primaryKey(),
-  value: text("value").notNull(),
-  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
@@ -197,6 +208,7 @@ export const insertProductBoostSchema = createInsertSchema(productBoosts).omit({
 export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({ id: true, createdAt: true });
 export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({ id: true, createdAt: true });
 export const insertWalletTransactionSchema = createInsertSchema(walletTransactions).omit({ id: true, createdAt: true });
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
 
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 export type UserProfile = typeof userProfiles.$inferSelect;
@@ -218,4 +230,5 @@ export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema
 export type UserSubscription = typeof userSubscriptions.$inferSelect;
 export type InsertWalletTransaction = z.infer<typeof insertWalletTransactionSchema>;
 export type WalletTransaction = typeof walletTransactions.$inferSelect;
-export type PlatformSetting = typeof platformSettings.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;

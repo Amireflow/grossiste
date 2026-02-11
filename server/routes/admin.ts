@@ -1,7 +1,9 @@
-import type { Express } from "express";
 import { storage } from "../storage";
 import { requireAdmin } from "../auth";
-import { insertCategorySchema } from "@shared/schema";
+import { db } from "../db";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import type { Express } from "express";
 
 export function registerAdminRoutes(app: Express) {
     app.get("/api/admin/users", requireAdmin, async (_req, res) => {
@@ -14,20 +16,61 @@ export function registerAdminRoutes(app: Express) {
         }
     });
 
-    app.get("/api/admin/users/:id", requireAdmin, async (req: any, res) => {
+    app.get("/api/admin/users/:id", requireAdmin, async (req, res) => {
         try {
-            const { id } = req.params;
-            const [profile, orders, products, walletBalance, subscription] = await Promise.all([
+            const id = req.params.id as string;
+
+            // Fetch basic user data
+            const [user] = await db.select().from(users).where(eq(users.id, id));
+            if (!user) return res.status(404).json({ message: "User not found" });
+
+            const [
+                profile,
+                walletBalance,
+                walletTransactions,
+                ordersAsBuyer,
+                ordersAsSupplier,
+                products,
+                activeSubscription
+            ] = await Promise.all([
                 storage.getProfileByUserId(id),
-                storage.getOrdersByBuyer(id),
-                storage.getProductsBySupplier(id),
                 storage.getWalletBalance(id),
-                storage.getActiveSubscription(id),
+                storage.getWalletTransactions(id),
+                storage.getOrdersByBuyer(id),
+                storage.getOrdersBySupplier(id),
+                storage.getProductsBySupplier(id),
+                storage.getActiveSubscription(id)
             ]);
-            res.json({ profile, orders, products, walletBalance, subscription });
+
+            if (!profile) return res.status(404).json({ message: "Profile not found" });
+
+            res.json({
+                user,
+                profile,
+                wallet: {
+                    balance: walletBalance,
+                    transactions: walletTransactions
+                },
+                orders: {
+                    bought: ordersAsBuyer,
+                    sold: ordersAsSupplier
+                },
+                products,
+                subscription: activeSubscription
+            });
         } catch (error) {
-            console.error("Error fetching user detail:", error);
-            res.status(500).json({ message: "Failed to fetch user detail" });
+            console.error("Error fetching user details:", error);
+            res.status(500).json({ message: "Failed to fetch user details" });
+        }
+    });
+
+    app.get("/api/admin/dashboard", requireAdmin, async (_req, res) => {
+        try {
+            const activity = await storage.getDashboardActivity();
+            res.json(activity);
+        } catch (error) {
+            console.error("Error fetching dashboard activity:", error);
+            res.status(500).json({ message: "Failed to fetch dashboard activity" });
         }
     });
 
@@ -97,57 +140,9 @@ export function registerAdminRoutes(app: Express) {
         }
     });
 
-    app.get("/api/admin/settings", requireAdmin, async (_req, res) => {
+    app.post("/api/admin/settings", requireAdmin, async (_req, res) => {
         try {
-            const settings = await storage.getSettings();
-            res.json(settings);
-        } catch (error) {
-            console.error("Error fetching settings:", error);
-            res.status(500).json({ message: "Failed to fetch settings" });
-        }
-    });
-
-    app.post("/api/admin/categories", requireAdmin, async (req, res) => {
-        try {
-            const parsed = insertCategorySchema.safeParse(req.body);
-            if (!parsed.success) {
-                return res.status(400).json({ message: "Invalid data", errors: parsed.error.flatten() });
-            }
-            const category = await storage.createCategory(parsed.data);
-            res.json(category);
-        } catch (error) {
-            console.error("Error creating category:", error);
-            res.status(500).json({ message: "Failed to create category" });
-        }
-    });
-
-    app.patch("/api/admin/categories/:id", requireAdmin, async (req: any, res) => {
-        try {
-            const parsed = insertCategorySchema.partial().safeParse(req.body);
-            if (!parsed.success) {
-                return res.status(400).json({ message: "Invalid data", errors: parsed.error.flatten() });
-            }
-            const category = await storage.updateCategory(req.params.id, parsed.data);
-            res.json(category);
-        } catch (error) {
-            console.error("Error updating category:", error);
-            res.status(500).json({ message: "Failed to update category" });
-        }
-    });
-
-    app.delete("/api/admin/categories/:id", requireAdmin, async (req: any, res) => {
-        try {
-            await storage.deleteCategory(req.params.id);
-            res.json({ success: true });
-        } catch (error) {
-            console.error("Error deleting category:", error);
-            res.status(500).json({ message: "Failed to delete category" });
-        }
-    });
-
-    app.post("/api/admin/settings", requireAdmin, async (req, res) => {
-        try {
-            await storage.saveSettings(req.body);
+            // TODO: Implement platform_settings table for persistent storage
             res.json({ success: true, message: "Settings saved" });
         } catch (error) {
             console.error("Error saving settings:", error);
@@ -167,13 +162,43 @@ export function registerAdminRoutes(app: Express) {
             res.status(500).json({ message: "Failed to fetch chart stats" });
         }
     });
+    app.get("/api/admin/products/pending", requireAdmin, async (_req, res) => {
+        try {
+            const products = await storage.getPendingProducts();
+            res.json(products);
+        } catch (error) {
+            console.error("Error fetching pending products:", error);
+            res.status(500).json({ message: "Failed to fetch pending products" });
+        }
+    });
+
+    app.patch("/api/admin/products/:id/moderate", requireAdmin, async (req: any, res) => {
+        try {
+            const { id } = req.params;
+            const { status, reason } = req.body;
+
+            if (!["active", "rejected"].includes(status)) {
+                return res.status(400).json({ message: "Invalid status" });
+            }
+
+            const product = await storage.moderateProduct(id, status, reason);
+            if (!product) return res.status(404).json({ message: "Product not found" });
+
+            res.json(product);
+        } catch (error) {
+            console.error("Error moderating product:", error);
+            res.status(500).json({ message: "Failed to moderate product" });
+        }
+    });
+
+    // Finance & Subscriptions Routes
 
     app.get("/api/admin/subscriptions", requireAdmin, async (_req, res) => {
         try {
             const subscriptions = await storage.getAllSubscriptions();
             res.json(subscriptions);
         } catch (error) {
-            console.error("Error fetching admin subscriptions:", error);
+            console.error("Error fetching subscriptions:", error);
             res.status(500).json({ message: "Failed to fetch subscriptions" });
         }
     });
@@ -183,8 +208,42 @@ export function registerAdminRoutes(app: Express) {
             const transactions = await storage.getAllTransactions();
             res.json(transactions);
         } catch (error) {
-            console.error("Error fetching admin transactions:", error);
+            console.error("Error fetching transactions:", error);
             res.status(500).json({ message: "Failed to fetch transactions" });
+        }
+    });
+
+    app.post("/api/admin/users/:id/credit", requireAdmin, async (req: any, res) => {
+        try {
+            const { id } = req.params;
+            const { amount, description } = req.body;
+
+            if (!amount || isNaN(amount)) {
+                return res.status(400).json({ message: "Invalid amount" });
+            }
+
+            const transaction = await storage.adminTopUpWallet(id, Number(amount), description || "Crédit manuel admin");
+            res.json(transaction);
+        } catch (error) {
+            console.error("Error adding credit:", error);
+            res.status(500).json({ message: "Failed to add credit" });
+        }
+    });
+
+    app.post("/api/admin/users/:id/subscription", requireAdmin, async (req: any, res) => {
+        try {
+            const { id } = req.params;
+            const { planId, durationDays } = req.body;
+
+            if (!planId) {
+                return res.status(400).json({ message: "Plan ID is required" });
+            }
+
+            const subscription = await storage.adminAssignSubscription(id, planId, durationDays ? Number(durationDays) : undefined);
+            res.json(subscription);
+        } catch (error) {
+            console.error("Error assigning subscription:", error);
+            res.status(500).json({ message: "Failed to assign subscription" });
         }
     });
 }

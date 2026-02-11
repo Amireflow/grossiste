@@ -27,11 +27,18 @@ import {
   LogOut,
   Plus,
   Globe,
+  Heading,
+  LucideIcon,
+  ShoppingBag,
+  Bell,
+  Search,
+  Menu,
+  ShieldCheck,
+  Banknote,
+  TrendingUp,
   Users,
   Settings,
   Crown,
-  FolderTree,
-  CreditCard,
 } from "lucide-react";
 import type { UserProfile, WalletTransaction } from "@shared/schema";
 import { formatPrice } from "@/lib/constants";
@@ -90,11 +97,13 @@ export function AppSidebar() {
 
   const adminMenuItems = [
     { title: "Vue d'ensemble", url: "/admin", icon: LayoutDashboard },
+    { title: "Modération", url: "/admin/moderation", icon: ShieldCheck },
     { title: "Utilisateurs", url: "/admin/users", icon: Users },
+    { title: "Abonnements", url: "/admin/subscriptions", icon: Crown },
+    { title: "Finance", url: "/admin/finance", icon: Banknote },
     { title: "Commandes", url: "/admin/orders", icon: ShoppingCart },
     { title: "Produits", url: "/admin/products", icon: Package },
-    { title: "Catégories", url: "/admin/categories", icon: FolderTree },
-    { title: "Abonnements", url: "/admin/subscriptions", icon: CreditCard },
+    { title: "Analytics", url: "/admin/analytics", icon: TrendingUp },
     { title: "Paramètres", url: "/admin/settings", icon: Settings },
   ];
 

@@ -1,275 +1,382 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { useParams, Link } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRoute, useLocation } from "wouter";
+import {
+    Card, CardContent, CardHeader, CardTitle, CardDescription
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import {
-    ArrowLeft, User, Mail, MapPin, Phone, Store, Package,
-    ShoppingCart, Wallet, Crown, Calendar,
+    User, Mail, Phone, MapPin, Calendar, Shield,
+    Wallet, ShoppingCart, Package, ArrowUpRight, ArrowDownLeft,
+    Ban, CheckCircle, AlertTriangle, Building, ArrowLeft
 } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
-import type { UserProfile, Product, Order, OrderItem, UserSubscription, SubscriptionPlan } from "@shared/schema";
-
-type UserDetail = {
-    profile: UserProfile | null;
-    orders: (Order & { items: OrderItem[] })[];
-    products: Product[];
-    walletBalance: string;
-    subscription: (UserSubscription & { plan: SubscriptionPlan }) | null;
-};
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
+import { AdminTopUpModal } from "@/components/admin/top-up-modal";
+import { AdminSubscriptionModal } from "@/components/admin/subscription-modal";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 export default function AdminUserDetail() {
-    const { id } = useParams<{ id: string }>();
+    const [match, params] = useRoute("/admin/users/:id");
+    const [_, setLocation] = useLocation();
+    const id = match ? params.id : "";
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
 
-    const { data, isLoading, isError } = useQuery<UserDetail>({
+    const { data, isLoading, isError } = useQuery<any>({
         queryKey: [`/api/admin/users/${id}`],
-        enabled: !!id,
+        enabled: !!id
     });
 
-    if (isLoading) {
-        return (
-            <div className="flex-1 w-full bg-muted/20 p-6 sm:p-10 space-y-6">
-                <Skeleton className="h-8 w-48" />
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Skeleton className="h-48" />
-                    <Skeleton className="h-48" />
-                    <Skeleton className="h-48" />
-                </div>
-            </div>
-        );
-    }
+    const updateUserRoleMutation = useMutation({
+        mutationFn: async ({ role }: { role: string }) => {
+            await apiRequest("PATCH", `/api/admin/users/${id}`, { role });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${id}`] });
+            toast({ title: "Succès", description: "Rôle mis à jour" });
+        },
+        onError: () => toast({ title: "Erreur", variant: "destructive", description: "Échec de la mise à jour" })
+    });
 
-    if (isError || !data) {
-        return (
-            <div className="flex-1 w-full bg-muted/20 p-6 sm:p-10 flex items-center justify-center">
-                <div className="text-center">
-                    <p className="text-lg font-semibold text-destructive">Utilisateur non trouvé</p>
-                    <Button variant="outline" className="mt-4" asChild>
-                        <Link href="/admin/users"><ArrowLeft className="w-4 h-4 mr-2" /> Retour</Link>
-                    </Button>
-                </div>
-            </div>
-        );
-    }
+    if (isLoading) return <div className="p-10 space-y-4">
+        <Skeleton className="h-12 w-48" />
+        <Skeleton className="h-64 w-full" />
+    </div>;
 
-    const { profile, orders, products, walletBalance, subscription } = data;
+    if (isError || !data) return (
+        <div className="flex-1 w-full bg-muted/20 p-10 flex flex-col items-center justify-center">
+            <AlertTriangle className="w-12 h-12 text-destructive mb-4" />
+            <h2 className="text-xl font-bold">Utilisateur non trouvé</h2>
+            <Link href="/admin/users">
+                <Button variant="ghost" className="mt-4">Retour à la liste</Button>
+            </Link>
+        </div>
+    );
 
-    const getRoleBadge = (role?: string) => {
-        switch (role) {
-            case "admin": return <Badge>Admin</Badge>;
-            case "supplier": return <Badge variant="secondary">Fournisseur</Badge>;
-            case "banned": return <Badge variant="destructive">Banni</Badge>;
-            default: return <Badge variant="outline">Commerçant</Badge>;
-        }
-    };
-
-    const totalSpent = orders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+    const { user, profile, wallet, orders, products, subscription } = data;
+    const isBanned = profile?.role === "banned";
 
     return (
-        <div className="flex-1 w-full bg-muted/20 p-6 sm:p-10">
-            <div className="flex items-center gap-3 mb-8">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/admin/users"><ArrowLeft className="w-5 h-5" /></Link>
+        <div className="flex-1 w-full bg-muted/20 p-6 sm:p-10 space-y-8 animate-fade-in">
+            {/* Breadcrumb / Back */}
+            <Link href="/admin/users">
+                <Button variant="ghost" className="pl-0 hover:pl-2 transition-all gap-2 text-muted-foreground mb-4">
+                    <ArrowLeft className="w-4 h-4" /> Retour aux utilisateurs
                 </Button>
-                <div className="p-3 bg-primary/10 rounded-xl">
-                    <User className="w-8 h-8 text-primary" />
-                </div>
-                <div className="flex-1">
-                    <h1 className="text-3xl font-serif font-bold text-foreground">
-                        {profile?.businessName || "Utilisateur"}
-                    </h1>
-                    <div className="flex items-center gap-2 mt-1">
-                        {getRoleBadge(profile?.role || undefined)}
-                        {profile?.city && (
-                            <span className="text-sm text-muted-foreground flex items-center gap-1">
-                                <MapPin className="w-3 h-3" /> {profile.city}
-                            </span>
-                        )}
-                    </div>
-                </div>
-            </div>
+            </Link>
 
-            {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-4 mb-8">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Solde Wallet</CardTitle>
-                        <Wallet className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{formatPrice(Number(walletBalance || 0))}</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Commandes</CardTitle>
-                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{orders.length}</div>
-                        <p className="text-xs text-muted-foreground mt-1">Total dépensé : {formatPrice(totalSpent)}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Produits</CardTitle>
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{products.length}</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            {products.filter(p => p.isActive).length} actifs
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Abonnement</CardTitle>
-                        <Crown className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        {subscription ? (
-                            <>
-                                <div className="text-2xl font-bold">{subscription.plan.name}</div>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    Expire le {new Date(subscription.endDate).toLocaleDateString("fr-FR")}
-                                </p>
-                            </>
+            {/* Header Card */}
+            <Card className="border-none shadow-sm bg-background/60 backdrop-blur-sm overflow-hidden">
+                <div className="h-32 bg-gradient-to-r from-primary/10 via-primary/5 to-background w-full" />
+                <div className="px-8 pb-8 -mt-12 flex flex-col sm:flex-row justify-between items-end gap-6">
+                    <div className="flex items-end gap-6">
+                        <Avatar className="w-24 h-24 border-4 border-background shadow-lg">
+                            <AvatarFallback className="bg-primary text-primary-foreground text-3xl font-bold">
+                                {user.firstName?.[0] || user.email[0]}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="mb-2">
+                            <h1 className="text-3xl font-bold font-serif flex items-center gap-3">
+                                {user.firstName} {user.lastName}
+                                <Badge variant={isBanned ? "destructive" : "secondary"} className="text-sm px-3 py-1">
+                                    {isBanned ? "Banni" : profile.role === 'shop_owner' ? 'Commerçant' : profile.role === 'supplier' ? 'Fournisseur' : profile.role}
+                                </Badge>
+                            </h1>
+                            <div className="flex flex-wrap gap-4 text-muted-foreground text-sm mt-1">
+                                <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> {user.email}</span>
+                                <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Inscrit le {new Date(user.createdAt).toLocaleDateString()}</span>
+                                <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {profile.city || "Ville ?"}, {profile.country || "Pays ?"}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex gap-3 mb-2">
+                        {isBanned ? (
+                            <Button
+                                className="bg-green-600 hover:bg-green-700 shadow-sm"
+                                onClick={() => updateUserRoleMutation.mutate({ role: 'shop_owner' })}
+                            >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Restaurer l'accès
+                            </Button>
                         ) : (
-                            <div className="text-sm text-muted-foreground">Aucun abonnement</div>
+                            <Button
+                                variant="destructive"
+                                className="shadow-sm"
+                                onClick={() => {
+                                    if (confirm("Voulez-vous vraiment bannir cet utilisateur ? Il ne pourra plus se connecter."))
+                                        updateUserRoleMutation.mutate({ role: 'banned' })
+                                }}
+                            >
+                                <Ban className="w-4 h-4 mr-2" />
+                                Bannir l'utilisateur
+                            </Button>
                         )}
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Profile Info */}
-            <Card className="mb-8">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Store className="w-5 h-5" /> Informations du profil
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-sm">
-                                <Mail className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-muted-foreground">Email :</span>
-                                <span>{profile?.userId || "-"}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                                <Phone className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-muted-foreground">Téléphone :</span>
-                                <span>{profile?.phone || "-"}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                                <MapPin className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-muted-foreground">Ville :</span>
-                                <span>{profile?.city || "-"}, {profile?.country || "-"}</span>
-                            </div>
-                        </div>
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-sm">
-                                <Calendar className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-muted-foreground">Inscrit le :</span>
-                                <span>{profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString("fr-FR") : "-"}</span>
-                            </div>
-                            {profile?.description && (
-                                <div className="text-sm">
-                                    <span className="text-muted-foreground">Description : </span>
-                                    <span>{profile.description}</span>
-                                </div>
-                            )}
-                        </div>
                     </div>
-                </CardContent>
+                </div>
             </Card>
 
-            {/* Recent Orders */}
-            {orders.length > 0 && (
-                <Card className="mb-8">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <ShoppingCart className="w-5 h-5" /> Commandes récentes
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Réf</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Montant</TableHead>
-                                    <TableHead>Statut</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {orders.slice(0, 10).map((order) => (
-                                    <TableRow key={order.id}>
-                                        <TableCell className="font-mono text-xs">{order.id.slice(0, 8)}...</TableCell>
-                                        <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleDateString("fr-FR") : "-"}</TableCell>
-                                        <TableCell>{formatPrice(Number(order.totalAmount))}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">{order.status}</Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* Products */}
-            {products.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Package className="w-5 h-5" /> Produits ({products.length})
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[60px]">Image</TableHead>
-                                    <TableHead>Nom</TableHead>
-                                    <TableHead>Prix</TableHead>
-                                    <TableHead>Statut</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {products.slice(0, 10).map((product) => (
-                                    <TableRow key={product.id}>
-                                        <TableCell>
-                                            {product.imageUrl ? (
-                                                <img src={product.imageUrl} alt={product.name} className="h-10 w-10 rounded-md object-cover" />
-                                            ) : (
-                                                <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center">
-                                                    <Package className="h-5 w-5 text-muted-foreground" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Sidebar Info */}
+                <div className="space-y-6">
+                    {/* Wallet Card */}
+                    <Card className="overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        <CardHeader className="bg-gradient-to-br from-primary to-emerald-700 text-white pb-6 pt-6">
+                            <CardTitle className="text-emerald-100 flex justify-between items-center text-base font-medium">
+                                <span>Solde Portefeuille</span>
+                                <Wallet className="w-5 h-5 opacity-80" />
+                            </CardTitle>
+                            <div className="text-4xl font-bold mt-2 tracking-tight">{formatPrice(wallet.balance)}</div>
+                            <div className="mt-4">
+                                <AdminTopUpModal userId={id} />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="p-6">
+                                <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-4 tracking-wider">Dernières transactions</h4>
+                                <div className="space-y-4">
+                                    {wallet.transactions.slice(0, 3).map((tx: any) => (
+                                        <div key={tx.id} className="flex justify-between items-center text-sm group">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-full ${tx.amount > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                                                    {tx.amount > 0 ? <ArrowDownLeft className="w-3 h-3" /> : <ArrowUpRight className="w-3 h-3" />}
                                                 </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="font-medium">{product.name}</TableCell>
-                                        <TableCell>{formatPrice(Number(product.price))}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={product.isActive ? "default" : "destructive"}>
-                                                {product.isActive ? "Actif" : "Inactif"}
-                                            </Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-            )}
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium max-w-[120px] truncate" title={tx.description}>{tx.description || "Transaction"}</span>
+                                                    <span className="text-[10px] text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
+                                            <span className={`font-bold ${tx.amount > 0 ? "text-green-600" : "text-red-600"}`}>
+                                                {tx.amount > 0 ? "+" : ""}{formatPrice(tx.amount)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                    {wallet.transactions.length === 0 && <span className="text-sm text-muted-foreground text-center block py-2">Aucune transaction</span>}
+
+                                    {wallet.transactions.length > 0 && (
+                                        <Button variant="outline" className="w-full text-xs h-8 mt-2">Voir tout l'historique</Button>
+                                    )}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Subscription Card */}
+                    {profile.role === "supplier" && (
+                        <Card className="shadow-sm">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-lg flex justify-between items-center">
+                                    <span>Abonnement</span>
+                                    <Badge variant={subscription ? (subscription.active ? "default" : "secondary") : "outline"}>
+                                        {subscription ? (subscription.active ? "Actif" : "Inactif") : "Aucun"}
+                                    </Badge>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {subscription ? (
+                                    <>
+                                        <div>
+                                            <p className="text-sm font-medium text-muted-foreground">Plan actuel</p>
+                                            <p className="text-xl font-bold text-primary">{subscription.plan.name}</p>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <p className="text-muted-foreground">Début</p>
+                                                <p>{format(new Date(subscription.startDate), "dd MMM yyyy", { locale: fr })}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-muted-foreground">Fin</p>
+                                                <p>{format(new Date(subscription.endDate), "dd MMM yyyy", { locale: fr })}</p>
+                                            </div>
+                                        </div>
+                                        <Separator />
+                                    </>
+                                ) : (
+                                    <div className="text-sm text-muted-foreground py-2 text-center bg-muted/50 rounded-md">
+                                        Aucun abonnement actif
+                                    </div>
+                                )}
+                                <AdminSubscriptionModal userId={id} currentUserRole={profile.role} />
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Business/Contact Info */}
+                    <Card className="shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Coordonnées</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-5">
+                            <div className="flex gap-4">
+                                <Building className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-medium leading-none mb-1">Entreprise</p>
+                                    <p className="text-sm text-muted-foreground">{profile.businessName || "Non renseigné"}</p>
+                                </div>
+                            </div>
+                            <Separator />
+                            <div className="flex gap-4">
+                                <Phone className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-medium leading-none mb-1">Téléphone</p>
+                                    <p className="text-sm text-muted-foreground">{profile.phone || "Non renseigné"}</p>
+                                </div>
+                            </div>
+                            <Separator />
+                            <div className="flex gap-4">
+                                <MapPin className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-medium leading-none mb-1">Adresse</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {profile.address}<br />
+                                        {profile.city}, {profile.country}
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Main Content Tabs */}
+                <div className="lg:col-span-2 space-y-6">
+                    <Tabs defaultValue="orders" className="w-full">
+                        <TabsList className="w-full justify-start h-auto p-1 bg-background/50 backdrop-blur-sm border rounded-xl overflow-x-auto">
+                            <TabsTrigger value="orders" className="rounded-lg py-2 px-4">Commandes ({orders.bought.length})</TabsTrigger>
+                            <TabsTrigger value="sales" className="rounded-lg py-2 px-4">Ventes ({orders.sold.length})</TabsTrigger>
+                            <TabsTrigger value="products" className="rounded-lg py-2 px-4">Produits ({products.length})</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="orders" className="mt-6">
+                            <Card className="shadow-sm">
+                                <CardHeader>
+                                    <CardTitle>Historique d'achats</CardTitle>
+                                    <CardDescription>Commandes passées par cet utilisateur</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <OrdersTable orders={orders.bought} type="buy" />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="sales" className="mt-6">
+                            <Card className="shadow-sm">
+                                <CardHeader>
+                                    <CardTitle>Historique de ventes</CardTitle>
+                                    <CardDescription>Commandes reçues par ce fournisseur</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <OrdersTable orders={orders.sold} type="sell" />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="products" className="mt-6">
+                            <Card className="shadow-sm">
+                                <CardHeader>
+                                    <CardTitle>Catalogue Produits</CardTitle>
+                                    <CardDescription>Produits listés sur la marketplace</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="rounded-md border">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead className="w-[80px]">Image</TableHead>
+                                                    <TableHead>Produit</TableHead>
+                                                    <TableHead>Prix</TableHead>
+                                                    <TableHead className="text-right">Statut</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {products.map((product: any) => (
+                                                    <TableRow key={product.id}>
+                                                        <TableCell>
+                                                            {product.imageUrl ? (
+                                                                <img src={product.imageUrl} className="w-10 h-10 rounded-md object-cover bg-muted" />
+                                                            ) : (
+                                                                <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
+                                                                    <Package className="w-5 h-5 text-muted-foreground" />
+                                                                </div>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="font-medium">{product.name}</TableCell>
+                                                        <TableCell>{formatPrice(product.price)}</TableCell>
+                                                        <TableCell className="text-right">
+                                                            <Badge variant={product.isActive ? "secondary" : "destructive"}>
+                                                                {product.isActive ? "Actif" : "Inactif"}
+                                                            </Badge>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                                {products.length === 0 && (
+                                                    <TableRow>
+                                                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Aucun produit listé</TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                </div>
+            </div>
         </div>
     );
 }
+
+function OrdersTable({ orders, type }: { orders: any[], type: "buy" | "sell" }) {
+    if (orders.length === 0) {
+        return <div className="text-center py-12 border-2 border-dashed rounded-lg text-muted-foreground">Aucune commande trouvée</div>;
+    }
+
+    return (
+        <div className="rounded-md border">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Référence</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Montant</TableHead>
+                        <TableHead className="text-right">Statut</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {orders.map((order) => (
+                        <TableRow key={order.id}>
+                            <TableCell className="font-mono text-xs">
+                                {order.id.slice(0, 8)}...
+                            </TableCell>
+                            <TableCell>
+                                {new Date(order.createdAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                                {formatPrice(order.totalAmount)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                                <Badge variant="outline" className={`capitalize ${order.status === 'completed' ? 'border-green-500 text-green-600 bg-green-50' :
+                                    order.status === 'cancelled' ? 'border-red-500 text-red-600 bg-red-50' :
+                                        'border-amber-500 text-amber-600 bg-amber-50'
+                                    }`}>
+                                    {order.status}
+                                </Badge>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
+    );
+}
+
+

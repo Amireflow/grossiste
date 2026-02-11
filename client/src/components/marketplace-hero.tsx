@@ -109,25 +109,25 @@ export function MarketplaceHero({ onSearch }: { onSearch?: (query: string) => vo
                                 <p className="text-muted-foreground text-lg sm:text-xl mb-8 leading-relaxed max-w-lg">
                                     {SLIDES[selectedIndex].description}
                                 </p>
-
-                                <div className="relative max-w-md w-full mb-8">
-                                    <form onSubmit={handleSearch} className="relative group">
-                                        <div className="relative flex items-center bg-background border border-primary/20 rounded-full shadow-none overflow-hidden focus-within:border-2 focus-within:border-primary transition-all">
-                                            <Search className="ml-4 w-5 h-5 text-primary" />
-                                            <Input
-                                                type="text"
-                                                placeholder="Rechercher un produit, un fournisseur..."
-                                                className="border-none shadow-none focus-visible:ring-0 h-12 text-base px-3"
-                                                value={search}
-                                                onChange={(e) => setSearch(e.target.value)}
-                                            />
-                                            <Button type="submit" size="sm" className="mr-1.5 rounded-full h-9 px-4">
-                                                Rechercher
-                                            </Button>
-                                        </div>
-                                    </form>
-                                </div>
                             </div>
+
+                            {/* Search Bar - Shop Style aligned */}
+                            <form onSubmit={handleSearch} className="relative max-w-xl mt-8">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                                    <Input
+                                        placeholder="Rechercher des produits, fournisseurs..."
+                                        className="pl-10 pr-32 h-12 text-base bg-muted/50 border-none rounded-full"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                    />
+                                    <div className="absolute right-1 top-1 bottom-1">
+                                        <Button type="submit" size="sm" className="h-full rounded-full px-6">
+                                            Rechercher
+                                        </Button>
+                                    </div>
+                                </div>
+                            </form>
 
                             {/* Trust Indicators */}
                             <div className="flex items-center gap-6 mt-10">

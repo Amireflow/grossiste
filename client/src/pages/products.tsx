@@ -192,6 +192,20 @@ export default function ProductsPage() {
                             </Badge>
                           </div>
                         )}
+                        {product.status === "pending" && (
+                          <div className="absolute top-2 right-2">
+                            <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                              Vérification en cours
+                            </Badge>
+                          </div>
+                        )}
+                        {product.status === "rejected" && (
+                          <div className="absolute top-2 right-2">
+                            <Badge variant="destructive" className="text-[10px]">
+                              Rejeté
+                            </Badge>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <h3 className="font-medium text-sm line-clamp-1">{product.name}</h3>
@@ -217,6 +231,12 @@ export default function ProductsPage() {
                           </Badge>
                         )}
                       </div>
+
+                      {product.status === "rejected" && product.rejectionReason && (
+                        <div className="mb-3 p-2 bg-red-50 border border-red-100 rounded text-xs text-red-800">
+                          <span className="font-semibold">Motif du rejet :</span> {product.rejectionReason}
+                        </div>
+                      )}
 
                       {activeBoost ? (
                         <div className="space-y-2">

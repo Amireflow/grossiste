@@ -145,6 +145,8 @@ export function registerProductRoutes(app: Express) {
                 ...parsed.data,
                 supplierId: userId,
                 currency: profile.currency || "XOF",
+                status: "pending",
+                isActive: true, // Auto-active, verification is post-hoc
             });
             res.status(201).json(product);
         } catch (error) {
