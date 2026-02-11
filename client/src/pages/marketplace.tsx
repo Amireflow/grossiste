@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, type RefObject } from "react";
+import { useState, useMemo, useRef, useCallback, type RefObject } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
   Search, Package, Store, ChevronRight, X, MapPin, ShoppingCart,
   Users,
   ArrowUpDown, Plus, Minus, CheckCircle, Zap, Star,
-  ChevronLeft, Eye, Grid3X3, Shield, Truck, TrendingUp, Sparkles,
+  ChevronLeft, Eye, Grid3X3, List, Shield, Truck, TrendingUp, Sparkles,
 } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { MarketplaceNavbar } from "@/components/marketplace-navbar";
@@ -67,6 +67,7 @@ interface Supplier {
 }
 
 type SortOption = "newest" | "price_asc" | "price_desc" | "name_asc";
+type ViewMode = "grid" | "list";
 
 const SORT_LABELS: Record<SortOption, string> = {
   newest: "Plus recents",
@@ -84,10 +85,21 @@ export default function MarketplacePage() {
   const supplierFilter = selectedSupplier !== "all" ? selectedSupplier : undefined;
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const { user } = useAuth();
   const { toast } = useToast();
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const supplierScrollRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  const handleSearch = useCallback((q: string) => {
+    setSearch(q);
+    if (q.length > 0 && resultsRef.current) {
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  }, []);
 
   const { data: categories } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
   const { data: suppliers } = useQuery<Supplier[]>({ queryKey: ["/api/suppliers"] });
@@ -205,13 +217,13 @@ export default function MarketplacePage() {
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <MarketplaceNavbar />
-      <div className="pt-20">
-        <MarketplaceHero onSearch={(q) => setSearch(q)} />
+      <MarketplaceNavbar onSearch={handleSearch} searchValue={search} />
+      <div className="pt-14 sm:pt-16">
+        <MarketplaceHero onSearch={handleSearch} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-          {suppliers && suppliers.length > 0 && (
+          {suppliers && suppliers.length > 0 && !search && (
             <div className="mb-8">
               <div className="flex items-center justify-between gap-2 mb-4">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fournisseurs recommandés</p>
@@ -267,22 +279,49 @@ export default function MarketplacePage() {
           {categories && categories.length > 0 && !search && (
             <div className="mb-8">
               <div className="flex items-center justify-between gap-2 mb-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Categories</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Catégories</p>
                 <div className="flex items-center gap-1">
                   {selectedCategory !== "all" && (
                     <Button variant="ghost" size="sm" onClick={() => setSelectedCategory("all")} data-testid="button-category-all">
                       <X className="w-3.5 h-3.5 mr-1" /> Effacer
                     </Button>
                   )}
-                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(categoryScrollRef, "left")} data-testid="button-scroll-categories-left">
+                  <Button size="icon" variant="ghost" className="no-default-hover-elevate hidden sm:inline-flex" onClick={() => scrollContainer(categoryScrollRef, "left")} data-testid="button-scroll-categories-left">
                     <ChevronLeft className="w-3.5 h-3.5" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="no-default-hover-elevate" onClick={() => scrollContainer(categoryScrollRef, "right")} data-testid="button-scroll-categories-right">
+                  <Button size="icon" variant="ghost" className="no-default-hover-elevate hidden sm:inline-flex" onClick={() => scrollContainer(categoryScrollRef, "right")} data-testid="button-scroll-categories-right">
                     <ChevronRight className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </div>
-              <div className="relative">
+
+              {/* Mobile: horizontal pill chips */}
+              <div className="sm:hidden flex gap-2 overflow-x-auto pb-2 scrollbar-thin scroll-smooth -mx-1 px-1">
+                {categories.map((cat) => {
+                  const isSelected = selectedCategory === cat.id;
+                  const count = globalCategoryCounts[cat.id];
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(isSelected ? "all" : cat.id)}
+                      className={`shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer ${isSelected
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-muted/70 text-foreground hover:bg-muted border border-transparent hover:border-border/50"
+                        }`}
+                      data-testid={`button-category-chip-${cat.slug}`}
+                    >
+                      {cat.nameFr}
+                      {count !== undefined && (
+                        <span className={`text-[10px] font-medium ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"
+                          }`}>{count}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Desktop: image cards */}
+              <div className="relative hidden sm:block">
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scroll-smooth" ref={categoryScrollRef}>
                   {categories.map((cat) => {
                     const catImage = CATEGORY_IMAGES[cat.slug];
@@ -291,7 +330,7 @@ export default function MarketplacePage() {
                       <button
                         key={cat.id}
                         onClick={() => setSelectedCategory(isSelected ? "all" : cat.id)}
-                        className={`relative shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] md:w-[calc(25%-9px)] rounded-xl overflow-hidden cursor-pointer transition-all group ${isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
+                        className={`relative shrink-0 w-[calc(33.333%-8px)] md:w-[calc(25%-9px)] rounded-xl overflow-hidden cursor-pointer transition-all group ${isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
                         data-testid={`button-category-${cat.slug}`}
                       >
                         <div className="aspect-[4/3] w-full">
@@ -353,12 +392,26 @@ export default function MarketplacePage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-            <p className="text-sm text-muted-foreground" data-testid="text-marketplace-count">
-              {sortedProducts.length > 0
-                ? `${sortedProducts.length} produit${sortedProducts.length !== 1 ? "s" : ""} disponible${sortedProducts.length !== 1 ? "s" : ""}`
-                : isLoading ? "Chargement..." : "Aucun produit"}
-            </p>
+          <div ref={resultsRef} className="flex items-center justify-between gap-3 mb-4 flex-wrap scroll-mt-20">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground" data-testid="text-marketplace-count">
+              {isLoading ? (
+                <span>Chargement...</span>
+              ) : sortedProducts.length > 0 ? (
+                <>
+                  <span className="font-medium text-foreground">{sortedProducts.length}</span>
+                  <span>produit{sortedProducts.length !== 1 ? "s" : ""}</span>
+                  {supplierCount > 0 && (
+                    <>
+                      <span className="text-muted-foreground/40">•</span>
+                      <span className="font-medium text-foreground">{supplierCount}</span>
+                      <span>fournisseur{supplierCount !== 1 ? "s" : ""}</span>
+                    </>
+                  )}
+                </>
+              ) : (
+                <span>Aucun produit</span>
+              )}
+            </div>
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
               <SelectTrigger className="w-[170px]" data-testid="select-marketplace-sort">
                 <ArrowUpDown className="w-3.5 h-3.5 mr-2 text-muted-foreground shrink-0" />
@@ -370,20 +423,52 @@ export default function MarketplacePage() {
                 ))}
               </SelectContent>
             </Select>
+            <div className="flex items-center bg-muted/50 rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-1.5 rounded-md transition-all ${viewMode === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                data-testid="button-view-grid"
+              >
+                <Grid3X3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-1.5 rounded-md transition-all ${viewMode === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                data-testid="button-view-list"
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className={viewMode === "grid"
+              ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4"
+              : "flex flex-col gap-3"
+            }>
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <Card key={i}>
+                <Card key={i} className="overflow-hidden" style={{ animationDelay: `${i * 80}ms` }}>
                   <CardContent className="p-0">
-                    <Skeleton className="w-full aspect-[4/3] rounded-t-md" />
-                    <div className="p-3 sm:p-4 space-y-2">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3 w-1/2" />
-                      <Skeleton className="h-3 w-2/3" />
-                      <Skeleton className="h-9 w-full mt-2" />
-                    </div>
+                    {viewMode === "grid" ? (
+                      <>
+                        <Skeleton className="w-full aspect-[4/3]" />
+                        <div className="p-2.5 sm:p-4 space-y-2">
+                          <Skeleton className="h-3.5 sm:h-4 w-4/5" />
+                          <Skeleton className="h-3 w-3/5" />
+                          <Skeleton className="h-3 w-2/5 hidden sm:block" />
+                          <Skeleton className="h-8 sm:h-9 w-full mt-2" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex gap-4 p-3">
+                        <Skeleton className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg shrink-0" />
+                        <div className="flex-1 space-y-2 py-1">
+                          <Skeleton className="h-4 w-3/4" />
+                          <Skeleton className="h-3 w-1/2" />
+                          <Skeleton className="h-5 w-1/3 mt-2" />
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -396,17 +481,22 @@ export default function MarketplacePage() {
                     <Sparkles className="w-4 h-4 text-amber-500" />
                     <p className="text-sm font-semibold">Produits mis en avant</p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
-                    {sponsoredProducts.map((product) => (
-                      <MarketplaceProductCard
-                        key={product.id}
-                        product={product}
-                        isShopOwner={isShopOwner}
-                        isLoggedIn={!!user}
-                        onAddToCart={(qty) => addToCart.mutate({ productId: product.id, quantity: qty })}
-                        isAdding={addToCart.isPending}
-                        categories={categories}
-                      />
+                  <div className={viewMode === "grid"
+                    ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4"
+                    : "flex flex-col gap-3"
+                  }>
+                    {sponsoredProducts.map((product, idx) => (
+                      <div key={product.id} className="animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: `${idx * 60}ms`, animationFillMode: 'both' }}>
+                        <MarketplaceProductCard
+                          product={product}
+                          isShopOwner={isShopOwner}
+                          isLoggedIn={!!user}
+                          onAddToCart={(qty) => addToCart.mutate({ productId: product.id, quantity: qty })}
+                          isAdding={addToCart.isPending}
+                          categories={categories}
+                          viewMode={viewMode}
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -419,17 +509,22 @@ export default function MarketplacePage() {
                     <p className="text-sm font-semibold">Tous les produits</p>
                   </div>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-in">
-                  {(sponsoredProducts.length > 0 && selectedCategory === "all" && !search && !supplierFilter ? regularProducts : sortedProducts).map((product) => (
-                    <MarketplaceProductCard
-                      key={product.id}
-                      product={product}
-                      isShopOwner={isShopOwner}
-                      isLoggedIn={!!user}
-                      onAddToCart={(qty) => addToCart.mutate({ productId: product.id, quantity: qty })}
-                      isAdding={addToCart.isPending}
-                      categories={categories}
-                    />
+                <div className={viewMode === "grid"
+                  ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4"
+                  : "flex flex-col gap-3"
+                }>
+                  {(sponsoredProducts.length > 0 && selectedCategory === "all" && !search && !supplierFilter ? regularProducts : sortedProducts).map((product, idx) => (
+                    <div key={product.id} className="animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: `${idx * 50}ms`, animationFillMode: 'both' }}>
+                      <MarketplaceProductCard
+                        product={product}
+                        isShopOwner={isShopOwner}
+                        isLoggedIn={!!user}
+                        onAddToCart={(qty) => addToCart.mutate({ productId: product.id, quantity: qty })}
+                        isAdding={addToCart.isPending}
+                        categories={categories}
+                        viewMode={viewMode}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -512,18 +607,63 @@ export default function MarketplacePage() {
         </div>
       </div >
 
-      <footer className="">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-                <Store className="w-3.5 h-3.5 text-primary-foreground" />
+      <footer className="bg-muted/30 border-t">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-8">
+            {/* Brand */}
+            <div className="col-span-2 sm:col-span-1">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
+                  <Store className="w-4 h-4 text-primary-foreground" />
+                </div>
+                <span className="font-serif text-lg font-bold tracking-tight">SokoB2B</span>
               </div>
-              <span className="font-serif text-lg font-bold tracking-tight">SokoB2B</span>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                La marketplace B2B de référence en Afrique de l'Ouest. Connectez-vous aux meilleurs fournisseurs.
+              </p>
             </div>
+
+            {/* Navigation */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Navigation</p>
+              <ul className="space-y-2">
+                <li><Link href="/marketplace" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Marketplace</Link></li>
+                <li><Link href="/register" className="text-sm text-muted-foreground hover:text-foreground transition-colors">S'inscrire</Link></li>
+                <li><Link href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Connexion</Link></li>
+              </ul>
+            </div>
+
+            {/* Pour les pros */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Pour les pros</p>
+              <ul className="space-y-2">
+                <li><Link href="/register" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Devenir fournisseur</Link></li>
+                <li><Link href="/register" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Ouvrir une boutique</Link></li>
+              </ul>
+            </div>
+
+            {/* Confiance */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Confiance</p>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-1.5 text-sm text-muted-foreground"><Shield className="w-3.5 h-3.5 text-primary" /> Fournisseurs vérifiés</li>
+                <li className="flex items-center gap-1.5 text-sm text-muted-foreground"><Truck className="w-3.5 h-3.5 text-primary" /> Livraison rapide</li>
+                <li className="flex items-center gap-1.5 text-sm text-muted-foreground"><TrendingUp className="w-3.5 h-3.5 text-primary" /> Meilleurs prix</li>
+              </ul>
+            </div>
+          </div>
+
+          <Separator className="mb-6" />
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground" data-testid="text-marketplace-footer">
-              &copy; 2026 SokoB2B. Marketplace B2B pour l'Afrique de l'Ouest.
+              &copy; 2026 SokoB2B. Tous droits réservés.
             </p>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="hover:text-foreground cursor-pointer transition-colors">Conditions</span>
+              <span className="hover:text-foreground cursor-pointer transition-colors">Confidentialité</span>
+              <span className="hover:text-foreground cursor-pointer transition-colors">Contact</span>
+            </div>
           </div>
         </div>
       </footer>
@@ -538,6 +678,7 @@ export function MarketplaceProductCard({
   onAddToCart,
   isAdding,
   categories,
+  viewMode = "grid",
 }: {
   product: MarketplaceProduct;
   isShopOwner: boolean;
@@ -545,6 +686,7 @@ export function MarketplaceProductCard({
   onAddToCart: (qty: number) => void;
   isAdding: boolean;
   categories?: Category[];
+  viewMode?: ViewMode;
 }) {
   const [qty, setQty] = useState(product.minOrder || 1);
   const [justAdded, setJustAdded] = useState(false);
@@ -557,6 +699,140 @@ export function MarketplaceProductCard({
     setTimeout(() => setJustAdded(false), 1500);
   };
 
+  // ─── LIST VIEW ───
+  if (viewMode === "list") {
+    return (
+      <Card
+        className={`overflow-hidden group transition-all duration-300 hover:shadow-md ${product.isSponsored
+          ? product.boostLevel === "premium"
+            ? "ring-2 ring-amber-400 shadow-amber-100/50 dark:shadow-amber-900/20 shadow-md"
+            : "ring-1 ring-blue-400/70 shadow-blue-100/50 dark:shadow-blue-900/20 shadow-sm"
+          : "hover:border-primary/50"
+          }`}
+        data-testid={`card-marketplace-product-${product.id}`}
+      >
+        <CardContent className="p-0">
+          <div className="flex">
+            {/* Image */}
+            <Link href={`/product/${product.id}`} className="shrink-0">
+              <div className="relative w-28 sm:w-36 self-stretch overflow-hidden rounded-l-xl bg-muted cursor-pointer h-full min-h-[7rem]">
+                {product.imageUrl ? (
+                  <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-muted">
+                    <Package className="w-8 h-8 text-muted-foreground/30" />
+                  </div>
+                )}
+                {isOutOfStock && (
+                  <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                    <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 text-[10px] font-medium">Rupture</Badge>
+                  </div>
+                )}
+                {product.isSponsored && (
+                  <div className="absolute top-1.5 left-1.5">
+                    <Badge
+                      className={`text-[10px] text-white border-0 gap-1 shadow-sm px-1.5 py-0.5 ${product.boostLevel === "premium"
+                        ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                        : "bg-blue-500"
+                        }`}
+                    >
+                      {product.boostLevel === "premium" ? <Star className="w-3 h-3 fill-current" /> : <Zap className="w-3 h-3 fill-current" />}
+                      {product.boostLevel === "premium" ? "Premium" : "Sponsorisé"}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            </Link>
+
+            {/* Content */}
+            <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-w-0">
+              <div>
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <Link href={`/product/${product.id}`}>
+                    <h3 className="font-semibold text-sm sm:text-base line-clamp-1 cursor-pointer hover:text-primary transition-colors" title={product.name}>
+                      {product.name}
+                    </h3>
+                  </Link>
+                  {categoryName && (
+                    <Badge variant="secondary" className="text-[10px] shrink-0 hidden sm:inline-flex">{categoryName}</Badge>
+                  )}
+                </div>
+
+                {product.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-1 mb-1.5">{product.description}</p>
+                )}
+
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  {product.supplierImage ? (
+                    <img src={product.supplierImage} alt={product.supplierName} className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <Store className="w-3 h-3 shrink-0" />
+                  )}
+                  <span className="text-xs truncate font-medium">{product.supplierName}</span>
+                  {product.supplierCity && (
+                    <>
+                      <span className="text-[10px] text-muted-foreground/60">●</span>
+                      <span className="text-xs truncate">{product.supplierCity}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 mt-1.5">
+                <div className="flex items-baseline gap-1 shrink-0">
+                  <span className="font-bold text-primary text-base sm:text-lg tabular-nums">
+                    {formatPrice(product.price, product.currency || "XOF")}
+                  </span>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">/ {product.unit}</span>
+                </div>
+
+                {isShopOwner ? (
+                  isOutOfStock ? (
+                    <Button variant="secondary" size="sm" className="h-8 text-xs" disabled>Indisponible</Button>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex items-center bg-muted/40 rounded-lg shrink-0 border border-input">
+                        <Button size="icon" variant="ghost" className="no-default-hover-elevate h-7 w-7 hover:bg-background"
+                          onClick={(e) => { e.preventDefault(); setQty(Math.max(product.minOrder || 1, qty - 1)); }}>
+                          <Minus className="w-3.5 h-3.5" />
+                        </Button>
+                        <span className="text-xs w-6 text-center tabular-nums font-medium">{qty}</span>
+                        <Button size="icon" variant="ghost" className="no-default-hover-elevate h-7 w-7 hover:bg-background"
+                          onClick={(e) => { e.preventDefault(); setQty(qty + 1); }}>
+                          <Plus className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                      <Button className="text-xs h-8 px-3 font-medium shadow-sm transition-all active:scale-95"
+                        onClick={(e) => { e.preventDefault(); handleAdd(); }}
+                        disabled={isAdding}>
+                        {justAdded ? (
+                          <><CheckCircle className="w-3.5 h-3.5 mr-1" />Ajouté</>
+                        ) : (
+                          <><ShoppingCart className="w-3.5 h-3.5 mr-1" />Ajouter</>
+                        )}
+                      </Button>
+                    </div>
+                  )
+                ) : isLoggedIn ? (
+                  <Link href={`/product/${product.id}`}>
+                    <Button variant="outline" size="sm" className="text-xs h-8 font-medium">
+                      <Eye className="w-3.5 h-3.5 mr-1.5" />Voir
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/login">
+                    <Button variant="outline" size="sm" className="text-xs h-8">Connexion</Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // ─── GRID VIEW (default) ───
   return (
     <Card
       className={`overflow-visible group transition-all duration-300 hover:shadow-lg ${product.isSponsored
@@ -611,18 +887,18 @@ export function MarketplaceProductCard({
           </div>
         </Link>
 
-        <div className="p-4">
+        <div className="p-2.5 sm:p-4">
           <Link href={`/product/${product.id}`}>
-            <h3 className="font-semibold text-base mb-1 line-clamp-2 leading-snug min-h-[3rem] cursor-pointer hover:text-primary transition-colors" title={product.name} data-testid={`text-marketplace-product-name-${product.id}`}>
+            <h3 className="font-semibold text-xs sm:text-base mb-0.5 sm:mb-1 line-clamp-2 leading-snug min-h-[2rem] sm:min-h-[3rem] cursor-pointer hover:text-primary transition-colors" title={product.name} data-testid={`text-marketplace-product-name-${product.id}`}>
               {product.name}
             </h3>
           </Link>
 
           {product.description && (
-            <p className="text-xs text-muted-foreground line-clamp-1 mb-2.5">{product.description}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1 mb-1.5 sm:mb-2.5 hidden sm:block">{product.description}</p>
           )}
 
-          <div className="flex items-center gap-2 mb-3 text-muted-foreground">
+          <div className="hidden sm:flex items-center gap-2 mb-3 text-muted-foreground">
             {product.supplierImage ? (
               <img src={product.supplierImage} alt={product.supplierName} className="w-4 h-4 rounded-full object-cover shrink-0" />
             ) : (
@@ -639,15 +915,15 @@ export function MarketplaceProductCard({
             )}
           </div>
 
-          <div className="flex items-baseline gap-1.5 mb-4 flex-wrap">
-            <span className="font-bold text-primary text-xl tabular-nums" data-testid={`text-marketplace-price-${product.id}`}>
+          <div className="flex items-baseline gap-1 sm:gap-1.5 mb-2 sm:mb-4 flex-wrap">
+            <span className="font-bold text-primary text-sm sm:text-xl tabular-nums" data-testid={`text-marketplace-price-${product.id}`}>
               {formatPrice(product.price, product.currency || "XOF")}
             </span>
-            <span className="text-xs text-muted-foreground font-medium">/ {product.unit}</span>
+            <span className="text-[9px] sm:text-xs text-muted-foreground font-medium">/ {product.unit}</span>
           </div>
 
           {product.minOrder && product.minOrder > 1 && (
-            <p className="text-[10px] text-muted-foreground mb-2 flex items-center gap-1">
+            <p className="text-[10px] text-muted-foreground mb-2 items-center gap-1 hidden sm:flex">
               <Package className="w-3 h-3" />
               Minimum {product.minOrder} {product.unit}
             </p>
@@ -655,7 +931,7 @@ export function MarketplaceProductCard({
 
           {isShopOwner ? (
             isOutOfStock ? (
-              <Button variant="secondary" size="sm" className="w-full h-9" disabled data-testid={`button-unavailable-${product.id}`}>
+              <Button variant="secondary" size="sm" className="w-full h-8 sm:h-9 text-xs sm:text-sm" disabled data-testid={`button-unavailable-${product.id}`}>
                 Indisponible
               </Button>
             ) : (
@@ -688,7 +964,7 @@ export function MarketplaceProductCard({
                   </Button>
                 </div>
                 <Button
-                  className="flex-1 text-sm h-9 font-medium shadow-sm transition-all active:scale-95"
+                  className="flex-1 text-xs sm:text-sm h-8 sm:h-9 font-medium shadow-sm transition-all active:scale-95"
                   onClick={(e) => {
                     e.preventDefault();
                     handleAdd();
@@ -712,14 +988,14 @@ export function MarketplaceProductCard({
             )
           ) : isLoggedIn ? (
             <Link href={`/product/${product.id}`}>
-              <Button variant="outline" size="sm" className="w-full text-sm h-9 font-medium" data-testid={`button-supplier-view-${product.id}`}>
+              <Button variant="outline" size="sm" className="w-full text-xs sm:text-sm h-8 sm:h-9 font-medium" data-testid={`button-supplier-view-${product.id}`}>
                 <Eye className="w-4 h-4 mr-2" />
                 Voir le produit
               </Button>
             </Link>
           ) : (
             <Link href="/login">
-              <Button variant="outline" size="sm" className="w-full text-sm h-9" data-testid={`button-login-to-order-${product.id}`}>
+              <Button variant="outline" size="sm" className="w-full text-xs sm:text-sm h-8 sm:h-9" data-testid={`button-login-to-order-${product.id}`}>
                 Connexion pour commander
               </Button>
             </Link>

@@ -60,18 +60,7 @@ export default function WalletPage() {
   const topUpAmount = selectedPreset || (customAmount ? parseInt(customAmount) : 0);
 
   return (
-    <div className="p-3 sm:p-6 max-w-4xl mx-auto space-y-4 sm:space-y-6">
-      <div className="flex items-center gap-2 mb-1">
-        <Link href="/products">
-          <Button variant="ghost" size="icon" className="h-8 w-8" data-testid="button-back-from-wallet">
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="font-serif text-xl sm:text-3xl font-bold tracking-tight" data-testid="text-wallet-title">Mon Portefeuille</h1>
-          <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">Gérez votre solde et rechargez pour booster vos produits</p>
-        </div>
-      </div>
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
 
       {isLoading ? (
         <div className="space-y-4">

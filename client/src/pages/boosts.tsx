@@ -58,22 +58,7 @@ export default function BoostsPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-start sm:items-center justify-between gap-4 flex-wrap">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Link href="/products">
-              <Button variant="ghost" size="icon" data-testid="button-back-products">
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-            </Link>
-            <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-boosts-title">Mes Boosts</h1>
-          </div>
-          <p className="text-muted-foreground text-sm ml-11">
-            Gérez vos annonces sponsorisées et boosts de produits
-          </p>
-        </div>
-      </div>
+    <div className="max-w-7xl mx-auto space-y-6">
 
       <div className="grid sm:grid-cols-3 gap-4">
         <Card>

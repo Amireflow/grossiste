@@ -27,10 +27,9 @@ import {
   LogOut,
   Plus,
   Globe,
-  Zap,
-  Wallet,
   Users,
   Settings,
+  Crown,
 } from "lucide-react";
 import type { UserProfile, WalletTransaction } from "@shared/schema";
 import { formatPrice } from "@/lib/constants";
@@ -83,9 +82,8 @@ export function AppSidebar() {
   const supplierMenuItems = [
     { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
     { title: "Mes produits", url: "/products", icon: Package },
-    { title: "Mes Boosts", url: "/boosts", icon: Zap },
-    { title: "Portefeuille", url: "/wallet", icon: Wallet },
-    { title: "Commandes recues", url: "/orders", icon: ClipboardList },
+    { title: "Commandes reçues", url: "/orders", icon: ClipboardList },
+    { title: "Mon Compte Pro", url: "/account-pro", icon: Crown },
   ];
 
   const adminMenuItems = [
@@ -143,7 +141,7 @@ export function AppSidebar() {
                           {(item as any).badge}
                         </Badge>
                       )}
-                      {item.url === "/wallet" && walletBalance > 0 && (
+                      {item.url === "/account-pro" && walletBalance > 0 && (
                         <span className="text-[10px] text-muted-foreground font-medium tabular-nums" data-testid="text-sidebar-wallet-balance">
                           {formatPrice(walletBalance)}
                         </span>

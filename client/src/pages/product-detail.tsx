@@ -144,7 +144,7 @@ export default function ProductDetailPage() {
     }
 
     return (
-        <div className="min-h-screen bg-muted/20">
+        <div className="min-h-screen bg-muted/20 overflow-x-hidden">
             <MarketplaceNavbar />
             <div className="pt-16 sm:pt-20 max-w-4xl mx-auto px-4 py-6">
                 {/* Back button */}
@@ -157,7 +157,7 @@ export default function ProductDetailPage() {
 
                 <div className="grid md:grid-cols-2 gap-6">
                     {/* Product Image Gallery */}
-                    <div className="space-y-3">
+                    <div className="space-y-3 overflow-hidden max-w-full">
                         <Carousel
                             setApi={(api) => {
                                 // Sync carousel change to state
@@ -166,17 +166,17 @@ export default function ProductDetailPage() {
                                 });
                                 // Sync state change to carousel is handled by useEffect below
                             }}
-                            className="w-full relative aspect-square rounded-xl overflow-hidden bg-muted"
+                            className="w-full max-w-full relative aspect-square rounded-xl overflow-hidden bg-muted"
                         >
                             <CarouselContent>
                                 {allImages.length > 0 ? (
                                     allImages.map((src, index) => (
                                         <CarouselItem key={index}>
-                                            <div className="w-full h-full aspect-square relative">
+                                            <div className="w-full h-full aspect-square relative overflow-hidden">
                                                 <img
                                                     src={src}
                                                     alt={`${product.name} - Vue ${index + 1}`}
-                                                    className="w-full h-full object-cover"
+                                                    className="w-full h-full object-cover max-w-full"
                                                 />
                                             </div>
                                         </CarouselItem>

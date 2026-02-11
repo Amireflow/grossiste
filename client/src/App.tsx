@@ -36,9 +36,8 @@ import CartPage from "@/pages/cart";
 import OrdersPage from "@/pages/orders";
 import ProductsPage from "@/pages/products";
 import ProductFormPage from "@/pages/product-form";
-import BoostsPage from "@/pages/boosts";
-import WalletPage from "@/pages/wallet";
 import ProfilePage from "@/pages/profile";
+import AccountProPage from "@/pages/account-pro";
 import NotFound from "@/pages/not-found";
 
 import type { UserProfile } from "@shared/schema";
@@ -49,8 +48,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/orders": "Commandes",
   "/products": "Mes produits",
   "/products/new": "Nouveau produit",
-  "/boosts": "Mes Boosts",
-  "/wallet": "Mon Portefeuille",
+  "/account-pro": "Mon Compte Pro",
   "/marketplace": "Marketplace",
   "/admin": "Administration",
   "/admin/users": "Gestion Utilisateurs",
@@ -119,9 +117,9 @@ function AuthenticatedRouter() {
               <Route path="/products" component={ProductsPage} />
               <Route path="/products/new" component={ProductFormPage} />
               <Route path="/products/:id/edit" component={ProductFormPage} />
-              <Route path="/boosts" component={BoostsPage} />
-              <Route path="/wallet" component={WalletPage} />
+
               <Route path="/profile" component={ProfilePage} />
+              <Route path="/account-pro" component={AccountProPage} />
 
               {/* Admin Routes */}
               <Route path="/admin">{() => <AdminGuard><AdminDashboard /></AdminGuard>}</Route>

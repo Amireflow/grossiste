@@ -1,5 +1,6 @@
 import {
   users, userProfiles, categories, products, orders, orderItems, cartItems, productBoosts, walletTransactions,
+  subscriptionPlans, userSubscriptions,
   type UserProfile, type InsertUserProfile,
   type Category, type InsertCategory,
   type Product, type InsertProduct,
@@ -8,6 +9,7 @@ import {
   type CartItem, type InsertCartItem,
   type ProductBoost, type InsertProductBoost,
   type WalletTransaction, type InsertWalletTransaction,
+  type SubscriptionPlan, type UserSubscription, type InsertUserSubscription,
   type User,
 } from "@shared/schema";
 import { db } from "./db";
@@ -72,6 +74,13 @@ export interface IStorage {
   getWalletTransactions(userId: string): Promise<WalletTransaction[]>;
   topUpWallet(userId: string, amount: number, description: string): Promise<WalletTransaction>;
   chargeWalletForBoost(userId: string, amount: number, boostId: string, description: string): Promise<WalletTransaction>;
+
+  // Subscription methods
+  getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getActiveSubscription(userId: string): Promise<(UserSubscription & { plan: SubscriptionPlan }) | undefined>;
+  createSubscription(data: InsertUserSubscription): Promise<UserSubscription>;
+  chargeWalletForSubscription(userId: string, amount: number, planId: string, description: string): Promise<WalletTransaction>;
+  getSupplierProductCount(supplierId: string): Promise<number>;
 
   // Admin methods
   getAllUsers(): Promise<(User & { profile: UserProfile | null })[]>;
@@ -578,7 +587,7 @@ export class DatabaseStorage implements IStorage {
   async chargeWalletForBoost(userId: string, amount: number, boostId: string, description: string): Promise<WalletTransaction> {
     return db.transaction(async (tx) => {
       const [result] = await tx.update(userProfiles)
-        .set({ walletBalance: sql`(coalesce(${userProfiles.walletBalance}::numeric, 0) - ${amount})::text` })
+        .set({ walletBalance: sql`cast(coalesce(${userProfiles.walletBalance}::numeric, 0) - ${amount}::numeric as numeric)` })
         .where(and(
           eq(userProfiles.userId, userId),
           sql`coalesce(${userProfiles.walletBalance}::numeric, 0) >= ${amount}`
@@ -598,6 +607,71 @@ export class DatabaseStorage implements IStorage {
       }).returning();
       return walletTx;
     });
+  }
+
+  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return db.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true));
+  }
+
+  async getActiveSubscription(userId: string): Promise<(UserSubscription & { plan: SubscriptionPlan }) | undefined> {
+    const now = new Date();
+    const rows = await db.select({
+      subscription: userSubscriptions,
+      plan: subscriptionPlans
+    })
+      .from(userSubscriptions)
+      .innerJoin(subscriptionPlans, eq(userSubscriptions.planId, subscriptionPlans.id))
+      .where(and(
+        eq(userSubscriptions.userId, userId),
+        eq(userSubscriptions.status, "active"),
+        gte(userSubscriptions.endDate, now)
+      ))
+      .orderBy(desc(userSubscriptions.endDate))
+      .limit(1);
+
+    if (rows.length === 0) return undefined;
+
+    return {
+      ...rows[0].subscription,
+      plan: rows[0].plan
+    };
+  }
+
+  async createSubscription(data: InsertUserSubscription): Promise<UserSubscription> {
+    const [sub] = await db.insert(userSubscriptions).values(data).returning();
+    return sub;
+  }
+
+  async chargeWalletForSubscription(userId: string, amount: number, planId: string, description: string): Promise<WalletTransaction> {
+    return db.transaction(async (tx) => {
+      const [result] = await tx.update(userProfiles)
+        .set({ walletBalance: sql`cast(coalesce(${userProfiles.walletBalance}::numeric, 0) - ${amount}::numeric as numeric)` })
+        .where(and(
+          eq(userProfiles.userId, userId),
+          sql`coalesce(${userProfiles.walletBalance}::numeric, 0) >= ${amount}`
+        ))
+        .returning({ walletBalance: userProfiles.walletBalance });
+
+      if (!result) {
+        throw new Error("Solde insuffisant");
+      }
+
+      const [walletTx] = await tx.insert(walletTransactions).values({
+        userId,
+        type: "subscription_payment",
+        amount: amount.toString(),
+        description,
+        subscriptionId: planId
+      }).returning();
+      return walletTx;
+    });
+  }
+
+  async getSupplierProductCount(supplierId: string): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)` })
+      .from(products)
+      .where(eq(products.supplierId, supplierId));
+    return Number(result.count);
   }
 
   async getAllUsers(): Promise<(User & { profile: UserProfile | null })[]> {

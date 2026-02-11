@@ -11,7 +11,7 @@ export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "
 export const currencyEnum = pgEnum("currency", ["XOF", "XAF", "NGN", "GHS"]);
 export const boostLevelEnum = pgEnum("boost_level", ["standard", "premium"]);
 export const boostStatusEnum = pgEnum("boost_status", ["active", "paused", "expired"]);
-export const walletTransactionTypeEnum = pgEnum("wallet_transaction_type", ["topup", "boost_charge", "refund"]);
+export const walletTransactionTypeEnum = pgEnum("wallet_transaction_type", ["topup", "boost_charge", "subscription_payment", "refund"]);
 
 export const userProfiles = pgTable("user_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -102,6 +102,30 @@ export const productBoosts = pgTable("product_boosts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(), // e.g. 'starter', 'pro'
+  price: decimal("price", { precision: 12, scale: 2 }).notNull(),
+  currency: currencyEnum("currency").default("XOF"),
+  duration: integer("duration").notNull(), // in days, e.g. 30
+  features: text("features"), // JSON string of features
+  maxProducts: integer("max_products"), // null for unlimited
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  planId: varchar("plan_id").notNull().references(() => subscriptionPlans.id),
+  status: text("status").notNull().default("active"), // active, expired, cancelled
+  startDate: timestamp("start_date").defaultNow(),
+  endDate: timestamp("end_date").notNull(),
+  autoRenew: boolean("auto_renew").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const walletTransactions = pgTable("wallet_transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
@@ -110,6 +134,7 @@ export const walletTransactions = pgTable("wallet_transactions", {
   currency: currencyEnum("currency").default("XOF"),
   description: text("description"),
   boostId: varchar("boost_id"),
+  subscriptionId: varchar("subscription_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -143,6 +168,15 @@ export const productBoostsRelations = relations(productBoosts, ({ one }) => ({
   supplier: one(users, { fields: [productBoosts.supplierId], references: [users.id] }),
 }));
 
+export const subscriptionPlansRelations = relations(subscriptionPlans, ({ many }) => ({
+  subscriptions: many(userSubscriptions),
+}));
+
+export const userSubscriptionsRelations = relations(userSubscriptions, ({ one }) => ({
+  user: one(users, { fields: [userSubscriptions.userId], references: [users.id] }),
+  plan: one(subscriptionPlans, { fields: [userSubscriptions.planId], references: [subscriptionPlans.id] }),
+}));
+
 export const walletTransactionsRelations = relations(walletTransactions, ({ one }) => ({
   user: one(users, { fields: [walletTransactions.userId], references: [users.id] }),
 }));
@@ -154,6 +188,8 @@ export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, cre
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true });
 export const insertProductBoostSchema = createInsertSchema(productBoosts).omit({ id: true, createdAt: true });
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({ id: true, createdAt: true });
+export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({ id: true, createdAt: true });
 export const insertWalletTransactionSchema = createInsertSchema(walletTransactions).omit({ id: true, createdAt: true });
 
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
@@ -170,5 +206,9 @@ export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type CartItem = typeof cartItems.$inferSelect;
 export type InsertProductBoost = z.infer<typeof insertProductBoostSchema>;
 export type ProductBoost = typeof productBoosts.$inferSelect;
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
 export type InsertWalletTransaction = z.infer<typeof insertWalletTransactionSchema>;
 export type WalletTransaction = typeof walletTransactions.$inferSelect;

@@ -111,24 +111,6 @@ export function MarketplaceHero({ onSearch }: { onSearch?: (query: string) => vo
                                 </p>
                             </div>
 
-                            {/* Search Bar - Shop Style aligned */}
-                            <form onSubmit={handleSearch} className="relative max-w-xl mt-8">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                                    <Input
-                                        placeholder="Rechercher des produits, fournisseurs..."
-                                        className="pl-10 pr-32 h-12 text-base bg-muted/50 border-none rounded-full"
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                    />
-                                    <div className="absolute right-1 top-1 bottom-1">
-                                        <Button type="submit" size="sm" className="h-full rounded-full px-6">
-                                            Rechercher
-                                        </Button>
-                                    </div>
-                                </div>
-                            </form>
-
                             {/* Trust Indicators */}
                             <div className="flex items-center gap-6 mt-10">
                                 <div className="flex -space-x-3">

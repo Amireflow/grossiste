@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Link } from "wouter";
 import { Plus, Package, Pencil, EyeOff, Zap, Rocket, Clock, Star, Wallet, AlertTriangle } from "lucide-react";
+import BoostsPage from "@/pages/boosts";
 import { formatPrice } from "@/lib/constants";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -121,165 +123,177 @@ export default function ProductsPage() {
             {totalCount > 0 ? `${activeCount} actif${activeCount !== 1 ? "s" : ""} sur ${totalCount}` : "Gérez votre catalogue"}
           </p>
         </div>
-        <div className="w-full sm:w-auto grid grid-cols-2 sm:flex items-center gap-2 sm:gap-4">
-          <Link href="/boosts" className="w-full sm:w-auto">
-            <Button variant="outline" size="sm" className="w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm" data-testid="button-manage-boosts">
-              <Zap className="w-3.5 h-3.5 mr-1" />
-              Gérer les boosts
-            </Button>
-          </Link>
-          <Link href="/products/new" className="w-full sm:w-auto">
-            <Button size="sm" className="w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm" data-testid="button-add-product">
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Ajouter un produit
-            </Button>
-          </Link>
-        </div>
+        <Link href="/products/new" className="w-full sm:w-auto">
+          <Button size="sm" className="w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm" data-testid="button-add-product">
+            <Plus className="w-3.5 h-3.5 mr-1" />
+            Ajouter un produit
+          </Button>
+        </Link>
       </div>
 
-      {isLoading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i}>
-              <CardContent className="p-4">
-                <Skeleton className="w-full aspect-video rounded-md mb-3" />
-                <Skeleton className="h-4 w-3/4 mb-2" />
-                <Skeleton className="h-3 w-1/2 mb-3" />
-                <Skeleton className="h-8 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : products && products.length > 0 ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((product) => {
-            const isActive = product.isActive ?? true;
-            const activeBoost = getActiveBoost(product.id);
-            return (
-              <Card key={product.id} className={!isActive ? "opacity-60" : ""} data-testid={`product-card-${product.id}`}>
-                <CardContent className="p-3 sm:p-4">
-                  <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted mb-3">
-                    {product.imageUrl ? (
-                      <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-8 h-8 text-muted-foreground/30" />
-                      </div>
-                    )}
-                    {!isActive && (
-                      <div className="absolute inset-0 bg-background/40 flex items-center justify-center">
-                        <Badge variant="secondary" className="text-[10px]">
-                          <EyeOff className="w-3 h-3 mr-1" />
-                          Masqué
-                          Masqué
-                        </Badge>
-                      </div>
-                    )}
-                    {activeBoost && (
-                      <div className="absolute top-2 left-2">
-                        <Badge className="text-[10px] bg-amber-500 text-white border-0 gap-1" data-testid={`badge-boost-${product.id}`}>
-                          <span className="text-yellow-600 font-medium text-[10px] uppercase tracking-wider bg-yellow-100/50 px-1.5 py-0.5 rounded border border-yellow-200/50">
-                            {activeBoost.boostLevel === "premium" ? "Premium" : "Sponsorisé"}
-                          </span>
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="font-medium text-sm line-clamp-1">{product.name}</h3>
-                    <Switch
-                      checked={isActive}
-                      onCheckedChange={(checked) => toggleActive.mutate({ productId: product.id, isActive: checked })}
-                      data-testid={`switch-active-${product.id}`}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    <span className="font-bold text-primary text-sm">
-                      {formatPrice(product.price, product.currency || "XOF")}
-                    </span>
-                    <span className="text-xs text-muted-foreground">/ {product.unit}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    <Badge variant="secondary" className="text-[10px]">
-                      Stock: {product.stock ?? 0}
-                    </Badge>
-                    {product.minOrder && product.minOrder > 1 && (
-                      <Badge variant="secondary" className="text-[10px]">
-                        Min: {product.minOrder}
-                      </Badge>
-                    )}
-                  </div>
+      <Tabs defaultValue="products" className="w-full">
+        <TabsList className="w-full grid grid-cols-2 h-10">
+          <TabsTrigger value="products" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <Package className="w-4 h-4" />
+            Catalogue
+          </TabsTrigger>
+          <TabsTrigger value="boosts" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <Zap className="w-4 h-4" />
+            Mes Boosts
+          </TabsTrigger>
+        </TabsList>
 
-                  {activeBoost ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-muted-foreground bg-primary/5 p-1.5 rounded-md">
-                        <Clock className="w-3 h-3" />
-                        Fin le {new Date(activeBoost.endDate).toLocaleDateString("fr-FR")}
+        <TabsContent value="products" className="mt-4">
+
+          {isLoading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i}>
+                  <CardContent className="p-4">
+                    <Skeleton className="w-full aspect-video rounded-md mb-3" />
+                    <Skeleton className="h-4 w-3/4 mb-2" />
+                    <Skeleton className="h-3 w-1/2 mb-3" />
+                    <Skeleton className="h-8 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : products && products.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {products.map((product) => {
+                const isActive = product.isActive ?? true;
+                const activeBoost = getActiveBoost(product.id);
+                return (
+                  <Card key={product.id} className={!isActive ? "opacity-60" : ""} data-testid={`product-card-${product.id}`}>
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted mb-3">
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="w-8 h-8 text-muted-foreground/30" />
+                          </div>
+                        )}
+                        {!isActive && (
+                          <div className="absolute inset-0 bg-background/40 flex items-center justify-center">
+                            <Badge variant="secondary" className="text-[10px]">
+                              <EyeOff className="w-3 h-3 mr-1" />
+                              Masqué
+                              Masqué
+                            </Badge>
+                          </div>
+                        )}
+                        {activeBoost && (
+                          <div className="absolute top-2 left-2">
+                            <Badge className="text-[10px] bg-amber-500 text-white border-0 gap-1" data-testid={`badge-boost-${product.id}`}>
+                              <span className="text-yellow-600 font-medium text-[10px] uppercase tracking-wider bg-yellow-100/50 px-1.5 py-0.5 rounded border border-yellow-200/50">
+                                {activeBoost.boostLevel === "premium" ? "Premium" : "Sponsorisé"}
+                              </span>
+                            </Badge>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Link href={`/products/${product.id}/edit`} className="flex-1">
-                          <Button variant="outline" size="sm" className="w-full h-8 sm:h-9 text-xs" data-testid={`button-edit-${product.id}`}>
-                            <Pencil className="w-3.5 h-3.5 sm:mr-1.5" />
-                            <span>Modifier</span>
-                          </Button>
-                        </Link>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="flex-1 h-8 sm:h-9 text-xs text-destructive hover:text-destructive"
-                          onClick={() => stopBoost.mutate(activeBoost.id)}
-                          disabled={stopBoost.isPending}
-                          data-testid={`button-stop-boost-${product.id}`}
-                        >
-                          <span className="hidden sm:inline mr-1.5">Arrêter</span>
-                          <span className="sm:hidden">Stop</span>
-                        </Button>
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h3 className="font-medium text-sm line-clamp-1">{product.name}</h3>
+                        <Switch
+                          checked={isActive}
+                          onCheckedChange={(checked) => toggleActive.mutate({ productId: product.id, isActive: checked })}
+                          data-testid={`switch-active-${product.id}`}
+                        />
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Link href={`/products/${product.id}/edit`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full h-8 sm:h-9 text-xs" data-testid={`button-edit-${product.id}`}>
-                          <Pencil className="w-3.5 h-3.5 sm:mr-1.5" />
-                          <span>Modifier</span>
-                        </Button>
-                      </Link>
-                      {isActive && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 h-8 sm:h-9 text-xs border-primary/20 hover:bg-primary/5 hover:text-primary text-foreground"
-                          onClick={() => { setBoostDialogProduct(product); setBoostLevel("standard"); setBoostDuration("7"); }}
-                          data-testid={`button-boost-${product.id}`}
-                        >
-                          <Zap className="w-3.5 h-3.5 sm:mr-1.5 fill-current" />
-                          <span>Booster</span>
-                        </Button>
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        <span className="font-bold text-primary text-sm">
+                          {formatPrice(product.price, product.currency || "XOF")}
+                        </span>
+                        <span className="text-xs text-muted-foreground">/ {product.unit}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        <Badge variant="secondary" className="text-[10px]">
+                          Stock: {product.stock ?? 0}
+                        </Badge>
+                        {product.minOrder && product.minOrder > 1 && (
+                          <Badge variant="secondary" className="text-[10px]">
+                            Min: {product.minOrder}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {activeBoost ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-muted-foreground bg-primary/5 p-1.5 rounded-md">
+                            <Clock className="w-3 h-3" />
+                            Fin le {new Date(activeBoost.endDate).toLocaleDateString("fr-FR")}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Link href={`/products/${product.id}/edit`} className="flex-1">
+                              <Button variant="outline" size="sm" className="w-full h-8 sm:h-9 text-xs" data-testid={`button-edit-${product.id}`}>
+                                <Pencil className="w-3.5 h-3.5 sm:mr-1.5" />
+                                <span>Modifier</span>
+                              </Button>
+                            </Link>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="flex-1 h-8 sm:h-9 text-xs text-destructive hover:text-destructive"
+                              onClick={() => stopBoost.mutate(activeBoost.id)}
+                              disabled={stopBoost.isPending}
+                              data-testid={`button-stop-boost-${product.id}`}
+                            >
+                              <span className="hidden sm:inline mr-1.5">Arrêter</span>
+                              <span className="sm:hidden">Stop</span>
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Link href={`/products/${product.id}/edit`} className="flex-1">
+                            <Button variant="outline" size="sm" className="w-full h-8 sm:h-9 text-xs" data-testid={`button-edit-${product.id}`}>
+                              <Pencil className="w-3.5 h-3.5 sm:mr-1.5" />
+                              <span>Modifier</span>
+                            </Button>
+                          </Link>
+                          {isActive && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 h-8 sm:h-9 text-xs border-primary/20 hover:bg-primary/5 hover:text-primary text-foreground"
+                              onClick={() => { setBoostDialogProduct(product); setBoostLevel("standard"); setBoostDuration("7"); }}
+                              data-testid={`button-boost-${product.id}`}
+                            >
+                              <Zap className="w-3.5 h-3.5 sm:mr-1.5 fill-current" />
+                              <span>Booster</span>
+                            </Button>
+                          )}
+                        </div>
                       )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-20">
-          <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-5">
-            <Package className="w-8 h-8 text-muted-foreground/40" />
-          </div>
-          <h3 className="font-medium text-lg mb-2">Aucun produit</h3>
-          <p className="text-sm text-muted-foreground mb-5 max-w-xs mx-auto">
-            Commencez par ajouter vos premiers produits pour qu'ils apparaissent dans le catalogue
-          </p>
-          <Link href="/products/new">
-            <Button data-testid="button-first-product">
-              <Plus className="w-4 h-4 mr-1" />
-              Ajouter mon premier produit
-            </Button>
-          </Link>
-        </div>
-      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-5">
+                <Package className="w-8 h-8 text-muted-foreground/40" />
+              </div>
+              <h3 className="font-medium text-lg mb-2">Aucun produit</h3>
+              <p className="text-sm text-muted-foreground mb-5 max-w-xs mx-auto">
+                Commencez par ajouter vos premiers produits pour qu'ils apparaissent dans le catalogue
+              </p>
+              <Link href="/products/new">
+                <Button data-testid="button-first-product">
+                  <Plus className="w-4 h-4 mr-1" />
+                  Ajouter mon premier produit
+                </Button>
+              </Link>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="boosts" className="mt-4">
+          <BoostsPage />
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={!!boostDialogProduct} onOpenChange={(open) => !open && setBoostDialogProduct(null)}>
         <DialogContent>
@@ -354,7 +368,7 @@ export default function ProductsPage() {
                     <p className="text-[11px] text-muted-foreground mt-0.5">
                       Rechargez votre portefeuille pour activer ce boost.
                     </p>
-                    <Link href="/wallet">
+                    <Link href="/account-pro">
                       <Button variant="outline" size="sm" className="mt-2 text-xs" data-testid="button-goto-topup">
                         <Wallet className="w-3 h-3 mr-1" />
                         Recharger

@@ -11,6 +11,7 @@ import { registerProductRoutes } from "./routes/products";
 import { registerCartRoutes } from "./routes/cart";
 import { registerOrderRoutes } from "./routes/orders";
 import { registerWalletAndBoostRoutes } from "./routes/wallet-boosts";
+import { registerSubscriptionRoutes } from "./routes/subscriptions";
 import { registerAdminRoutes } from "./routes/admin";
 
 const upload = multer({
@@ -99,6 +100,7 @@ export async function registerRoutes(
   registerCartRoutes(app);
   registerOrderRoutes(app);
   registerWalletAndBoostRoutes(app);
+  registerSubscriptionRoutes(app);
   registerAdminRoutes(app);
 
   return httpServer;

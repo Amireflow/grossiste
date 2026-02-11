@@ -1,6 +1,6 @@
 import { storage } from "./storage";
 import { db } from "./db";
-import { users, userProfiles, products, categories } from "@shared/schema";
+import { users, userProfiles, products, categories, subscriptionPlans } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 
 export async function seedDatabase() {
@@ -103,6 +103,8 @@ export async function seedDatabase() {
     }
     console.log("New categories seeded successfully!");
   }
+
+  await seedSubscriptionPlans();
 
   const existingProducts = await storage.getProducts();
   if (existingProducts.length > 0) {
@@ -319,4 +321,76 @@ async function seedNewCategoryProducts() {
   if (seeded > 0) {
     console.log(`Seeded ${seeded} new products for new categories!`);
   }
+
+
+}
+
+export async function seedSubscriptionPlans() {
+  console.log("Seeding subscription plans...");
+
+
+  const plans = [
+    {
+      name: "Standard",
+      slug: "standard",
+      price: "5000",
+      currency: "XOF",
+      duration: 30,
+      features: JSON.stringify([
+        "Jusqu'à 20 produits",
+        "Visibilité standard",
+        "Support par email"
+      ]),
+      maxProducts: 20,
+      isActive: true
+    },
+    {
+      name: "Pro",
+      slug: "pro",
+      price: "15000",
+      currency: "XOF",
+      duration: 30,
+      features: JSON.stringify([
+        "Jusqu'à 50 produits",
+        "3 Boosts de visibilité offerts",
+        "Badge Vendeur Pro",
+        "Support prioritaire"
+      ]),
+      maxProducts: 50,
+      isActive: true
+    },
+    {
+      name: "Entreprise",
+      slug: "enterprise",
+      price: "50000",
+      currency: "XOF",
+      duration: 30,
+      features: JSON.stringify([
+        "Produits illimités",
+        "10 Boosts de visibilité offerts",
+        "Badge Fournisseur Certifié",
+        "Account Manager dédié"
+      ]),
+      maxProducts: null,
+      isActive: true
+    }
+  ];
+
+  for (const plan of plans) {
+    await db.insert(subscriptionPlans)
+      .values(plan as any)
+      .onConflictDoUpdate({
+        target: subscriptionPlans.slug,
+        set: {
+          name: plan.name,
+          price: plan.price,
+          features: plan.features,
+          maxProducts: plan.maxProducts,
+          duration: plan.duration,
+          isActive: plan.isActive
+        }
+      });
+  }
+
+  console.log("Subscription plans seeded successfully!");
 }
