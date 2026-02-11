@@ -1,10 +1,29 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Package, ShoppingCart, TrendingUp, Store } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Users, Package, ShoppingCart, TrendingUp, Store, Eye, ArrowRight } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import {
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from "recharts";
+import type { User, UserProfile, Order } from "@shared/schema";
+
+type AdminOrder = Order & { buyerName: string; supplierName: string; itemsCount: number };
+type UserWithProfile = User & { profile: UserProfile | null };
+
+const statusLabels: Record<string, string> = {
+    pending: "En attente",
+    confirmed: "Confirmée",
+    processing: "En cours",
+    shipped: "Expédiée",
+    delivered: "Livrée",
+    cancelled: "Annulée",
+};
 
 export default function AdminDashboard() {
     const { data: stats, isLoading, isError, error } = useQuery<{
@@ -34,7 +53,20 @@ export default function AdminDashboard() {
         queryKey: ["/api/admin/stats/charts"],
     });
 
+    const { data: recentOrders } = useQuery<AdminOrder[]>({
+        queryKey: ["/api/admin/orders"],
+    });
+
+    const { data: recentUsers } = useQuery<UserWithProfile[]>({
+        queryKey: ["/api/admin/users"],
+    });
+
     const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+
+    const last5Orders = recentOrders?.slice(0, 5) || [];
+    const last5Users = recentUsers?.sort((a, b) =>
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    ).slice(0, 5) || [];
 
     return (
         <div className="flex-1 w-full bg-muted/20 p-6 sm:p-10">
@@ -211,6 +243,97 @@ export default function AdminDashboard() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Recent Orders & New Users */}
+            <div className="grid gap-4 md:grid-cols-2 mt-8">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="text-lg">Commandes récentes</CardTitle>
+                            <CardDescription>Les 5 dernières commandes</CardDescription>
+                        </div>
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href="/admin/orders"><ArrowRight className="w-4 h-4" /></Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        {last5Orders.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-4">Aucune commande</p>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Client</TableHead>
+                                        <TableHead>Montant</TableHead>
+                                        <TableHead>Statut</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {last5Orders.map((order) => (
+                                        <TableRow key={order.id}>
+                                            <TableCell className="text-sm">{order.buyerName}</TableCell>
+                                            <TableCell className="text-sm">{formatPrice(Number(order.totalAmount))}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className="text-xs">
+                                                    {statusLabels[order.status || "pending"] || order.status}
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="text-lg">Nouveaux inscrits</CardTitle>
+                            <CardDescription>Les 5 dernières inscriptions</CardDescription>
+                        </div>
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href="/admin/users"><ArrowRight className="w-4 h-4" /></Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        {last5Users.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-4">Aucun utilisateur</p>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Nom</TableHead>
+                                        <TableHead>Rôle</TableHead>
+                                        <TableHead>Inscrit le</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {last5Users.map((user) => (
+                                        <TableRow key={user.id} className="cursor-pointer" onClick={() => window.location.href = `/admin/users/${user.id}`}>
+                                            <TableCell className="text-sm font-medium">
+                                                {user.profile?.businessName || `${user.firstName || ""} ${user.lastName || ""}`}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant={
+                                                    user.profile?.role === "admin" ? "default" :
+                                                        user.profile?.role === "supplier" ? "secondary" : "outline"
+                                                } className="text-xs">
+                                                    {user.profile?.role === "admin" ? "Admin" :
+                                                        user.profile?.role === "supplier" ? "Fournisseur" : "Commerçant"}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString("fr-FR") : "-"}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }
+

@@ -1,6 +1,6 @@
 import {
   users, userProfiles, categories, products, orders, orderItems, cartItems, productBoosts, walletTransactions,
-  subscriptionPlans, userSubscriptions,
+  subscriptionPlans, userSubscriptions, platformSettings,
   type UserProfile, type InsertUserProfile,
   type Category, type InsertCategory,
   type Product, type InsertProduct,
@@ -25,6 +25,8 @@ export interface IStorage {
   getCategories(): Promise<Category[]>;
   createCategory(data: InsertCategory): Promise<Category>;
   getCategoryBySlug(slug: string): Promise<Category | undefined>;
+  updateCategory(id: string, data: Partial<InsertCategory>): Promise<Category | undefined>;
+  deleteCategory(id: string): Promise<void>;
 
   getProducts(categoryId?: string): Promise<Product[]>;
   getProductById(id: string): Promise<Product | undefined>;
@@ -96,6 +98,12 @@ export interface IStorage {
   updateUserRole(userId: string, role: string): Promise<UserProfile>;
   getRevenueStats(): Promise<{ date: string; revenue: number }[]>;
   getUserStats(): Promise<{ role: string; count: number }[]>;
+  getSettings(): Promise<Record<string, string>>;
+  saveSettings(settings: Record<string, string>): Promise<void>;
+
+
+  getAllSubscriptions(): Promise<(UserSubscription & { user: User; plan: SubscriptionPlan })[]>;
+  getAllTransactions(): Promise<(WalletTransaction & { user: User })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -131,6 +139,15 @@ export class DatabaseStorage implements IStorage {
   async getCategoryBySlug(slug: string): Promise<Category | undefined> {
     const [cat] = await db.select().from(categories).where(eq(categories.slug, slug));
     return cat || undefined;
+  }
+
+  async updateCategory(id: string, data: Partial<InsertCategory>): Promise<Category | undefined> {
+    const [category] = await db.update(categories).set(data).where(eq(categories.id, id)).returning();
+    return category || undefined;
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
   }
 
   async getProducts(categoryId?: string): Promise<Product[]> {
@@ -814,6 +831,53 @@ export class DatabaseStorage implements IStorage {
       role: r.role === 'shop_owner' ? 'Commerçants' : r.role === 'supplier' ? 'Fournisseurs' : r.role === 'admin' ? 'Admin' : r.role,
       count: r.count
     }));
+  }
+
+  async getSettings(): Promise<Record<string, string>> {
+    const rows = await db.select().from(platformSettings);
+    const result: Record<string, string> = {};
+    for (const row of rows) {
+      result[row.key] = row.value;
+    }
+    return result;
+  }
+
+  async saveSettings(settings: Record<string, string>): Promise<void> {
+    for (const [key, value] of Object.entries(settings)) {
+      await db
+        .insert(platformSettings)
+        .values({ key, value, updatedAt: new Date() })
+        .onConflictDoUpdate({
+          target: platformSettings.key,
+          set: { value, updatedAt: new Date() },
+        });
+    }
+  }
+
+  async getAllSubscriptions(): Promise<(UserSubscription & { user: User; plan: SubscriptionPlan })[]> {
+    const rows = await db.select({
+      subscription: userSubscriptions,
+      user: users,
+      plan: subscriptionPlans
+    })
+      .from(userSubscriptions)
+      .innerJoin(users, eq(userSubscriptions.userId, users.id))
+      .innerJoin(subscriptionPlans, eq(userSubscriptions.planId, subscriptionPlans.id))
+      .orderBy(desc(userSubscriptions.createdAt));
+
+    return rows.map(r => ({ ...r.subscription, user: r.user, plan: r.plan }));
+  }
+
+  async getAllTransactions(): Promise<(WalletTransaction & { user: User })[]> {
+    const rows = await db.select({
+      transaction: walletTransactions,
+      user: users
+    })
+      .from(walletTransactions)
+      .innerJoin(users, eq(walletTransactions.userId, users.id))
+      .orderBy(desc(walletTransactions.createdAt));
+
+    return rows.map(r => ({ ...r.transaction, user: r.user }));
   }
 }
 

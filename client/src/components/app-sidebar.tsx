@@ -30,6 +30,8 @@ import {
   Users,
   Settings,
   Crown,
+  FolderTree,
+  CreditCard,
 } from "lucide-react";
 import type { UserProfile, WalletTransaction } from "@shared/schema";
 import { formatPrice } from "@/lib/constants";
@@ -91,6 +93,8 @@ export function AppSidebar() {
     { title: "Utilisateurs", url: "/admin/users", icon: Users },
     { title: "Commandes", url: "/admin/orders", icon: ShoppingCart },
     { title: "Produits", url: "/admin/products", icon: Package },
+    { title: "Catégories", url: "/admin/categories", icon: FolderTree },
+    { title: "Abonnements", url: "/admin/subscriptions", icon: CreditCard },
     { title: "Paramètres", url: "/admin/settings", icon: Settings },
   ];
 

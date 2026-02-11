@@ -29,6 +29,9 @@ import AdminUsers from "@/pages/admin/users";
 import AdminProducts from "@/pages/admin/products";
 import AdminOrders from "@/pages/admin/orders";
 import AdminSettings from "@/pages/admin/settings";
+import AdminUserDetail from "@/pages/admin/user-detail";
+import AdminCategories from "@/pages/admin/categories";
+import AdminSubscriptions from "@/pages/admin/subscriptions";
 
 import OnboardingPage from "@/pages/onboarding";
 import DashboardPage from "@/pages/dashboard";
@@ -54,7 +57,10 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/users": "Gestion Utilisateurs",
   "/admin/products": "Gestion Produits",
   "/admin/orders": "Gestion Commandes",
+
   "/admin/settings": "Paramètres Plateforme",
+  "/admin/categories": "Gestion Catégories",
+  "/admin/subscriptions": "Abonnements & Revenus",
 };
 
 function AuthenticatedRouter() {
@@ -123,9 +129,12 @@ function AuthenticatedRouter() {
 
               {/* Admin Routes */}
               <Route path="/admin">{() => <AdminGuard><AdminDashboard /></AdminGuard>}</Route>
+              <Route path="/admin/users/:id">{() => <AdminGuard><AdminUserDetail /></AdminGuard>}</Route>
               <Route path="/admin/users">{() => <AdminGuard><AdminUsers /></AdminGuard>}</Route>
               <Route path="/admin/products">{() => <AdminGuard><AdminProducts /></AdminGuard>}</Route>
               <Route path="/admin/orders">{() => <AdminGuard><AdminOrders /></AdminGuard>}</Route>
+              <Route path="/admin/categories">{() => <AdminGuard><AdminCategories /></AdminGuard>}</Route>
+              <Route path="/admin/subscriptions">{() => <AdminGuard><AdminSubscriptions /></AdminGuard>}</Route>
               <Route path="/admin/settings">{() => <AdminGuard><AdminSettings /></AdminGuard>}</Route>
 
               <Route component={NotFound} />

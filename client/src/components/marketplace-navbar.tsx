@@ -40,38 +40,7 @@ export function MarketplaceNavbar({ onSearch, searchValue }: { onSearch?: (q: st
                         </div>
                     </Link>
 
-                    {/* Search bar */}
-                    {onSearch && (
-                        <div className="flex-1 max-w-lg mx-2 sm:mx-6">
-                            <div className="relative group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 transition-colors group-focus-within:text-primary z-10" />
-                                <Input
-                                    ref={inputRef}
-                                    type="text"
-                                    placeholder="Rechercher un produit, une marque..."
-                                    className="pl-9 pr-9 h-10 text-sm rounded-xl"
-                                    value={searchValue || ""}
-                                    onChange={(e) => onSearch(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Escape") {
-                                            onSearch("");
-                                            inputRef.current?.blur();
-                                        }
-                                    }}
-                                    data-testid="input-marketplace-search"
-                                />
-                                {searchValue && searchValue.length > 0 && (
-                                    <button
-                                        onClick={() => { onSearch(""); inputRef.current?.focus(); }}
-                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                        data-testid="button-clear-search"
-                                    >
-                                        <X className="w-3.5 h-3.5" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    )}
+
 
                     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         <ThemeToggle />
